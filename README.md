@@ -44,4 +44,4 @@
 
 ### Attributions
 
-* Logo - <a href="https://www.flaticon.com/free-icons/purebred" title="purebred icons">Purebred icons created by Chanut-is-Industries - Flaticon</a>
+* <a href="https://www.flaticon.com/free-icons/purebred" title="purebred icons">Purebred icons created by Chanut-is-Industries - Flaticon</a>
