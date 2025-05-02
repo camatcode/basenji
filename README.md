@@ -37,6 +37,12 @@
 > This project is under active, daily development.
 
 
+
 ## Table of Contents
 
+- [Attributions](#attributions)
 
+
+### Attributions
+
+* Logo - <a href="https://www.flaticon.com/free-icons/purebred" title="purebred icons">Purebred icons created by Chanut-is-Industries - Flaticon</a>
