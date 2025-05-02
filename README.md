@@ -1,4 +1,3 @@
-# Basenji
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/camatcode/basenji/refs/heads/main/assets/basenji-logo-dark.png">
