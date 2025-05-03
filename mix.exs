@@ -116,7 +116,8 @@ defmodule Basenji.MixProject do
       {:bandit, "~> 1.5"},
 
       # basenji deps
-      {:zstream, "~> 0.6"}
+      {:zstream, "~> 0.6"},
+      {:unzip, "~> 0.12"}
     ]
   end
 
