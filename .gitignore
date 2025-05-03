@@ -35,3 +35,6 @@ basenji-*.tar
 npm-debug.log
 /assets/node_modules/
 
+#intellij
+*.iml
+.idea/
