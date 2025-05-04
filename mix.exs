@@ -3,7 +3,7 @@ defmodule Basenji.MixProject do
 
   @source_url "https://github.com/camatcode/basenji"
   @version "0.9.0"
-  @doc_logo_location "assets/basenji-logo.png"
+  @doc_logo_location "assets/basenji-logo.svg"
 
   def project do
     [
@@ -118,7 +118,8 @@ defmodule Basenji.MixProject do
       # basenji deps
       {:zstream, "~> 0.6"},
       {:unzip, "~> 0.12"},
-      {:porcelain, "~> 2.0"}
+      {:porcelain, "~> 2.0"},
+      {:ok, "~> 2.3"}
     ]
   end
 

@@ -1,4 +1,4 @@
-defmodule Basenji.Formats.CBTReader do
+defmodule Basenji.Reader.CBTReader do
   @moduledoc false
 
   def get_entries(cbz_file_path, _opts \\ []) do
@@ -12,6 +12,8 @@ defmodule Basenji.Formats.CBTReader do
         end)
 
       {:ok, %{entries: file_entries}}
+    else
+      non_matching -> {:error, non_matching}
     end
   end
 

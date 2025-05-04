@@ -1,8 +1,8 @@
-defmodule Basenji.Formats.CB7ReaderTest do
+defmodule Basenji.Reader.CB7ReaderTest do
   use ExUnit.Case
-  doctest Basenji.Formats.CB7Reader
+  doctest Basenji.Reader.CB7Reader
 
-  alias Basenji.Formats.CB7Reader
+  alias Basenji.Reader.CB7Reader
 
   test "get_entries" do
     cb7_dir =

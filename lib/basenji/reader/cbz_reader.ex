@@ -1,4 +1,4 @@
-defmodule Basenji.Formats.CBZReader do
+defmodule Basenji.Reader.CBZReader do
   @moduledoc false
 
   # opts[:close] - will close the stream after reading
@@ -17,6 +17,8 @@ defmodule Basenji.Formats.CBZReader do
       else
         {:ok, %{entries: file_entries, file: unzip}}
       end
+    else
+      non_matching -> {:error, non_matching}
     end
   end
 

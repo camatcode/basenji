@@ -1,14 +1,20 @@
-defmodule Basenji.Formats.CBRReader do
+defmodule Basenji.Reader.CB7Reader do
   @moduledoc false
+  @behaviour Basenji.Reader
+
+  require OK
 
   alias Porcelain.Result
 
   def get_entries(cbz_file_path, _opts \\ []) do
-    with %Result{out: output, status: 0} <- Porcelain.exec("unrar", ["lb", cbz_file_path]) do
-      names = String.split(output, "\n")
-
+    with %Result{out: output, status: 0} <- Porcelain.exec("7z", ["l", "-ba", cbz_file_path]) do
       file_entries =
-        names
+        output
+        |> String.trim()
+        |> String.split("\n")
+        |> Enum.map(fn line ->
+          String.slice(line, 53..-1//1)
+        end)
         |> Enum.map(fn name -> %{file_name: "#{name}"} end)
         |> Enum.sort_by(& &1.file_name)
         |> Enum.filter(fn entry ->
@@ -16,6 +22,8 @@ defmodule Basenji.Formats.CBRReader do
         end)
 
       {:ok, %{entries: file_entries}}
+    else
+      non_matching -> {:error, non_matching}
     end
   end
 
@@ -23,7 +31,7 @@ defmodule Basenji.Formats.CBRReader do
     Stream.resource(
       fn ->
         with %Result{out: output, status: 0} <-
-               Porcelain.exec("unrar", ["p", cbz_file_path, entry[:file_name]]) do
+               Porcelain.exec("7z", ["x", "-so", cbz_file_path, entry[:file_name]]) do
           [output |> :binary.bin_to_list()]
         end
       end,
