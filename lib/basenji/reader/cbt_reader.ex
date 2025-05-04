@@ -1,44 +1,32 @@
 defmodule Basenji.Reader.CBTReader do
   @moduledoc false
+  import Basenji.Reader
 
-  @spec get_entries(cbz_file_path :: String.t(), _opts :: keyword()) ::
-          {:ok, %{entries: any()}} | {:error, any()}
   def get_entries(cbz_file_path, _opts \\ []) do
-    with {:ok, names} <- :erl_tar.table(cbz_file_path, [:compressed]) do
+    with {:ok, file_names} <- :erl_tar.table(cbz_file_path, [:compressed]) do
       file_entries =
-        names
-        |> Enum.map(fn name -> %{file_name: "#{name}"} end)
-        |> Enum.sort_by(& &1.file_name)
-        |> Enum.filter(fn entry ->
-          !String.contains?(entry.file_name, "__MACOSX")
-        end)
+        file_names
+        |> Enum.map(&%{file_name: "#{&1}"})
+        |> sort_file_names()
+        |> reject_macos_preview()
 
       {:ok, %{entries: file_entries}}
-    else
-      non_matching -> {:error, non_matching}
     end
   end
 
   def get_entry_stream!(cbz_file_path, entry) do
     file_name = ~c"#{entry[:file_name]}"
 
-    Stream.resource(
-      fn ->
-        with {:ok, [{^file_name, data}]} <-
-               :erl_tar.extract(cbz_file_path, [
-                 {:files, [file_name]},
-                 :compressed,
-                 :memory
-               ]) do
-          [data |> :binary.bin_to_list()]
-        end
-      end,
-      fn
-        :halt -> {:halt, nil}
-        func -> {func, :halt}
-      end,
-      fn _ -> nil end
-    )
+    create_resource(fn ->
+      with {:ok, [{^file_name, data}]} <-
+             :erl_tar.extract(cbz_file_path, [
+               {:files, [file_name]},
+               :compressed,
+               :memory
+             ]) do
+        [data |> :binary.bin_to_list()]
+      end
+    end)
   end
 
   def read(cbz_file_path, _opts \\ []) do

@@ -1,17 +1,14 @@
 defmodule Basenji.Reader.CBZReader do
   @moduledoc false
+  import Basenji.Reader
 
   # opts[:close] - will close the stream after reading
-  @spec get_entries(cbz_file_path :: String.t(), _opts :: keyword()) ::
-          {:ok, %{entries: any(), file: any()}} | {:error, any()}
   def get_entries(cbz_file_path, opts \\ []) when is_bitstring(cbz_file_path) do
     with {:ok, unzip} <- open(cbz_file_path) do
       file_entries =
         Unzip.list_entries(unzip)
-        |> Enum.sort_by(& &1.file_name)
-        |> Enum.filter(fn entry ->
-          !String.contains?(entry.file_name, "__MACOSX") && entry.compressed_size != 0
-        end)
+        |> sort_file_names()
+        |> reject_macos_preview()
 
       if opts[:close] do
         close(unzip)
@@ -19,8 +16,6 @@ defmodule Basenji.Reader.CBZReader do
       else
         {:ok, %{entries: file_entries, file: unzip}}
       end
-    else
-      non_matching -> {:error, non_matching}
     end
   end
 
@@ -41,18 +36,11 @@ defmodule Basenji.Reader.CBZReader do
   end
 
   def get_entry_stream!(%Unzip{} = unzip, file_name, opts) when is_bitstring(file_name) do
-    Stream.resource(
-      fn -> Unzip.file_stream!(unzip, file_name, opts) end,
-      fn
-        :halt -> {:halt, nil}
-        func -> {func, :halt}
-      end,
-      fn _ -> nil end
-    )
+    create_resource(fn -> Unzip.file_stream!(unzip, file_name, opts) end)
   end
 
   def open(cbz_file_path) when is_bitstring(cbz_file_path) do
-    with true <- File.exists?(cbz_file_path) || {:err, "Doesn't exist, #{cbz_file_path}"},
+    with true <- File.exists?(cbz_file_path) || {:error, "Doesn't exist, #{cbz_file_path}"},
          %Unzip.LocalFile{} = zip_file <- Unzip.LocalFile.open(cbz_file_path) do
       Unzip.new(zip_file)
     end

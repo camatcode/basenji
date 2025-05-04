@@ -1,42 +1,28 @@
 defmodule Basenji.Reader.CBRReader do
   @moduledoc false
+  import Basenji.Reader
 
-  alias Porcelain.Result
 
-  @spec get_entries(cbz_file_path :: String.t(), _opts :: keyword()) ::
-          {:ok, %{entries: any()}} | {:error, any()}
   def get_entries(cbz_file_path, _opts \\ []) do
-    with %Result{out: output, status: 0} <- Porcelain.exec("unrar", ["lb", cbz_file_path]) do
-      names = String.split(output, "\n")
+    with {:ok, output} <- exec("unrar", ["lb", cbz_file_path]) do
+      file_names = String.trim(output) |> String.split("\n")
 
       file_entries =
-        names
-        |> Enum.map(fn name -> %{file_name: "#{name}"} end)
-        |> Enum.sort_by(& &1.file_name)
-        |> Enum.filter(fn entry ->
-          !String.contains?(entry.file_name, "__MACOSX")
-        end)
+        file_names
+        |> Enum.map(&%{file_name: &1})
+        |> sort_file_names()
+        |> reject_macos_preview()
 
       {:ok, %{entries: file_entries}}
-    else
-      non_matching -> {:error, non_matching}
     end
   end
 
   def get_entry_stream!(cbz_file_path, entry) do
-    Stream.resource(
-      fn ->
-        with %Result{out: output, status: 0} <-
-               Porcelain.exec("unrar", ["p", cbz_file_path, entry[:file_name]]) do
-          [output |> :binary.bin_to_list()]
-        end
-      end,
-      fn
-        :halt -> {:halt, nil}
-        func -> {func, :halt}
-      end,
-      fn _ -> nil end
-    )
+    create_resource(fn ->
+      with {:ok, output} <- exec("unrar", ["p", cbz_file_path, entry[:file_name]]) do
+        [output |> :binary.bin_to_list()]
+      end
+    end)
   end
 
   def read(cbz_file_path, _opts \\ []) do
