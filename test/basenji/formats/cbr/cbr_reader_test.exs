@@ -35,7 +35,6 @@ defmodule Basenji.Formats.CBRReaderTest do
     refute Enum.empty?(cbr_files)
 
     cbr_files
-    #
     |> Enum.each(fn cbr_file_path ->
       {:ok, %{entries: entries}} = CBRReader.read(cbr_file_path)
       refute Enum.empty?(entries)
