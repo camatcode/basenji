@@ -2,6 +2,8 @@ defmodule Basenji.Reader.CBZReader do
   @moduledoc false
   import Basenji.Reader
 
+  def get_magic_numbers, do: [%{offset: 0, magic: [0x50, 0x4B, 0x03, 0x04]}]
+
   # opts[:close] - will close the stream after reading
   def get_entries(cbz_file_path, opts \\ []) when is_bitstring(cbz_file_path) do
     with {:ok, unzip} <- open(cbz_file_path) do
@@ -46,7 +48,7 @@ defmodule Basenji.Reader.CBZReader do
     end
   end
 
-  def read(cbz_file_path) do
+  def read(cbz_file_path, _opts \\ []) do
     with {:ok, %{entries: file_entries, file: unzip}} <- get_entries(cbz_file_path) do
       file_entries =
         file_entries

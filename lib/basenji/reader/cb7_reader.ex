@@ -3,11 +3,12 @@ defmodule Basenji.Reader.CB7Reader do
 
   import Basenji.Reader
 
+  def get_magic_numbers, do: [%{offset: 0, magic: [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C]}]
+
   def get_entries(cbz_file_path, _opts \\ []) do
     with {:ok, output} <- exec("7z", ["l", "-ba", cbz_file_path]) do
       file_names =
         output
-        |> String.trim()
         |> String.split("\n")
         |> Enum.map(&String.slice(&1, 53..-1//1))
 
@@ -33,10 +34,7 @@ defmodule Basenji.Reader.CB7Reader do
     with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
       file_entries =
         file_entries
-        |> Enum.map(fn entry ->
-          entry
-          |> Map.put(:stream_fun, fn -> get_entry_stream!(cbz_file_path, entry) end)
-        end)
+        |> Enum.map(&Map.put(&1, :stream_fun, fn -> get_entry_stream!(cbz_file_path, &1) end))
 
       {:ok, %{entries: file_entries}}
     end

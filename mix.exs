@@ -118,8 +118,7 @@ defmodule Basenji.MixProject do
       # basenji deps
       {:zstream, "~> 0.6"},
       {:unzip, "~> 0.12"},
-      {:porcelain, "~> 2.0"},
-      {:ok, "~> 2.3"}
+      {:porcelain, "~> 2.0"}
     ]
   end
 

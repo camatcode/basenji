@@ -2,10 +2,11 @@ defmodule Basenji.Reader.CBRReader do
   @moduledoc false
   import Basenji.Reader
 
+  def get_magic_numbers, do: [%{offset: 0, magic: [0x52, 0x61, 0x72, 0x21, 0x1A, 0x07]}]
 
   def get_entries(cbz_file_path, _opts \\ []) do
     with {:ok, output} <- exec("unrar", ["lb", cbz_file_path]) do
-      file_names = String.trim(output) |> String.split("\n")
+      file_names = String.split(output, "\n")
 
       file_entries =
         file_names
