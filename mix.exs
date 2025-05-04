@@ -3,7 +3,7 @@ defmodule Basenji.MixProject do
 
   @source_url "https://github.com/camatcode/basenji"
   @version "0.9.0"
-  @doc_logo_location "assets/basenji-logo.png"
+  @doc_logo_location "assets/basenji-logo.svg"
 
   def project do
     [

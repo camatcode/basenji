@@ -1,20 +1,20 @@
-defmodule Basenji.Formats.CBRReaderTest do
+defmodule Basenji.Reader.CBTReaderTest do
   use ExUnit.Case
-  doctest Basenji.Formats.CBRReader
+  doctest Basenji.Reader.CBTReader
 
-  alias Basenji.Formats.CBRReader
+  alias Basenji.Reader.CBTReader
 
   test "get_entries" do
-    cbr_dir =
+    cbt_dir =
       File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cbr")
+      |> Path.join("test/support/data/basenji/formats/cbt")
 
-    cbr_files = Path.wildcard("#{cbr_dir}/**/*.cbr")
-    refute Enum.empty?(cbr_files)
+    cbt_files = Path.wildcard("#{cbt_dir}/**/*.cbt")
+    refute Enum.empty?(cbt_files)
 
-    cbr_files
-    |> Enum.each(fn cbr_path ->
-      {:ok, %{entries: entries}} = CBRReader.get_entries(cbr_path)
+    cbt_files
+    |> Enum.each(fn cbt_path ->
+      {:ok, %{entries: entries}} = CBTReader.get_entries(cbt_path)
       refute Enum.empty?(entries)
 
       entries
@@ -27,16 +27,17 @@ defmodule Basenji.Formats.CBRReaderTest do
   test "read" do
     tmp_dir = System.tmp_dir!() |> Path.join("cbr_read_test")
 
-    cbr_dir =
+    cbt_dir =
       File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cbr")
+      |> Path.join("test/support/data/basenji/formats/cbt")
 
-    cbr_files = Path.wildcard("#{cbr_dir}/**/*.cbr")
-    refute Enum.empty?(cbr_files)
+    cbt_files = Path.wildcard("#{cbt_dir}/**/*.cbt")
+    refute Enum.empty?(cbt_files)
 
-    cbr_files
-    |> Enum.each(fn cbr_file_path ->
-      {:ok, %{entries: entries}} = CBRReader.read(cbr_file_path)
+    cbt_files
+    #
+    |> Enum.each(fn cbt_file_path ->
+      {:ok, %{entries: entries}} = CBTReader.read(cbt_file_path)
       refute Enum.empty?(entries)
 
       [random_entry] = Enum.shuffle(entries) |> Enum.take(1)

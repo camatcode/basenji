@@ -1,11 +1,11 @@
-defmodule Basenji.Formats.CBZReaderTest do
+defmodule Basenji.Reader.CBZReaderTest do
   use ExUnit.Case
-  doctest Basenji.Formats.CBZReader
+  doctest Basenji.Reader.CBZReader
 
-  alias Basenji.Formats.CBZReader
+  alias Basenji.Reader.CBZReader
 
   test "get_entries/1" do
-    assert {:err, _} = CBZReader.get_entries("does-not-exist")
+    assert {:error, _} = CBZReader.get_entries("does-not-exist")
 
     cbz_dir =
       File.cwd!()
