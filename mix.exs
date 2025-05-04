@@ -45,7 +45,7 @@ defmodule Basenji.MixProject do
   def application do
     [
       mod: {Basenji.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :porcelain]
     ]
   end
 
