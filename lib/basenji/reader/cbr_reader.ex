@@ -3,6 +3,8 @@ defmodule Basenji.Reader.CBRReader do
 
   alias Porcelain.Result
 
+  @spec get_entries(cbz_file_path :: String.t(), _opts :: keyword()) ::
+          {:ok, %{entries: any()}} | {:error, any()}
   def get_entries(cbz_file_path, _opts \\ []) do
     with %Result{out: output, status: 0} <- Porcelain.exec("unrar", ["lb", cbz_file_path]) do
       names = String.split(output, "\n")

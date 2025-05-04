@@ -2,6 +2,8 @@ defmodule Basenji.Reader.CBZReader do
   @moduledoc false
 
   # opts[:close] - will close the stream after reading
+  @spec get_entries(cbz_file_path :: String.t(), _opts :: keyword()) ::
+          {:ok, %{entries: any(), file: any()}} | {:error, any()}
   def get_entries(cbz_file_path, opts \\ []) when is_bitstring(cbz_file_path) do
     with {:ok, unzip} <- open(cbz_file_path) do
       file_entries =
@@ -13,7 +15,7 @@ defmodule Basenji.Reader.CBZReader do
 
       if opts[:close] do
         close(unzip)
-        {:ok, %{entries: file_entries}}
+        {:ok, %{entries: file_entries, file: nil}}
       else
         {:ok, %{entries: file_entries, file: unzip}}
       end

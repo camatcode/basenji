@@ -1,11 +1,8 @@
 defmodule Basenji.Reader.CB7Reader do
-  @moduledoc false
-  @behaviour Basenji.Reader
-
-  require OK
-
   alias Porcelain.Result
 
+  @spec get_entries(cbz_file_path :: String.t(), _opts :: keyword()) ::
+          {:ok, %{entries: any()}} | {:error, any()}
   def get_entries(cbz_file_path, _opts \\ []) do
     with %Result{out: output, status: 0} <- Porcelain.exec("7z", ["l", "-ba", cbz_file_path]) do
       file_entries =

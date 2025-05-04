@@ -1,6 +1,8 @@
 defmodule Basenji.Reader.CBTReader do
   @moduledoc false
 
+  @spec get_entries(cbz_file_path :: String.t(), _opts :: keyword()) ::
+          {:ok, %{entries: any()}} | {:error, any()}
   def get_entries(cbz_file_path, _opts \\ []) do
     with {:ok, names} <- :erl_tar.table(cbz_file_path, [:compressed]) do
       file_entries =
