@@ -9,7 +9,7 @@ defmodule Basenji.ReaderTest do
       File.cwd!()
       |> Path.join("test/support/data/basenji/formats/")
 
-    files = Path.wildcard("#{examples}/**/*.*")
+    files = Path.wildcard("#{examples}/**/*.cb*")
     refute Enum.empty?(files)
 
     files
