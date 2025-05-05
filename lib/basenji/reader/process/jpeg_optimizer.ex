@@ -2,11 +2,16 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
   @moduledoc false
 
   import Basenji.Reader
-  # --size=1000 - only if size is > 1000
-  # cat Bobby-Make-Believe_1915__0.jpg | jpegoptim --stdin --stdout --size=1000 > optim.jpg
+
+  def optimize(jpeg_bytes, opts \\ [])
+
+  def optimize(<<0xFF, 0xD8, 0xFF, _::binary>> = jpeg_bytes, opts),
+    do: optimize_impl(jpeg_bytes, opts)
+
+  def optimize(not_jpeg_bytes, _) when is_binary(not_jpeg_bytes), do: {:ok, not_jpeg_bytes}
 
   # opts - target_size_kb - a size target you want to hit
-  def optimize_jpeg(bytes, opts \\ []) when is_binary(bytes) do
+  defp optimize_impl(bytes, opts) when is_binary(bytes) do
     opts = Keyword.merge([target_size_kb: min(byte_size(bytes) / 1000, 1000)], opts)
     cmd = "jpegoptim"
 

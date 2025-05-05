@@ -3,7 +3,12 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
 
   import Basenji.Reader
 
-  def optimize_png(bytes, _opts \\ []) when is_binary(bytes) do
+  def optimize(png_bytes, opts \\ [])
+
+  def optimize(
+        <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _rest::binary>> = png_bytes,
+        _opts
+      ) do
     cmd = "optipng"
 
     tmp_dir = System.tmp_dir!() |> Path.join("png_optimize")
@@ -11,7 +16,7 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
     path = Path.join(tmp_dir, "#{System.monotonic_time(:nanosecond)}.jpg")
 
     try do
-      :ok = File.write!(path, bytes)
+      :ok = File.write!(path, png_bytes)
 
       cmd_opts = ["-fix", "-quiet"] ++ [path]
 
@@ -22,4 +27,6 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
       File.rm(path)
     end
   end
+
+  def optimize(not_png_bytes, _) when is_binary(not_png_bytes), do: {:ok, not_png_bytes}
 end
