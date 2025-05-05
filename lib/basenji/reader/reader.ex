@@ -3,6 +3,18 @@ defmodule Basenji.Reader do
 
   alias Porcelain.Result
 
+  @readers [
+    Basenji.Reader.CBZReader,
+    Basenji.Reader.CBRReader,
+    Basenji.Reader.CB7Reader,
+    Basenji.Reader.CBTReader
+  ]
+
+  @optimizers [
+    Basenji.Reader.Process.JPEGOptimizer,
+    Basenji.Reader.Process.PNGOptimizer
+  ]
+
   def exec(cmd, args, opts \\ []) do
     Porcelain.exec(cmd, args, opts)
     |> case do
@@ -30,15 +42,10 @@ defmodule Basenji.Reader do
   def reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
 
   def read(file_path, opts \\ []) do
-    readers = [
-      Basenji.Reader.CBZReader,
-      Basenji.Reader.CBRReader,
-      Basenji.Reader.CB7Reader,
-      Basenji.Reader.CBTReader
-    ]
+    opts = Keyword.merge([optimize: false], opts)
 
     reader =
-      readers
+      @readers
       |> Enum.reduce_while(
         nil,
         fn reader, _acc ->
@@ -47,7 +54,8 @@ defmodule Basenji.Reader do
       )
 
     if reader do
-      reader.read(file_path, opts)
+      read_result = reader.read(file_path, opts)
+      if opts[:optimize], do: optimize_entries(read_result), else: read_result
     else
       {:error, "No Reader found for: #{file_path}. Unknown file type"}
     end
@@ -68,5 +76,30 @@ defmodule Basenji.Reader do
         if bytes == magic, do: {:halt, true}, else: {:cont, nil}
       end
     )
+  end
+
+  defp optimize_entries({:ok, result}) do
+    updated_entries =
+      Map.get(result, :entries)
+      |> Enum.map(fn entry ->
+        stream_fun = fn ->
+          create_resource(fn -> [optimize(entry.stream_fun.()) |> :binary.bin_to_list()] end)
+        end
+
+        Map.put(entry, :stream_fun, stream_fun)
+      end)
+
+    result = Map.put(result, :entries, updated_entries)
+
+    {:ok, result}
+  end
+
+  defp optimize_entries(other), do: other
+
+  defp optimize(bytes) do
+    @optimizers
+    |> Enum.reduce(bytes |> Enum.into([]), fn reader, bytes ->
+      reader.optimize!(bytes)
+    end)
   end
 end
