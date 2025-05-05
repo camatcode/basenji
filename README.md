@@ -45,7 +45,7 @@
 
 ### Features
 
-* ✅ Read CBZ, CBR, CBT and CB7 comic book formats
+* ✅ Supports CBZ, CBR, CBT and CB7 comic book formats
 * ✅ Automatically optimizes pages to reduce bloat
 * 🚧 Rest is in development
 
