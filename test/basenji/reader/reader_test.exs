@@ -5,6 +5,8 @@ defmodule Basenji.ReaderTest do
   alias Basenji.Reader
 
   test "read" do
+    tmp_dir = System.tmp_dir!() |> Path.join("reader_test")
+
     examples =
       File.cwd!()
       |> Path.join("test/support/data/basenji/formats/")
@@ -14,7 +16,25 @@ defmodule Basenji.ReaderTest do
 
     files
     |> Enum.each(fn file ->
-      assert {:ok, _entries} = Reader.read(file)
+      assert {:ok, entries} = Reader.read(file)
+      refute Enum.empty?(entries)
+
+      assert {:ok, %{entries: optimized_entries}} = Reader.read(file, optimize: true)
+      [random_entry] = Enum.shuffle(optimized_entries) |> Enum.take(1)
+
+      path = Path.join(tmp_dir, random_entry.file_name)
+      :ok = File.mkdir_p!(Path.dirname(path))
+      file = File.stream!(path)
+
+      random_entry.stream_fun.()
+      |> Enum.into(file)
+
+      File.close(file)
+
+      %{size: size} = File.stat!(path)
+
+      assert size != 0
+      :ok = File.rm!(path)
     end)
   end
 end
