@@ -61,6 +61,17 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Configure MIME types for comic book formats
+config :mime, :types, %{
+  "application/vnd.comicbook+zip" => ["cbz"],
+  "application/vnd.comicbook-rar" => ["cbr"],
+  "application/x-cb7" => ["cb7"],
+  "application/x-cbt" => ["cbt"]
+}
+
+# Comics library configuration
+config :basenji, :comics, library_path: System.get_env("COMICS_LIBRARY_PATH") || "comics"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

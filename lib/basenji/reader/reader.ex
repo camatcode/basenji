@@ -41,6 +41,9 @@ defmodule Basenji.Reader do
 
   def reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
 
+  # zSoU-Nerd.jpg
+  # zzzDQzzz.jpg
+
   def read(file_path, opts \\ []) do
     opts = Keyword.merge([optimize: false], opts)
 

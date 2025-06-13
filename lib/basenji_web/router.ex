@@ -10,14 +10,31 @@ defmodule BasenjiWeb.Router do
     plug :put_secure_browser_headers
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
+  pipeline :fullscreen do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, false
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
   end
 
   scope "/", BasenjiWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", HomeLive, :index
+    live "/library", ComicLibraryLive, :index
+    get "/thumbnail/:path", ThumbnailController, :show
+  end
+
+  scope "/", BasenjiWeb do
+    pipe_through :fullscreen
+
+    live "/reader", ComicReaderLive, :index
+  end
+
+  pipeline :api do
+    plug :accepts, ["json"]
   end
 
   # Other scopes may use custom stacks.
