@@ -9,8 +9,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
     :binary.list_to_bin(list) |> optimize(opts)
   end
 
-  def optimize(<<0xFF, 0xD8, 0xFF, _::binary>> = jpeg_bytes, opts),
-    do: optimize_impl(jpeg_bytes, opts)
+  def optimize(<<0xFF, 0xD8, 0xFF, _::binary>> = jpeg_bytes, opts), do: optimize_impl(jpeg_bytes, opts)
 
   def optimize(not_jpeg_bytes, _) when is_binary(not_jpeg_bytes), do: {:ok, not_jpeg_bytes}
 

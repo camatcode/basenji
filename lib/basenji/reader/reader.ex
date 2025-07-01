@@ -1,18 +1,24 @@
 defmodule Basenji.Reader do
   @moduledoc false
 
+  alias Basenji.Reader.CB7Reader
+  alias Basenji.Reader.CBRReader
+  alias Basenji.Reader.CBTReader
+  alias Basenji.Reader.CBZReader
+  alias Basenji.Reader.Process.JPEGOptimizer
+  alias Basenji.Reader.Process.PNGOptimizer
   alias Porcelain.Result
 
   @readers [
-    Basenji.Reader.CBZReader,
-    Basenji.Reader.CBRReader,
-    Basenji.Reader.CB7Reader,
-    Basenji.Reader.CBTReader
+    CBZReader,
+    CBRReader,
+    CB7Reader,
+    CBTReader
   ]
 
   @optimizers [
-    Basenji.Reader.Process.JPEGOptimizer,
-    Basenji.Reader.Process.PNGOptimizer
+    JPEGOptimizer,
+    PNGOptimizer
   ]
 
   def exec(cmd, args, opts \\ []) do
@@ -67,7 +73,7 @@ defmodule Basenji.Reader do
       nil,
       fn %{offset: offset, magic: magic}, _acc ->
         bytes =
-          File.stream!(file_path, [], offset + Enum.count(magic))
+          File.stream!(file_path, offset + Enum.count(magic), [])
           |> Enum.take(1)
           |> hd()
           |> :binary.bin_to_list()
@@ -98,7 +104,7 @@ defmodule Basenji.Reader do
 
   defp optimize(bytes) do
     @optimizers
-    |> Enum.reduce(bytes |> Enum.into([]), fn reader, bytes ->
+    |> Enum.reduce(bytes |> Enum.to_list(), fn reader, bytes ->
       reader.optimize!(bytes)
     end)
   end

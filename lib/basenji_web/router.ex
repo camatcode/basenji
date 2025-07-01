@@ -1,6 +1,8 @@
 defmodule BasenjiWeb.Router do
   use BasenjiWeb, :router
 
+  alias Plug.Swoosh.MailboxPreview
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -38,7 +40,7 @@ defmodule BasenjiWeb.Router do
       pipe_through :browser
 
       live_dashboard "/dashboard", metrics: BasenjiWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+      forward "/mailbox", MailboxPreview
     end
   end
 end

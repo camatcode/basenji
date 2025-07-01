@@ -9,10 +9,7 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
     :binary.list_to_bin(list) |> optimize(opts)
   end
 
-  def optimize(
-        <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _rest::binary>> = png_bytes,
-        _opts
-      ) do
+  def optimize(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _rest::binary>> = png_bytes, _opts) do
     cmd = "optipng"
 
     tmp_dir = System.tmp_dir!() |> Path.join("png_optimize")

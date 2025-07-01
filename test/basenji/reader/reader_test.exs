@@ -1,8 +1,9 @@
 defmodule Basenji.ReaderTest do
   use ExUnit.Case
-  doctest Basenji.Reader
 
   alias Basenji.Reader
+
+  doctest Basenji.Reader
 
   test "read" do
     tmp_dir = System.tmp_dir!() |> Path.join("reader_test")
