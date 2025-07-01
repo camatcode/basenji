@@ -4,6 +4,8 @@ defmodule Basenji.Comic do
 
   import Ecto.Changeset
 
+  @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3]
+
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "comics" do
     field(:title, :string)
@@ -12,6 +14,7 @@ defmodule Basenji.Comic do
     field(:resource_location, :string)
     field(:released_year, :integer)
     field(:page_count, :integer)
+    field(:format, Ecto.Enum, values: @formats)
 
     timestamps()
   end
@@ -24,7 +27,8 @@ defmodule Basenji.Comic do
       :description,
       :resource_location,
       :released_year,
-      :page_count
+      :page_count,
+      :format
     ])
     |> validate_required([:resource_location])
     |> validate_length(:title, max: 255, min: 3)
@@ -32,4 +36,6 @@ defmodule Basenji.Comic do
     |> validate_number(:released_year, greater_than: 0)
     |> validate_number(:page_count, greater_than: 0)
   end
+
+  def formats, do: @formats |> Keyword.keys()
 end

@@ -23,9 +23,11 @@ defmodule BasenjiWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", BasenjiWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", BasenjiWeb do
+    pipe_through :api
+
+    
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:basenji, :dev_routes) do

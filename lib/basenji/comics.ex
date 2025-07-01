@@ -4,7 +4,15 @@ defmodule Basenji.Comics do
   import Ecto.Query, warn: false
 
   alias Basenji.Comic
+  alias Basenji.Reader
   alias Basenji.Repo
+
+  def from_resource(location, attrs \\ %{}, opts \\ []) do
+    with {:ok, info} <- Reader.info(location) do
+      Map.merge(info, attrs)
+      |> create_comic(opts)
+    end
+  end
 
   def create_comic(attrs, opts \\ []) do
     opts = Keyword.merge([repo_opts: []], opts)
@@ -46,6 +54,40 @@ defmodule Basenji.Comics do
 
   def delete_comic(%Comic{id: _comic_id} = comic) do
     Repo.delete(comic)
+  end
+
+  def stream_pages(ref, opts \\ [])
+
+  def stream_pages(nil, _opts), do: {:error, :not_found}
+
+  def stream_pages(%Comic{resource_location: loc}, opts) do
+    opts = Keyword.merge([optimize: true], opts)
+    Reader.stream_pages(loc, opts)
+  end
+
+  def stream_pages(comic_id, opts) when is_bitstring(comic_id) do
+    get_comic(comic_id)
+    |> stream_pages(opts)
+  end
+
+  def get_page(comic, page_num, opts \\ [])
+
+  def get_page(nil, _, _), do: {:error, :not_found}
+
+  def get_page(%Comic{page_count: page_count}, page_num, _opts) when page_num < 0 or page_num > page_count,
+    do: {:error, :not_found}
+
+  def get_page(%Comic{resource_location: loc} = _comic, page_num, opts) do
+    opts = Keyword.merge([optimize: true], opts)
+
+    with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do
+      {:ok, Enum.at(entries, page_num - 1).stream_fun.()}
+    end
+  end
+
+  def get_page(comic_id, page_num, opts) when is_bitstring(comic_id) do
+    get_comic(comic_id)
+    |> get_page(page_num, opts)
   end
 
   defp reduce_comic_opts(query, opts) do

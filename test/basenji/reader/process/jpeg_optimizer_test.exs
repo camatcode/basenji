@@ -6,9 +6,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizerTest do
   doctest JPEGOptimizer
 
   test "optimize_jpeg" do
-    jpeg_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/jpeg")
+    jpeg_dir = Basenji.Application.get_comics_directory()
 
     jpeg_files = Path.wildcard("#{jpeg_dir}/**/*.jp*")
     refute Enum.empty?(jpeg_files)
@@ -24,9 +22,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizerTest do
       assert byte_size(optimized_bytes) <= orig_size
     end)
 
-    not_jpeg_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/png")
+    not_jpeg_dir = Basenji.Application.get_comics_directory()
 
     not_jpeg_files = Path.wildcard("#{not_jpeg_dir}/**/*.png")
     refute Enum.empty?(not_jpeg_files)

@@ -6,9 +6,7 @@ defmodule Basenji.Reader.CBTReaderTest do
   doctest CBTReader
 
   test "get_entries" do
-    cbt_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cbt")
+    cbt_dir = Basenji.Application.get_comics_directory()
 
     cbt_files = Path.wildcard("#{cbt_dir}/**/*.cbt")
     refute Enum.empty?(cbt_files)
@@ -28,9 +26,7 @@ defmodule Basenji.Reader.CBTReaderTest do
   test "read" do
     tmp_dir = System.tmp_dir!() |> Path.join("cbr_read_test")
 
-    cbt_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cbt")
+    cbt_dir = Basenji.Application.get_comics_directory()
 
     cbt_files = Path.wildcard("#{cbt_dir}/**/*.cbt")
     refute Enum.empty?(cbt_files)
