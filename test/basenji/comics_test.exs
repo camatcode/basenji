@@ -19,7 +19,7 @@ defmodule Basenji.ComicsTest do
       end)
     end
 
-    test "from_resource" do
+    test "from_resource/2" do
       Basenji.Comic.formats()
       |> Enum.each(fn format ->
         resource_dir = Basenji.Application.get_comics_directory()
