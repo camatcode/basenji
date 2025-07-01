@@ -20,6 +20,7 @@ defmodule BasenjiWeb.ConnCase do
   using do
     quote do
       use BasenjiWeb, :verified_routes
+
       import BasenjiWeb.ConnCase
       import Phoenix.ConnTest
       import Plug.Conn

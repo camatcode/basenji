@@ -19,6 +19,7 @@ defmodule Basenji.DataCase do
   using do
     quote do
       import Basenji.DataCase
+      import Basenji.Factory
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
