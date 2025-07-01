@@ -1,8 +1,9 @@
 defmodule Basenji.Reader.Process.PNGOptimizerTest do
   use ExUnit.Case
-  doctest Basenji.Reader.Process.PNGOptimizer
 
   alias Basenji.Reader.Process.PNGOptimizer
+
+  doctest PNGOptimizer
 
   test "optimize_png" do
     png_dir =

@@ -1,8 +1,9 @@
 defmodule Basenji.Reader.Process.JPEGOptimizerTest do
   use ExUnit.Case
-  doctest Basenji.Reader.Process.JPEGOptimizer
 
   alias Basenji.Reader.Process.JPEGOptimizer
+
+  doctest JPEGOptimizer
 
   test "optimize_jpeg" do
     jpeg_dir =

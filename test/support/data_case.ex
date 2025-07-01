@@ -18,12 +18,12 @@ defmodule Basenji.DataCase do
 
   using do
     quote do
-      alias Basenji.Repo
-
+      import Basenji.DataCase
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
-      import Basenji.DataCase
+
+      alias Basenji.Repo
     end
   end
 

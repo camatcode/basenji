@@ -1,8 +1,9 @@
 defmodule Basenji.Reader.CBRReaderTest do
   use ExUnit.Case
-  doctest Basenji.Reader.CBRReader
 
   alias Basenji.Reader.CBRReader
+
+  doctest CBRReader
 
   test "get_entries" do
     cbr_dir =

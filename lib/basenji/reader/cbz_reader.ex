@@ -61,9 +61,7 @@ defmodule Basenji.Reader.CBZReader do
     end
   end
 
-  def close(%Unzip{
-        zip: %Unzip.LocalFile{} = zip_file
-      }) do
+  def close(%Unzip{zip: %Unzip.LocalFile{} = zip_file}) do
     close(zip_file)
   end
 

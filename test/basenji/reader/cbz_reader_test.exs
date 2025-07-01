@@ -1,8 +1,9 @@
 defmodule Basenji.Reader.CBZReaderTest do
   use ExUnit.Case
-  doctest Basenji.Reader.CBZReader
 
   alias Basenji.Reader.CBZReader
+
+  doctest CBZReader
 
   test "get_entries/1" do
     assert {:error, _} = CBZReader.get_entries("does-not-exist")

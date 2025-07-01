@@ -19,15 +19,14 @@ defmodule BasenjiWeb.ConnCase do
 
   using do
     quote do
+      use BasenjiWeb, :verified_routes
+      import BasenjiWeb.ConnCase
+      import Phoenix.ConnTest
+      import Plug.Conn
       # The default endpoint for testing
       @endpoint BasenjiWeb.Endpoint
 
-      use BasenjiWeb, :verified_routes
-
       # Import conveniences for testing with connections
-      import Plug.Conn
-      import Phoenix.ConnTest
-      import BasenjiWeb.ConnCase
     end
   end
 
