@@ -21,6 +21,25 @@ defmodule Basenji.Reader do
     PNGOptimizer
   ]
 
+  def info(location, opts \\ []) do
+    reader = find_reader(location)
+
+    info =
+      if reader do
+        title = location |> Path.basename() |> Path.rootname()
+        {:ok, %{entries: entries}} = reader.read(location, opts)
+        %{format: reader.format(), resource_location: location, title: title, page_count: Enum.count(entries)}
+      else
+        {:error, :unreadable}
+      end
+
+    info
+    |> case do
+      {:error, e} -> {:error, e}
+      inf -> {:ok, inf}
+    end
+  end
+
   def exec(cmd, args, opts \\ []) do
     Porcelain.exec(cmd, args, opts)
     |> case do
@@ -50,20 +69,38 @@ defmodule Basenji.Reader do
   def read(file_path, opts \\ []) do
     opts = Keyword.merge([optimize: false], opts)
 
-    reader =
-      @readers
-      |> Enum.reduce_while(
-        nil,
-        fn reader, _acc ->
-          if matches_magic?(reader, file_path), do: {:halt, reader}, else: {:cont, nil}
-        end
-      )
+    reader = find_reader(file_path)
 
     if reader do
       read_result = reader.read(file_path, opts)
       if opts[:optimize], do: optimize_entries(read_result), else: read_result
     else
       {:error, "No Reader found for: #{file_path}. Unknown file type"}
+    end
+  end
+
+  defp find_reader(file_path) do
+    @readers
+    |> Enum.reduce_while(
+      nil,
+      fn reader, _acc ->
+        if matches_magic?(reader, file_path), do: {:halt, reader}, else: {:cont, nil}
+      end
+    )
+  end
+
+  def stream_pages(file_path, opts \\ []) do
+    opts = Keyword.merge([start_page: 1], opts)
+
+    with {:ok, %{entries: entries}} <- read(file_path, opts) do
+      stream =
+        opts[:start_page]..Enum.count(entries)
+        |> Stream.map(fn idx ->
+          at = idx - 1
+          Enum.at(entries, at).stream_fun.()
+        end)
+
+      {:ok, stream}
     end
   end
 

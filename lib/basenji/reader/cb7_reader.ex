@@ -3,6 +3,8 @@ defmodule Basenji.Reader.CB7Reader do
 
   import Basenji.Reader
 
+  def format, do: :cb7
+
   def get_magic_numbers, do: [%{offset: 0, magic: [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C]}]
 
   def get_entries(cbz_file_path, _opts \\ []) do

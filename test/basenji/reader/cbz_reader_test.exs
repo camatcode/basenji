@@ -8,9 +8,7 @@ defmodule Basenji.Reader.CBZReaderTest do
   test "get_entries/1" do
     assert {:error, _} = CBZReader.get_entries("does-not-exist")
 
-    cbz_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cbz")
+    cbz_dir = Basenji.Application.get_comics_directory()
 
     cbz_files = Path.wildcard("#{cbz_dir}/**/*.cbz")
 
@@ -34,9 +32,7 @@ defmodule Basenji.Reader.CBZReaderTest do
   test "read" do
     tmp_dir = System.tmp_dir!() |> Path.join("cbz_read_test")
 
-    cbz_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cbz")
+    cbz_dir = Basenji.Application.get_comics_directory()
 
     cbz_files = Path.wildcard("#{cbz_dir}/**/*.cbz")
     refute Enum.empty?(cbz_files)

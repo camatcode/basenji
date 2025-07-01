@@ -7,8 +7,8 @@ defmodule Basenji.Reader.CB7ReaderTest do
 
   test "get_entries" do
     cb7_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cb7")
+      Basenji.Application.get_comics_directory()
+      |> Path.join("/cb7")
 
     cb7_files = Path.wildcard("#{cb7_dir}/**/*.cb7")
     refute Enum.empty?(cb7_files)
@@ -28,9 +28,7 @@ defmodule Basenji.Reader.CB7ReaderTest do
   test "read" do
     tmp_dir = System.tmp_dir!() |> Path.join("cb7_read_test")
 
-    cb7_dir =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/cb7")
+    cb7_dir = Basenji.Application.get_comics_directory()
 
     cb7_files = Path.wildcard("#{cb7_dir}/**/*.cb7")
     refute Enum.empty?(cb7_files)

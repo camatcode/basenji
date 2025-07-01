@@ -25,6 +25,9 @@ config :basenji, BasenjiWeb.Endpoint,
   secret_key_base: "IV8/00d3IZSFHI0pUEn407oWHstUv8Vmnwjz0oDuDr2iPElYYSmA4UpVNXLFbfQr",
   server: false
 
+config :basenji,
+  comics_dir: "test/support/data/basenji/formats/"
+
 # Print only warnings and errors during test
 config :logger, level: :warning
 

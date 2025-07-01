@@ -10,6 +10,7 @@ defmodule Basenji.Repo.Migrations.AddComics do
       add :resource_location, :string
       add :released_year, :integer
       add :page_count, :integer
+      add :format, :integer
 
       timestamps(type: :utc_datetime)
     end

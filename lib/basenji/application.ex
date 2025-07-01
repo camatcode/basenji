@@ -33,4 +33,8 @@ defmodule Basenji.Application do
     BasenjiWeb.Endpoint.config_change(changed, removed)
     :ok
   end
+
+  def get_comics_directory do
+    Application.get_env(:basenji, :comics_dir, File.cwd!()) |> Path.expand()
+  end
 end

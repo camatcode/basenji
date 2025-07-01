@@ -5,12 +5,44 @@ defmodule Basenji.ReaderTest do
 
   doctest Basenji.Reader
 
+  test "info" do
+    examples = Basenji.Application.get_comics_directory()
+
+    files = Path.wildcard("#{examples}/**/*.cb*")
+    refute Enum.empty?(files)
+
+    files
+    |> Enum.each(fn file ->
+      {:ok, info} = Reader.info(file)
+      assert info.format
+      assert info.title
+      assert info.resource_location
+      assert info.page_count
+    end)
+  end
+
+  test "stream pages" do
+    examples = Basenji.Application.get_comics_directory()
+
+    files = Path.wildcard("#{examples}/**/*.cb*")
+    refute Enum.empty?(files)
+
+    files
+    |> Enum.each(fn file ->
+      {:ok, stream} = Reader.stream_pages(file)
+
+      stream
+      |> Enum.each(fn page ->
+        page_bytes = page |> Enum.to_list()
+        refute Enum.empty?(page_bytes)
+      end)
+    end)
+  end
+
   test "read" do
     tmp_dir = System.tmp_dir!() |> Path.join("reader_test")
 
-    examples =
-      File.cwd!()
-      |> Path.join("test/support/data/basenji/formats/")
+    examples = Basenji.Application.get_comics_directory()
 
     files = Path.wildcard("#{examples}/**/*.cb*")
     refute Enum.empty?(files)
