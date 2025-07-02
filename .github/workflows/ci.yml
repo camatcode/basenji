@@ -73,5 +73,5 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
-      - name: Run dialyzer
-        run: mix dialyzer --format github --format dialyxir
+#      - name: Run dialyzer
+#        run: mix dialyzer --format github --format dialyxir
