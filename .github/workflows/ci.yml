@@ -30,10 +30,10 @@ jobs:
         image: postgres
         ports:
           - 5432:5432
-      env:
-        POSTGRES_USER: postgres # The PostgreSQL user (useful to connect to the database)
-        POSTGRES_PASSWORD: postgres # The PostgreSQL password (useful to connect to the database)
-        POSTGRES_DB: basenji_dev # The PostgreSQL default database (automatically created at first launch)
+        env:
+          POSTGRES_USER: postgres # The PostgreSQL user (useful to connect to the database)
+          POSTGRES_PASSWORD: postgres # The PostgreSQL password (useful to connect to the database)
+          POSTGRES_DB: basenji_dev # The PostgreSQL default database (automatically created at first launch)
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
