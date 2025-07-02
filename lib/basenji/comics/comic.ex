@@ -26,7 +26,7 @@ defmodule Basenji.Comic do
     field(:page_count, :integer)
     field(:format, Ecto.Enum, values: @formats)
 
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   def changeset(comic, attrs) do

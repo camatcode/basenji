@@ -37,24 +37,6 @@ defmodule Basenji.ComicsTest do
       end)
     end
 
-    test "list_comics/1" do
-      expected_count = 100
-      asserted = insert_list(expected_count, :comic)
-      retrieved = Comics.list_comics()
-      assert Enum.count(retrieved) == expected_count
-
-      Enum.each(asserted, fn comic ->
-        assert [^comic] = Enum.filter(retrieved, &(&1.id == comic.id))
-        assert comic.title
-        assert comic.description
-        assert comic.author
-        assert comic.resource_location
-        assert comic.released_year > 0
-        assert comic.page_count > 0
-        assert comic.format
-      end)
-    end
-
     test "get_comic/2" do
       asserted = insert_list(100, :comic)
       refute Enum.empty?(asserted)
@@ -100,6 +82,94 @@ defmodule Basenji.ComicsTest do
         assert comic.id == deleted.id
         {:error, :not_found} = Comics.get_comic(deleted.id)
       end)
+    end
+  end
+
+  describe "search and sort" do
+    test "list_comics/1" do
+      expected_count = 100
+      asserted = insert_list(expected_count, :comic)
+      retrieved = Comics.list_comics()
+      assert Enum.count(retrieved) == expected_count
+
+      Enum.each(asserted, fn comic ->
+        assert [^comic] = Enum.filter(retrieved, &(&1.id == comic.id))
+        assert comic.title
+        assert comic.description
+        assert comic.author
+        assert comic.resource_location
+        assert comic.released_year > 0
+        assert comic.page_count > 0
+        assert comic.format
+      end)
+    end
+
+    test "offset/limit" do
+      insert_list(100, :comic)
+      comics = Comics.list_comics(limit: 10)
+      assert Enum.count(comics) == 10
+
+      0..9
+      |> Enum.reduce(nil, fn page_idx, offset ->
+        comics = Comics.list_comics(limit: 10, offset: offset)
+        assert Enum.count(comics) == 10
+        (page_idx + 1) * 10
+      end)
+
+      assert Enum.empty?(Comics.list_comics(limit: 10, offset: 200))
+    end
+
+    test "order_by" do
+      insert_list(10, :comic)
+      _order_by_id = Comics.list_comics()
+
+      [:title, :author, :description, :resource_location, :released_year, :page_count]
+      |> Enum.each(fn order ->
+        comics = Comics.list_comics(order_by: order)
+
+        manual_sort =
+          Enum.sort_by(
+            comics,
+            fn comic ->
+              m = comic |> Map.from_struct()
+              m[order]
+            end,
+            :asc
+          )
+
+        assert comics == manual_sort
+      end)
+    end
+
+    test "search" do
+      [comic | _] = insert_list(10, :comic)
+      [^comic] = Comics.list_comics(title: comic.title)
+      [^comic] = Comics.list_comics(author: comic.author)
+
+      results = Comics.list_comics(resource_location: comic.resource_location)
+      assert Enum.member?(results, comic)
+
+      results = Comics.list_comics(format: comic.format)
+      assert Enum.member?(results, comic)
+
+      results = Comics.list_comics(released_year: comic.released_year)
+      assert Enum.member?(results, comic)
+
+      # based on time
+      dt = NaiveDateTime.utc_now()
+      :timer.sleep(1000)
+      inserted = insert(:comic)
+      [^inserted] = Comics.list_comics(inserted_after: dt)
+      results = Comics.list_comics(inserted_before: dt)
+      refute Enum.member?(results, inserted)
+
+      updated_dt = NaiveDateTime.utc_now()
+      :timer.sleep(1000)
+      {:ok, updated} = Comics.update_comic(inserted, %{title: Faker.Lorem.sentence()})
+      [^updated] = Comics.list_comics(updated_after: updated_dt)
+
+      results = Comics.list_comics(updated_before: updated_dt)
+      refute Enum.member?(results, updated)
     end
   end
 
