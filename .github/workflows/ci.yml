@@ -36,6 +36,10 @@ jobs:
           POSTGRES_DB: basenji_dev # The PostgreSQL default database (automatically created at first launch)
 
     steps:
+
+      - name: Install unrar, optipng, jpegoptim
+        run: sudo apt install -y unrar optipng jpegoptim
+
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
