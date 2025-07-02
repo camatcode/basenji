@@ -25,6 +25,15 @@ defmodule BasenjiWeb.Router do
   # Other scopes may use custom stacks.
   scope "/api", BasenjiWeb do
     pipe_through :api
+
+    get "/comics", ComicsController, :list
+    get "/comics/:id", ComicsController, :get
+
+    post "/comics", ComicsController, :create
+    patch "/comics/:id", ComicsController, :update
+    delete "/comics/:id", ComicsController, :delete
+
+    get "/comics/:id/page/:page", ComicsController, :get_page
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

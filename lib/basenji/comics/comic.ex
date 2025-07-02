@@ -6,6 +6,16 @@ defmodule Basenji.Comic do
 
   @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3]
 
+  @attrs [
+    :title,
+    :author,
+    :description,
+    :resource_location,
+    :released_year,
+    :page_count,
+    :format
+  ]
+
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "comics" do
     field(:title, :string)
@@ -21,15 +31,18 @@ defmodule Basenji.Comic do
 
   def changeset(comic, attrs) do
     comic
-    |> cast(attrs, [
-      :title,
-      :author,
-      :description,
-      :resource_location,
-      :released_year,
-      :page_count,
-      :format
-    ])
+    |> cast(attrs, @attrs)
+    |> validate_changeset()
+  end
+
+  def update_changeset(comic, attrs) do
+    comic
+    |> cast(attrs, @attrs -- [:format, :page_count])
+    |> validate_changeset()
+  end
+
+  defp validate_changeset(changeset) do
+    changeset
     |> validate_required([:resource_location])
     |> validate_length(:title, max: 255, min: 3)
     |> validate_length(:author, max: 255, min: 3)
