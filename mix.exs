@@ -14,6 +14,14 @@ defmodule Basenji.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test
+      ],
 
       # Hex
       package: package(),
@@ -89,6 +97,7 @@ defmodule Basenji.MixProject do
       {:faker, "~> 0.18", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:quokka, "~> 2.7", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.18", only: [:test]},
       # phx deps
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
