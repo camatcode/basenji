@@ -31,6 +31,7 @@ defmodule BasenjiWeb.Router do
 
     post "/comics", ComicsController, :create
     patch "/comics/:id", ComicsController, :update
+    delete "/comics/:id", ComicsController, :delete
 
     get "/comics/:id/page/:page", ComicsController, :get_page
   end

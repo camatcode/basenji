@@ -61,15 +61,15 @@ defmodule BasenjiWeb.ComicsController do
     with {:ok, page_num} <- Utils.safe_to_int(page),
          {:ok, page_stream, mime} <- Comics.get_page(id, page_num) do
       binary = page_stream |> Enum.to_list()
-      {:ok, binary}
+      {:ok, binary, mime}
     end
     |> case do
-      {:ok, binary} ->
+      {:ok, binary, mime} ->
         length = Enum.count(binary)
 
         conn
         |> merge_resp_headers([{"access-control-allow-origin", "*"}])
-        |> merge_resp_headers([{"content-type", "image/jpeg"}])
+        |> merge_resp_headers([{"content-type", mime}])
         |> merge_resp_headers([{"content-length", "#{length}"}])
         |> merge_resp_headers([{"content-disposition", "attachment"}])
         |> send_resp(200, binary)

@@ -12,7 +12,7 @@ defmodule Basenji.Comics do
 
     Path.wildcard("#{path}/**/*.cb*")
     |> Enum.each(fn file ->
-      from_resource(file) |> IO.inspect()
+      from_resource(file)
     end)
   end
 

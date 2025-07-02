@@ -1,7 +1,6 @@
 defmodule BasenjiWeb.ComicsJSON do
   @moduledoc false
 
-
   def render("show.json", %{comic: comic}) do
     %{data: data(comic)}
   end
@@ -9,7 +8,6 @@ defmodule BasenjiWeb.ComicsJSON do
   def render("list.json", %{comics: comics}) do
     %{data: for(c <- comics, do: data(c))}
   end
-
 
   def data(comic) do
     %{
