@@ -36,6 +36,7 @@ defmodule Basenji.Comics do
 
     Comic
     |> reduce_opts(opts)
+    |> reduce_comic_opts(opts)
     |> Repo.all(opts[:repo_opts])
   end
 
@@ -123,6 +124,37 @@ defmodule Basenji.Comics do
       {_any, ""}, query ->
         query
 
+      {_any, nil}, query ->
+        query
+
+      {:search, search}, query ->
+        term = "%#{search}%"
+
+        where(query, [c], ilike(c.title, ^term))
+        |> or_where([c], ilike(c.author, ^term))
+        |> or_where([c], ilike(c.description, ^term))
+
+      {:title, search}, query ->
+        term = "%#{search}%"
+        where(query, [s], ilike(s.title, ^term))
+
+      {:author, search}, query ->
+        term = "%#{search}%"
+        where(query, [s], ilike(s.author, ^term))
+
+      {:description, search}, query ->
+        term = "%#{search}%"
+        where(query, [s], ilike(s.description, ^term))
+
+      {:resource_location, loc}, query ->
+        where(query, [c], c.resource_location == ^loc)
+
+      {:released_year, yr}, query ->
+        where(query, [c], c.released_year == ^yr)
+
+      {:format, fmt}, query ->
+        where(query, [c], c.format == ^fmt)
+
       _, query ->
         query
     end)
@@ -132,6 +164,37 @@ defmodule Basenji.Comics do
     Enum.reduce(opts, query, fn
       {_any, ""}, query ->
         query
+
+      {_any, nil}, query ->
+        query
+
+      {:inserted_before, dt}, query ->
+        where(query, [c], c.inserted_at < ^dt)
+
+      {:inserted_after, dt}, query ->
+        where(query, [c], c.inserted_at > ^dt)
+
+      {:updated_before, dt}, query ->
+        where(query, [c], c.updated_at < ^dt)
+
+      {:updated_after, dt}, query ->
+        where(query, [c], c.updated_at > ^dt)
+
+      {:offset, offset}, query ->
+        offset(query, [p], ^offset)
+
+      {:order_by, order}, query ->
+        order =
+          "#{order}"
+          |> String.to_existing_atom()
+
+        order_by(query, [], ^order)
+
+      {:preload, pre}, query ->
+        preload(query, [], ^pre)
+
+      {:limit, lim}, query ->
+        limit(query, [], ^lim)
 
       _, query ->
         query
