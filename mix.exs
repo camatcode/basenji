@@ -96,7 +96,7 @@ defmodule Basenji.MixProject do
       {:ex_machina, "~> 2.8", only: :test},
       {:faker, "~> 0.18", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:quokka, "~> 2.7", only: [:dev, :test], runtime: false},
+      {:quokka, "~> 2.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: [:test]},
       # phx deps
       {:phoenix, "~> 1.7.21"},
