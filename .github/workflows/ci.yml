@@ -28,15 +28,19 @@ jobs:
     steps:
       - name: 'Install unrar, optipng, jpegoptim'
         run: sudo apt install -y unrar optipng jpegoptim
+
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863
         with:
           egress-policy: audit
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
       - uses: erlef/setup-beam@75edbb82877ab10edeb12a99c3cf2f0909f3dc87
         with:
           otp-version: '${{matrix.pair.otp}}'
           elixir-version: '${{matrix.pair.elixir}}'
+
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: |
@@ -48,44 +52,26 @@ jobs:
             hashFiles('**/mix.lock') }}
           restore-keys: |
             ${{ runner.os }}-mix-${{matrix.pair.elixir}}-${{matrix.pair.otp}}-
+
       - name: Run mix deps.get
         run: mix deps.get --only test
+
       - name: Run mix format
         run: mix format --check-formatted
+
       - name: Run mix deps.compile
         run: mix deps.compile
+
       - name: Run mix compile
         run: mix compile --warnings-as-errors
+
       - name: Run credo
         run: mix credo --strict
+
       - name: Run tests
         run: mix coveralls.github
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-      - name: Restore PLT cache
-        id: plt_cache
-        uses: actions/cache/restore@v3
-        with: null
-        key: >
-          plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{
-          steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
-        restore-keys: >
-          plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{
-          steps.beam.outputs.elixir-version }}-
-        path: |
-          priv/plts
-      - name: Create PLTs
-        if: steps.plt_cache.outputs.cache-hit != 'true'
-        run: mix dialyzer --plt
-      - name: Save PLT cache
-        id: plt_cache_save
-        uses: actions/cache/save@v3
-        if: steps.plt_cache.outputs.cache-hit != 'true'
-        with: null
-        key: >
-          plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{
-          steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
-        path: |
-          priv/plts
+
       - name: Run dialyzer
         run: mix dialyzer --format github --format dialyxir
