@@ -141,7 +141,7 @@ defmodule Basenji.ComicsTest do
       end)
     end
 
-    test "search" do
+    test "search by" do
       [comic | _] = insert_list(10, :comic)
       [^comic] = Comics.list_comics(title: comic.title)
       [^comic] = Comics.list_comics(author: comic.author)
@@ -170,6 +170,34 @@ defmodule Basenji.ComicsTest do
 
       results = Comics.list_comics(updated_before: updated_dt)
       refute Enum.member?(results, updated)
+    end
+
+    test "generic search" do
+      a =
+        insert(:comic,
+          title: "Baz and Peace",
+          author: "Arthur Smith",
+          description: "A thrilling murder mystery"
+        )
+
+      b =
+        insert(:comic,
+          title: "Of foo and bar, or On The 25-fold Path",
+          author: "Jane Smith",
+          description: "Her best romance novel"
+        )
+
+      c =
+        insert(:comic,
+          title: "Potion-seller's guide to the galaxy",
+          author: "Sam Major",
+          description: "25 chapters of dense reading"
+        )
+
+      [^a, ^b] = Comics.list_comics(search: "and", order_by: :title)
+      [^b, ^c] = Comics.list_comics(search: "or", order_by: :title)
+      [^a, ^b] = Comics.list_comics(search: "it", order_by: :title)
+      [^b, ^c] = Comics.list_comics(search: "25", order_by: :title)
     end
   end
 
