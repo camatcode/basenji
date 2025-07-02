@@ -184,6 +184,10 @@ defmodule Basenji.Comics do
         offset(query, [p], ^offset)
 
       {:order_by, order}, query ->
+        order =
+          "#{order}"
+          |> String.to_existing_atom()
+
         order_by(query, [], ^order)
 
       {:preload, pre}, query ->

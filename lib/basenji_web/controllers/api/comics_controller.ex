@@ -15,8 +15,9 @@ defmodule BasenjiWeb.ComicsController do
     end
   end
 
-  def list(conn, _params) do
-    comics = Comics.list_comics()
+  def list(conn, params) do
+    params = Utils.atomize(params) |> Map.to_list()
+    comics = Comics.list_comics(params)
 
     render(conn, "list.json", %{comics: comics})
   end

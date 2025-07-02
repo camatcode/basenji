@@ -121,7 +121,6 @@ defmodule Basenji.ComicsTest do
 
     test "order_by" do
       insert_list(10, :comic)
-      _order_by_id = Comics.list_comics()
 
       [:title, :author, :description, :resource_location, :released_year, :page_count]
       |> Enum.each(fn order ->
@@ -142,18 +141,21 @@ defmodule Basenji.ComicsTest do
     end
 
     test "search by" do
-      [comic | _] = insert_list(10, :comic)
-      [^comic] = Comics.list_comics(title: comic.title)
-      [^comic] = Comics.list_comics(author: comic.author)
+      comics = insert_list(10, :comic)
 
-      results = Comics.list_comics(resource_location: comic.resource_location)
-      assert Enum.member?(results, comic)
+      Enum.each(comics, fn comic ->
+        [^comic] = Comics.list_comics(title: comic.title)
+        [^comic] = Comics.list_comics(author: comic.author)
 
-      results = Comics.list_comics(format: comic.format)
-      assert Enum.member?(results, comic)
+        results = Comics.list_comics(resource_location: comic.resource_location)
+        assert Enum.member?(results, comic)
 
-      results = Comics.list_comics(released_year: comic.released_year)
-      assert Enum.member?(results, comic)
+        results = Comics.list_comics(format: comic.format)
+        assert Enum.member?(results, comic)
+
+        results = Comics.list_comics(released_year: comic.released_year)
+        assert Enum.member?(results, comic)
+      end)
 
       # based on time
       dt = NaiveDateTime.utc_now()

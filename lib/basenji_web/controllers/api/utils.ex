@@ -1,6 +1,7 @@
 defmodule BasenjiWeb.API.Utils do
   @moduledoc false
 
+  import Ecto.Changeset
   import Phoenix.Controller
   import Plug.Conn
 
@@ -8,7 +9,14 @@ defmodule BasenjiWeb.API.Utils do
 
   def atomize(m) when is_map(m) do
     m
-    |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
+    |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
+  end
+
+  def validate_request_params(params, types, required_params) do
+    {%{}, types}
+    |> cast(params, Map.keys(types))
+    |> validate_required(required_params)
+    |> apply_action(:validate)
   end
 
   def safe_to_int(str) when is_bitstring(str) do
