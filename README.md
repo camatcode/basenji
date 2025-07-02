@@ -47,6 +47,7 @@
 
 * ✅ Supports CBZ, CBR, CBT and CB7 comic book formats
 * ✅ Automatically optimizes pages to improve read times and save disk space
+* ✅ JSON API
 * 🚧 Rest is in development
 
 ### Attributions
