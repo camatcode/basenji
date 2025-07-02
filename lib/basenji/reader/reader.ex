@@ -109,14 +109,18 @@ defmodule Basenji.Reader do
     |> Enum.reduce_while(
       nil,
       fn %{offset: offset, magic: magic}, _acc ->
-        bytes =
-          File.stream!(file_path, offset + Enum.count(magic), [])
-          |> Enum.take(1)
-          |> hd()
-          |> :binary.bin_to_list()
-          |> Enum.take(-1 * Enum.count(magic))
+        try do
+          bytes =
+            File.stream!(file_path, offset + Enum.count(magic), [])
+            |> Enum.take(1)
+            |> hd()
+            |> :binary.bin_to_list()
+            |> Enum.take(-1 * Enum.count(magic))
 
-        if bytes == magic, do: {:halt, true}, else: {:cont, nil}
+          if bytes == magic, do: {:halt, true}, else: {:cont, nil}
+        rescue
+          _ -> {:cont, nil}
+        end
       end
     )
   end

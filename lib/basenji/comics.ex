@@ -7,6 +7,15 @@ defmodule Basenji.Comics do
   alias Basenji.Reader
   alias Basenji.Repo
 
+  def load_from_directory(path) do
+    path = Path.expand(path)
+
+    Path.wildcard("#{path}/**/*.cb*")
+    |> Enum.each(fn file ->
+      from_resource(file) |> IO.inspect()
+    end)
+  end
+
   def from_resource(location, attrs \\ %{}, opts \\ []) do
     with {:ok, info} <- Reader.info(location) do
       Map.merge(info, attrs)
@@ -37,12 +46,22 @@ defmodule Basenji.Comics do
     |> reduce_opts(opts)
     |> reduce_comic_opts(opts)
     |> Repo.one(opts[:repo_opts])
+    |> case do
+      nil -> {:error, :not_found}
+      result -> {:ok, result}
+    end
   end
 
   def update_comic(%Comic{} = comic, attrs) do
     comic
-    |> Comic.changeset(attrs)
+    |> Comic.update_changeset(attrs)
     |> Repo.update()
+  end
+
+  def update_comic(id, attrs) when is_bitstring(id) do
+    with {:ok, comic} <- get_comic(id) do
+      update_comic(comic, attrs)
+    end
   end
 
   def delete_comic(nil), do: nil
@@ -66,8 +85,9 @@ defmodule Basenji.Comics do
   end
 
   def stream_pages(comic_id, opts) when is_bitstring(comic_id) do
-    get_comic(comic_id)
-    |> stream_pages(opts)
+    with {:ok, comic} <- get_comic(comic_id) do
+      stream_pages(comic, opts)
+    end
   end
 
   def get_page(comic, page_num, opts \\ [])
@@ -81,13 +101,21 @@ defmodule Basenji.Comics do
     opts = Keyword.merge([optimize: true], opts)
 
     with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do
-      {:ok, Enum.at(entries, page_num - 1).stream_fun.()}
+      entry = Enum.at(entries, page_num - 1)
+
+      ext =
+        Map.get(entry, :file_name)
+        |> Path.extname()
+        |> String.replace(".", "")
+
+      {:ok, Enum.at(entries, page_num - 1).stream_fun.(), "image/#{ext}"}
     end
   end
 
   def get_page(comic_id, page_num, opts) when is_bitstring(comic_id) do
-    get_comic(comic_id)
-    |> get_page(page_num, opts)
+    with {:ok, comic} <- get_comic(comic_id) do
+      get_page(comic, page_num, opts)
+    end
   end
 
   defp reduce_comic_opts(query, opts) do
