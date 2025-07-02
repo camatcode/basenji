@@ -21,6 +21,6 @@
   },
   "skip_files": [
     "test/support/factories/",
-    "test/support/factory.ex",
+    "test/support/factory.ex"
   ]
 }
