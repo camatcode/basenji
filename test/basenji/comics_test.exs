@@ -60,7 +60,7 @@ defmodule Basenji.ComicsTest do
       refute Enum.empty?(asserted)
 
       Enum.each(asserted, fn comic ->
-        assert comic == Comics.get_comic(comic.id)
+        assert {:ok, ^comic} = Comics.get_comic(comic.id)
       end)
     end
 
@@ -84,7 +84,8 @@ defmodule Basenji.ComicsTest do
         assert updated.description == updated_attrs.description
         assert updated.resource_location == updated_attrs.resource_location
         assert updated.released_year == updated_attrs.released_year
-        assert updated.page_count == updated_attrs.page_count
+        # not changed
+        assert updated.page_count == comic.page_count
       end)
     end
 
@@ -97,7 +98,7 @@ defmodule Basenji.ComicsTest do
         ref = Enum.random([comic, comic.id])
         {:ok, deleted} = Comics.delete_comic(ref)
         assert comic.id == deleted.id
-        refute Comics.get_comic(deleted.id)
+        {:error, :not_found} = Comics.get_comic(deleted.id)
       end)
     end
   end
@@ -108,7 +109,8 @@ defmodule Basenji.ComicsTest do
     1..comic.page_count
     |> Enum.each(fn page ->
       ref = Enum.random([comic, comic.id])
-      {:ok, stream} = Comics.get_page(ref, page)
+      {:ok, stream, mime} = Comics.get_page(ref, page)
+      assert mime == "image/jpg"
       bin_list = stream |> Enum.to_list()
       refute Enum.empty?(bin_list)
     end)
