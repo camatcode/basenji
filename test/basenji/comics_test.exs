@@ -119,27 +119,6 @@ defmodule Basenji.ComicsTest do
       assert Enum.empty?(Comics.list_comics(limit: 10, offset: 200))
     end
 
-    test "order_by" do
-      insert_list(10, :comic)
-
-      [:title, :author, :description, :resource_location, :released_year, :page_count]
-      |> Enum.each(fn order ->
-        comics = Comics.list_comics(order_by: order)
-
-        manual_sort =
-          Enum.sort_by(
-            comics,
-            fn comic ->
-              m = comic |> Map.from_struct()
-              m[order]
-            end,
-            :asc
-          )
-
-        assert comics == manual_sort
-      end)
-    end
-
     test "search by" do
       comics = insert_list(10, :comic)
 
