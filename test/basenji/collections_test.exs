@@ -2,10 +2,28 @@ defmodule Basenji.CollectionsTest do
   use Basenji.DataCase
 
   alias Basenji.Collections
+  alias Basenji.Comic
 
   @moduletag :capture_log
 
   doctest Collections
+
+  test "from_directory" do
+    resource_dir = Basenji.Application.get_comics_directory()
+
+    Comic.formats()
+    |> Enum.each(fn format ->
+      dirs = Path.wildcard("#{resource_dir}/**/#{format}")
+      refute Enum.empty?(dirs)
+
+      Enum.each(dirs, fn dir ->
+        title = "#{format}_#{System.monotonic_time()}"
+        description = Faker.Lorem.paragraph(2)
+        {:ok, collection} = Collections.from_directory(%{title: title, description: description}, dir)
+        assert valid_collection?(collection)
+      end)
+    end)
+  end
 
   test "create" do
     attrs = %{title: Faker.Lorem.sentence(), description: Faker.Lorem.paragraph(2)}

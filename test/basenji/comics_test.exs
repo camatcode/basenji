@@ -20,10 +20,9 @@ defmodule Basenji.ComicsTest do
     end
 
     test "from_resource/2" do
+      resource_dir = Basenji.Application.get_comics_directory()
       Basenji.Comic.formats()
       |> Enum.each(fn format ->
-        resource_dir = Basenji.Application.get_comics_directory()
-
         files = Path.wildcard("#{resource_dir}/**/*.#{format}")
         refute Enum.empty?(files)
 
