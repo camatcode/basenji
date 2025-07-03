@@ -8,23 +8,6 @@ defmodule Basenji.CollectionsTest do
 
   doctest Collections
 
-  test "from_directory" do
-    resource_dir = Basenji.Application.get_comics_directory()
-
-    Comic.formats()
-    |> Enum.each(fn format ->
-      dirs = Path.wildcard("#{resource_dir}/**/#{format}")
-      refute Enum.empty?(dirs)
-
-      Enum.each(dirs, fn dir ->
-        title = "#{format}_#{System.monotonic_time()}"
-        description = Faker.Lorem.paragraph(2)
-        {:ok, collection} = Collections.from_directory(%{title: title, description: description}, dir)
-        assert valid_collection?(collection)
-      end)
-    end)
-  end
-
   test "create" do
     attrs = %{title: Faker.Lorem.sentence(), description: Faker.Lorem.paragraph(2)}
 
@@ -39,6 +22,23 @@ defmodule Basenji.CollectionsTest do
       {:ok, coll_comic} = Collections.add_to_collection(collection, comic)
       assert coll_comic.comic_id == comic.id
       assert coll_comic.collection_id == collection.id
+    end)
+  end
+
+  test "from_directory" do
+    resource_dir = Basenji.Application.get_comics_directory()
+
+    Comic.formats()
+    |> Enum.each(fn format ->
+      dirs = Path.wildcard("#{resource_dir}/**/#{format}")
+      refute Enum.empty?(dirs)
+
+      Enum.each(dirs, fn dir ->
+        title = "#{format}_#{System.monotonic_time()}"
+        description = Faker.Lorem.paragraph(2)
+        {:ok, collection} = Collections.from_directory(%{title: title, description: description}, dir)
+        assert valid_collection?(collection)
+      end)
     end)
   end
 

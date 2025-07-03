@@ -127,6 +127,21 @@ defmodule Basenji.Collections do
       {_any, nil}, query ->
         query
 
+      {:search, search}, query ->
+        term = "%#{search}%"
+
+        where(query, [c], ilike(c.title, ^term))
+        |> or_where([c], ilike(c.author, ^term))
+        |> or_where([c], ilike(c.description, ^term))
+
+      {:title, search}, query ->
+        term = "%#{search}%"
+        where(query, [s], ilike(s.title, ^term))
+
+      {:description, search}, query ->
+        term = "%#{search}%"
+        where(query, [s], ilike(s.description, ^term))
+
       _, query ->
         query
     end)
