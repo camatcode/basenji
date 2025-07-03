@@ -40,7 +40,7 @@ defmodule Basenji.Collection do
   end
 
   defp validate_not_self_parent(changeset) do
-    if get_field(changeset, :id) == get_field(changeset, :parent_id) do
+    if get_field(changeset, :id) && get_field(changeset, :id) == get_field(changeset, :parent_id) do
       add_error(changeset, :parent_id, "cannot be their own parent")
     else
       changeset
