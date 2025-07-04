@@ -42,7 +42,6 @@ defmodule Basenji.Collections do
     opts = Keyword.merge([repo_opts: []], opts)
 
     Collection
-    |> reduce_opts(opts)
     |> reduce_collection_opts(opts)
     |> Repo.all(opts[:repo_opts])
   end
@@ -51,7 +50,6 @@ defmodule Basenji.Collections do
     opts = Keyword.merge([repo_opts: []], opts)
 
     from(c in Collection, where: c.id == ^id)
-    |> reduce_opts(opts)
     |> reduce_collection_opts(opts)
     |> Repo.one(opts[:repo_opts])
     |> case do
@@ -120,12 +118,31 @@ defmodule Basenji.Collections do
   end
 
   defp reduce_collection_opts(query, opts) do
+    query = reduce_opts(query, opts)
+
     Enum.reduce(opts, query, fn
       {_any, ""}, query ->
         query
 
       {_any, nil}, query ->
         query
+
+      {:search, search}, query ->
+        term = "%#{search}%"
+
+        where(query, [c], ilike(c.title, ^term))
+        |> or_where([c], ilike(c.description, ^term))
+
+      {:title, search}, query ->
+        term = "%#{search}%"
+        where(query, [c], ilike(c.title, ^term))
+
+      {:description, search}, query ->
+        term = "%#{search}%"
+        where(query, [c], ilike(c.description, ^term))
+
+      {:parent_id, p_id}, query ->
+        where(query, [c], c.parent_id == ^p_id)
 
       _, query ->
         query
