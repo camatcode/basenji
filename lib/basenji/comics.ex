@@ -27,7 +27,6 @@ defmodule Basenji.Comics do
     opts = Keyword.merge([repo_opts: []], opts)
 
     Comic
-    |> reduce_opts(opts)
     |> reduce_comic_opts(opts)
     |> Repo.all(opts[:repo_opts])
   end
@@ -36,7 +35,6 @@ defmodule Basenji.Comics do
     opts = Keyword.merge([repo_opts: []], opts)
 
     from(c in Comic, where: c.id == ^id)
-    |> reduce_opts(opts)
     |> reduce_comic_opts(opts)
     |> Repo.one(opts[:repo_opts])
     |> case do
@@ -112,6 +110,8 @@ defmodule Basenji.Comics do
   end
 
   defp reduce_comic_opts(query, opts) do
+    query = reduce_opts(query, opts)
+
     Enum.reduce(opts, query, fn
       {_any, ""}, query ->
         query

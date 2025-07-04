@@ -4,13 +4,14 @@ defmodule Basenji.Factory.CollectionFactory do
   defmacro __using__(_opts) do
     quote do
       def collection_factory(attrs) do
-        parent_fn = fn ->
-          if Enum.random([true, false]) do
-            parent = insert(:collection)
-            parent_comics = insert_list(Enum.random(1..10), :collection_comic, collection_id: parent.id)
-            parent
+        parent_fn =
+          fn ->
+            if !Map.has_key?(attrs, :parent) && Enum.random([true, false]) do
+              parent = insert(:collection)
+              parent_comics = insert_list(Enum.random(1..10), :collection_comic, collection_id: parent.id)
+              parent
+            end
           end
-        end
 
         %Basenji.Collection{
           title: Faker.Lorem.sentence(),

@@ -18,7 +18,7 @@ defmodule Basenji.Collection do
     field(:description, :string)
 
     has_many(:collection_comics, CollectionComic)
-    many_to_many(:comics, Comic, join_through: "collection_comics", join_keys: [comic_id: :id, collection_id: :id])
+    many_to_many(:comics, Comic, join_through: "collection_comics", join_keys: [collection_id: :id, comic_id: :id])
 
     belongs_to(:parent, Collection, foreign_key: :parent_id, type: Ecto.UUID)
 
