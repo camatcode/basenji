@@ -163,7 +163,21 @@ defmodule Basenji.CollectionsTest do
     end
 
     test "generic search" do
-      # TODO
+      %{id: a} = insert(:collection, title: "Baz and Peace", description: "Thrilling murder mystery comics", parent: nil)
+
+      %{id: b} =
+        insert(:collection, title: "Of foo and bar, or On The 25-fold Path", description: "Romance novels", parent: nil)
+
+      %{id: c} =
+        insert(:collection,
+          title: "Potion-seller's guide to the galaxy",
+          description: "25 comics, pretty dense",
+          parent: nil
+        )
+
+      [%{id: ^a}, %{id: ^b}] = Collections.list_collections(search: "and", order_by: :title)
+      [%{id: ^b}, %{id: ^c}] = Collections.list_collections(search: "the", order_by: :title)
+      [%{id: ^a}, %{id: ^c}] = Collections.list_collections(search: "comics", order_by: :title)
     end
   end
 
