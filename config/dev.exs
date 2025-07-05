@@ -16,6 +16,9 @@ config :basenji, Basenji.Repo,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
 
+config :basenji,
+       comics_dir: "test/support/data/basenji/formats/"
+
 config :basenji, BasenjiWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
