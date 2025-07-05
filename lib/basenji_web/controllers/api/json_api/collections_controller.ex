@@ -15,13 +15,13 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
 
   def create(conn, params) do
     # validate params!
-   # attrs = params["data"]["attributes"] |> Utils.atomize()
+    # attrs = params["data"]["attributes"] |> Utils.atomize()
 
-#    Comics.from_resource(params["data"]["attributes"]["resource_location"], attrs)
-#    |> case do
-#         {:ok, comic} -> render(conn, "create.json", %{data: comic})
-#         error -> Utils.bad_request_handler(conn, error)
-#       end
+    #    Comics.from_resource(params["data"]["attributes"]["resource_location"], attrs)
+    #    |> case do
+    #         {:ok, comic} -> render(conn, "create.json", %{data: comic})
+    #         error -> Utils.bad_request_handler(conn, error)
+    #       end
   end
 
   def show(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, params) do
