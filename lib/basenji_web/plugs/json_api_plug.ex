@@ -9,6 +9,8 @@ defmodule BasenjiWeb.Plugs.JSONAPIPlug do
   def call(conn, opts) do
     JSONAPIPlug.Plug.call(conn, JSONAPIPlug.Plug.init(opts))
   rescue
+    # handles a bug in json_api_plug where they mistakenly use :unsupported_content_type
+    # instead of :unsupported_media_type
     e in FunctionClauseError ->
       if e.module == Status and e.function == :code and e.arity == 1 and
            String.contains?(Exception.message(e), "no function clause matching in Plug.Conn.Status.code/1") do

@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.ComicsController do
+defmodule BasenjiWeb.JSONAPI.ComicsController do
   @moduledoc false
   use BasenjiWeb, :controller
 
@@ -24,7 +24,7 @@ defmodule BasenjiWeb.ComicsController do
     end
   end
 
-  def show(%{private: %{jsonapi_plug: %JSONAPIPlug{} = jsonapi_plug}} = conn, params) do
+  def show(%{private: %{jsonapi_plug: %{} = jsonapi_plug}} = conn, params) do
     Comics.get_comic(params["id"], Utils.to_opts(jsonapi_plug))
     |> case do
       {:ok, comic} ->

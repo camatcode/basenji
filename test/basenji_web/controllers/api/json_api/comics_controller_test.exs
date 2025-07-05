@@ -1,8 +1,8 @@
-defmodule BasenjiWeb.ComicsControllerTest do
+defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
   use BasenjiWeb.ConnCase
 
   alias Basenji.Comics
-  alias BasenjiWeb.ComicsController
+  alias BasenjiWeb.JSONAPI.ComicsController
 
   @moduletag :capture_log
 
@@ -23,7 +23,7 @@ defmodule BasenjiWeb.ComicsControllerTest do
 
     conn =
       conn
-      # |> put_req_header("content-type", "application/vnd.api+json")
+      |> put_req_header("content-type", "application/vnd.api+json")
       |> post(~p"/api/comics", %{"data" => %{"attributes" => comic, "type" => "comic"}})
 
     assert %{"data" => comic} = json_response(conn, 200)
