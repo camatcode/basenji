@@ -16,18 +16,26 @@ defmodule BasenjiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :json_api do
+    plug :accepts, ["json", "json_api"]
+  end
+
   scope "/", BasenjiWeb do
     pipe_through :browser
 
     live "/", HomeLive, :index
   end
 
-  # Other scopes may use custom stacks.
   scope "/api", BasenjiWeb do
     pipe_through :api
+    get "/comics/:id/page/:page", ComicsController, :get_page
+  end
+
+  # JSON:API
+  scope "/api/json", BasenjiWeb do
+    pipe_through :json_api
 
     resources "/comics", JSONAPI.ComicsController, only: [:index, :create, :show, :update, :delete]
-    get "/comics/:id/page/:page", JSONAPI.ComicsController, :get_page
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
