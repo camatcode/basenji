@@ -98,6 +98,8 @@ defmodule Basenji.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:quokka, "~> 2.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: [:test]},
+      # api deps
+      {:jsonapi_plug, "~> 2.0"},
       # phx deps
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
@@ -120,8 +122,7 @@ defmodule Basenji.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-
-      # basenji deps
+      # reader deps
       {:zstream, "~> 0.6"},
       {:unzip, "~> 0.12"},
       {:porcelain, "~> 2.0"}

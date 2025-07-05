@@ -44,6 +44,14 @@ defmodule Basenji.ComicsTest do
       Enum.each(asserted, fn comic ->
         assert {:ok, ^comic} = Comics.get_comic(comic.id)
       end)
+
+      # check collection
+      collection = insert(:collection)
+      [comic | _] = asserted
+      {:ok, %{collection_id: collection_id}} = Basenji.Collections.add_to_collection(collection, comic)
+
+      {:ok, %{member_collections: [%{id: ^collection_id}]}} =
+        Comics.get_comic(comic.id, preload: [:member_collections])
     end
 
     test "update_comic/2" do

@@ -3,44 +3,62 @@ defmodule Basenji.ContextUtils do
 
   import Ecto.Query, warn: false
 
+  defp safe_to_existing_atom(thing) do
+    String.to_existing_atom(thing)
+  rescue
+    _ -> nil
+  end
+
+  defp expand_search_opts(opts) do
+    if is_map(opts[:search]) do
+      expanded = Keyword.new(opts[:search], fn {k, v} -> {safe_to_existing_atom(k), v} end)
+
+      Keyword.merge(expanded, opts)
+      |> Keyword.delete(:search)
+    else
+      opts
+    end
+  end
+
   def reduce_opts(query, opts) do
-    Enum.reduce(opts, query, fn
-      {_any, ""}, query ->
-        query
+    opts = expand_search_opts(opts)
 
-      {_any, nil}, query ->
-        query
+    q =
+      Enum.reduce(opts, query, fn
+        {_any, ""}, query ->
+          query
 
-      {:inserted_before, dt}, query ->
-        where(query, [c], c.inserted_at < ^dt)
+        {_any, nil}, query ->
+          query
 
-      {:inserted_after, dt}, query ->
-        where(query, [c], c.inserted_at > ^dt)
+        {:inserted_before, dt}, query ->
+          where(query, [c], c.inserted_at < ^dt)
 
-      {:updated_before, dt}, query ->
-        where(query, [c], c.updated_at < ^dt)
+        {:inserted_after, dt}, query ->
+          where(query, [c], c.inserted_at > ^dt)
 
-      {:updated_after, dt}, query ->
-        where(query, [c], c.updated_at > ^dt)
+        {:updated_before, dt}, query ->
+          where(query, [c], c.updated_at < ^dt)
 
-      {:offset, offset}, query ->
-        offset(query, [p], ^offset)
+        {:updated_after, dt}, query ->
+          where(query, [c], c.updated_at > ^dt)
 
-      {:order_by, order}, query ->
-        order =
-          "#{order}"
-          |> String.to_existing_atom()
+        {:offset, offset}, query ->
+          offset(query, [p], ^offset)
 
-        order_by(query, [], ^order)
+        {:order_by, order}, query ->
+          order_by(query, [], ^order)
 
-      {:preload, pre}, query ->
-        preload(query, [], ^pre)
+        {:preload, pre}, query ->
+          preload(query, [], ^pre)
 
-      {:limit, lim}, query ->
-        limit(query, [], ^lim)
+        {:limit, lim}, query ->
+          limit(query, [], ^lim)
 
-      _, query ->
-        query
-    end)
+        _, query ->
+          query
+      end)
+
+    {q, opts}
   end
 end

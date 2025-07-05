@@ -4,6 +4,8 @@ defmodule Basenji.Comic do
 
   import Ecto.Changeset
 
+  alias Basenji.Collection
+
   @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3]
 
   @attrs [
@@ -16,6 +18,14 @@ defmodule Basenji.Comic do
     :format
   ]
 
+  @derive {
+    JSONAPIPlug.Resource,
+    type: "comic",
+    attributes: @attrs ++ [:updated_at, :inserted_at],
+    relationships: [
+      member_collections: [many: true, resource: Basenji.Collection]
+    ]
+  }
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "comics" do
     field(:title, :string)
@@ -25,6 +35,11 @@ defmodule Basenji.Comic do
     field(:released_year, :integer)
     field(:page_count, :integer)
     field(:format, Ecto.Enum, values: @formats)
+
+    many_to_many(:member_collections, Collection,
+      join_through: "collection_comics",
+      join_keys: [comic_id: :id, collection_id: :id]
+    )
 
     timestamps(type: :utc_datetime)
   end

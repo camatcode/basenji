@@ -109,6 +109,12 @@ defmodule BasenjiWeb do
     end
   end
 
+  def json_api do
+    quote do
+      use JSONAPIPlug.Phoenix.Component
+    end
+  end
+
   @doc """
   When used, dispatch to the appropriate controller/live_view/etc.
   """
