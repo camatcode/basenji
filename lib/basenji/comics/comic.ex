@@ -26,6 +26,7 @@ defmodule Basenji.Comic do
       member_collections: [many: true, resource: Basenji.Collection]
     ]
   }
+
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "comics" do
     field(:title, :string)

@@ -32,10 +32,11 @@ defmodule BasenjiWeb.Router do
   end
 
   # JSON:API
-  scope "/api/json", BasenjiWeb do
+  scope "/api/json", BasenjiWeb.JSONAPI do
     pipe_through :json_api
 
-    resources "/comics", JSONAPI.ComicsController, only: [:index, :create, :show, :update, :delete]
+    resources "/comics", ComicsController, only: [:index, :create, :show, :update, :delete]
+    resources "/collections", CollectionsController, only: [:index, :show]
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

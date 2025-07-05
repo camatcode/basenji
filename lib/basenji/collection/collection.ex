@@ -15,8 +15,10 @@ defmodule Basenji.Collection do
   @attrs [
     :title,
     :description,
-    :parent_id
+    :parent_id,
+    :resource_locaiton
   ]
+
   @derive {
     JSONAPIPlug.Resource,
     type: "collection",
