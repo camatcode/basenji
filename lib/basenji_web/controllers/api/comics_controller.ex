@@ -4,8 +4,9 @@ defmodule BasenjiWeb.ComicsController do
 
   alias Basenji.Comics
   alias BasenjiWeb.API.Utils
+  alias BasenjiWeb.Plugs.JSONAPIPlug
 
-  plug JSONAPIPlug.Plug, api: BasenjiWeb.API, path: "comics", resource: Basenji.Comic
+  plug JSONAPIPlug, api: BasenjiWeb.API, path: "comics", resource: Basenji.Comic
 
   def index(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, _params) do
     comics = Comics.list_comics(Utils.to_opts(jsonapi_plug))

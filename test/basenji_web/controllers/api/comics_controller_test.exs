@@ -23,7 +23,7 @@ defmodule BasenjiWeb.ComicsControllerTest do
 
     conn =
       conn
-      |> put_req_header("content-type", "application/vnd.api+json")
+      # |> put_req_header("content-type", "application/vnd.api+json")
       |> post(~p"/api/comics", %{"data" => %{"attributes" => comic, "type" => "comic"}})
 
     assert %{"data" => comic} = json_response(conn, 200)
