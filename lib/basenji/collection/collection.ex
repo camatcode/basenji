@@ -16,7 +16,7 @@ defmodule Basenji.Collection do
     :title,
     :description,
     :parent_id,
-    :resource_locaiton
+    :resource_location
   ]
 
   @derive {
@@ -32,6 +32,7 @@ defmodule Basenji.Collection do
   schema "collections" do
     field(:title, :string)
     field(:description, :string)
+    field(:resource_location, :string)
 
     has_many(:collection_comics, CollectionComic)
     many_to_many(:comics, Comic, join_through: "collection_comics", join_keys: [collection_id: :id, comic_id: :id])
