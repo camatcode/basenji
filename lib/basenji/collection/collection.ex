@@ -12,6 +12,20 @@ defmodule Basenji.Collection do
 
   require Logger
 
+  @attrs [
+    :title,
+    :description,
+    :parent_id
+  ]
+  @derive {
+    JSONAPIPlug.Resource,
+    type: "collection",
+    attributes: @attrs,
+    relationships: [
+      parent: [resource: Basenji.Collection],
+      comics: [many: true, resource: Basenji.Comic]
+    ]
+  }
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "collections" do
     field(:title, :string)
@@ -28,11 +42,7 @@ defmodule Basenji.Collection do
   def changeset(collection, attrs \\ %{}) do
     collection
     |> Repo.preload(:collection_comics)
-    |> cast(attrs, [
-      :title,
-      :description,
-      :parent_id
-    ])
+    |> cast(attrs, @attrs)
     |> cast_assoc(:collection_comics, with: &CollectionComic.changeset/2)
     |> validate_required([:title])
     |> foreign_key_constraint(:parent_id)

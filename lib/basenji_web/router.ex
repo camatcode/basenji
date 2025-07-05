@@ -26,13 +26,7 @@ defmodule BasenjiWeb.Router do
   scope "/api", BasenjiWeb do
     pipe_through :api
 
-    get "/comics", ComicsController, :list
-    get "/comics/:id", ComicsController, :get
-
-    post "/comics", ComicsController, :create
-    patch "/comics/:id", ComicsController, :update
-    delete "/comics/:id", ComicsController, :delete
-
+    resources "/comics", ComicsController, only: [:index, :create, :show, :update, :delete]
     get "/comics/:id/page/:page", ComicsController, :get_page
   end
 

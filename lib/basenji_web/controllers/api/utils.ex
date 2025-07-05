@@ -38,13 +38,39 @@ defmodule BasenjiWeb.API.Utils do
         Logger.error(inspect(errors))
 
         conn
-        |> put_resp_header("content-type", "application/json")
-        |> send_resp(400, inspect(errors))
+        |> put_status(400)
+        |> json(%{error: inspect(errors)})
 
       error ->
         Logger.error("Something went wrong, got: " <> inspect(error))
 
         conn
     end
+  end
+
+  def to_opts(plug_info) do
+    plug_info
+    |> Map.from_struct()
+    |> Enum.reduce([], &apply_opts/2)
+  end
+
+  defp apply_opts({:filter, filter}, opts) do
+    Keyword.merge([search: filter], opts)
+  end
+
+  defp apply_opts({:page, %{"limit" => limit, "offset" => offset}}, opts) do
+    Keyword.merge([offset: offset, limit: limit], opts)
+  end
+
+  defp apply_opts({:include, v}, opts) do
+    Keyword.merge([preload: v], opts)
+  end
+
+  defp apply_opts({:sort, v}, opts) do
+    Keyword.merge([order_by: v], opts)
+  end
+
+  defp apply_opts(_any, opts) do
+    opts
   end
 end

@@ -118,7 +118,7 @@ defmodule Basenji.Collections do
   end
 
   defp reduce_collection_opts(query, opts) do
-    query = reduce_opts(query, opts)
+    {query, opts} = reduce_opts(query, opts)
 
     Enum.reduce(opts, query, fn
       {_any, ""}, query ->

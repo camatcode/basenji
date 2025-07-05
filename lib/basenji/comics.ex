@@ -110,9 +110,9 @@ defmodule Basenji.Comics do
   end
 
   defp reduce_comic_opts(query, opts) do
-    query = reduce_opts(query, opts)
+    {q, opts} = reduce_opts(query, opts)
 
-    Enum.reduce(opts, query, fn
+    Enum.reduce(opts, q, fn
       {_any, ""}, query ->
         query
 
