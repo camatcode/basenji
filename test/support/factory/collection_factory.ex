@@ -13,10 +13,22 @@ defmodule Basenji.Factory.CollectionFactory do
             end
           end
 
+        resource_dir = Basenji.Application.get_comics_directory()
+
+        files = Path.wildcard("#{resource_dir}/**/cb*")
+
+        resource_location =
+          Map.get(
+            attrs,
+            :resource_location,
+            Enum.random(files)
+          )
+
         %Basenji.Collection{
           title: Faker.Lorem.sentence(),
           description: Faker.Lorem.paragraph(2),
-          parent: parent_fn
+          parent: parent_fn,
+          resource_location: resource_location
         }
         |> merge_attributes(attrs)
         |> evaluate_lazy_attributes()

@@ -18,23 +18,27 @@ defmodule Basenji.Collections do
     |> Repo.insert(opts[:repo_opts])
   end
 
-  def from_directory(attrs, path, opts \\ []) do
+  def from_resource(path, attrs, opts \\ []) do
     path = Path.expand(path)
 
     comics =
       Path.wildcard("#{path}/**/*.cb*")
       |> Enum.map(fn file ->
-        Comics.from_resource(file, %{}, opts)
+        Comics.from_resource(file, %{})
         |> case do
-          {:ok, created} -> created
-          _ -> nil
+          {:ok, created} ->
+            created
+
+          _ ->
+            nil
         end
       end)
       |> Enum.filter(&Function.identity/1)
 
     with {:ok, collection} <- create_collection(attrs, opts) do
       Enum.each(comics, fn c -> add_to_collection(collection, c) end)
-      get_collection(collection.id, preload: [collection_comics: [:comic]])
+      opts = Keyword.put(opts, :preload, collection_comics: [:comic], parent: [])
+      get_collection(collection.id, opts)
     end
   end
 
@@ -58,15 +62,24 @@ defmodule Basenji.Collections do
     end
   end
 
-  def update_collection(%Collection{} = collection, attrs) do
-    collection
-    |> Collection.changeset(attrs)
-    |> Repo.update()
+  def update_collection(collection_ref, attrs, opts \\ [])
+
+  def update_collection(%Collection{} = collection, attrs, opts) do
+    with {:ok, collection} <-
+           collection
+           |> Collection.changeset(attrs)
+           |> Repo.update() do
+      if opts[:preload] do
+        get_collection(collection.id, opts)
+      else
+        {:ok, collection}
+      end
+    end
   end
 
-  def update_collection(id, attrs) when is_bitstring(id) do
-    with {:ok, collection} <- get_collection(id) do
-      update_collection(collection, attrs)
+  def update_collection(id, attrs, opts) when is_bitstring(id) do
+    with {:ok, collection} <- get_collection(id, opts) do
+      update_collection(collection, attrs, opts)
     end
   end
 

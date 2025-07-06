@@ -50,7 +50,7 @@ defmodule Basenji.CollectionsTest do
         Enum.each(dirs, fn dir ->
           title = "#{format}_#{System.monotonic_time()}"
           description = Faker.Lorem.paragraph(2)
-          {:ok, collection} = Collections.from_directory(%{title: title, description: description}, dir)
+          {:ok, collection} = Collections.from_resource(dir, %{title: title, description: description})
           assert valid_collection?(collection)
         end)
       end)

@@ -18,9 +18,16 @@ defmodule Basenji.Comics do
   def create_comic(attrs, opts \\ []) do
     opts = Keyword.merge([repo_opts: []], opts)
 
-    %Comic{}
-    |> Comic.changeset(attrs)
-    |> Repo.insert(opts[:repo_opts])
+    with {:ok, comic} <-
+           %Comic{}
+           |> Comic.changeset(attrs)
+           |> Repo.insert(opts[:repo_opts]) do
+      if opts[:preload] do
+        get_comic(comic.id, opts)
+      else
+        {:ok, comic}
+      end
+    end
   end
 
   def list_comics(opts \\ []) do

@@ -8,6 +8,8 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
 
   doctest ComicsController
 
+  @api_path "/api/json/comics"
+
   test "create comic", %{conn: conn} do
     %{resource_location: loc, format: format, page_count: page_count, released_year: r_year} = build(:comic)
 
@@ -24,7 +26,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
     conn =
       conn
       |> put_req_header("content-type", "application/vnd.api+json")
-      |> post(~p"/api/comics", %{"data" => %{"attributes" => comic, "type" => "comic"}})
+      |> post(@api_path <> "?include=memberCollections", %{"data" => %{"attributes" => comic, "type" => "comic"}})
 
     assert %{"data" => comic} = json_response(conn, 200)
 
@@ -33,7 +35,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
 
   test "get comic", %{conn: conn} do
     comic = insert(:comic)
-    conn = get(conn, ~p"/api/comics/#{comic.id}", %{})
+    conn = get(conn, "#{@api_path}/#{comic.id}", %{})
 
     assert %{"data" => comic} = json_response(conn, 200)
     assert valid_comic?(comic)
@@ -56,7 +58,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
     conn =
       conn
       |> put_req_header("content-type", "application/vnd.api+json")
-      |> patch(~p"/api/comics/#{comic.id}", %{"data" => %{"attributes" => changes, "type" => "comic"}})
+      |> patch("#{@api_path}/#{comic.id}", %{"data" => %{"attributes" => changes, "type" => "comic"}})
 
     assert %{"data" => updated} = json_response(conn, 200)
     assert valid_comic?(updated)
@@ -74,7 +76,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
 
   test "delete comic", %{conn: conn} do
     comic = insert(:comic)
-    conn = delete(conn, ~p"/api/comics/#{comic.id}", %{})
+    conn = delete(conn, "#{@api_path}/#{comic.id}", %{})
 
     assert %{"data" => deleted} = json_response(conn, 200)
     assert deleted["id"] == comic.id
@@ -85,7 +87,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
   describe "list" do
     test "lists comics", %{conn: conn} do
       insert_list(100, :comic)
-      conn = get(conn, ~p"/api/comics", %{})
+      conn = get(conn, @api_path, %{})
 
       assert %{"data" => comics} = json_response(conn, 200)
       refute Enum.empty?(comics)
@@ -101,7 +103,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
 
       [:title, :author, :description, :resourceLocation, :releasedYear, :pageCount]
       |> Enum.each(fn order ->
-        conn = get(conn, ~p"/api/comics", %{"sort" => "#{order}"})
+        conn = get(conn, @api_path, %{"sort" => "#{order}"})
         assert %{"data" => comics} = json_response(conn, 200)
         refute Enum.empty?(comics)
 
@@ -122,7 +124,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
         [:title, :author, :resource_location, :format, :released_year]
         |> Enum.each(fn search_term ->
           search_val = comic |> Map.from_struct() |> Map.get(search_term)
-          conn = get(conn, ~p"/api/comics", %{"#{search_term}" => search_val})
+          conn = get(conn, @api_path, %{"filter" => %{"#{search_term}" => search_val}})
           assert %{"data" => results} = json_response(conn, 200)
           refute Enum.empty?(results)
           [_result] = Enum.filter(results, fn c -> c["id"] == comic.id end)
@@ -137,12 +139,12 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
       :timer.sleep(1000)
       inserted = insert(:comic)
       # inserted_after
-      conn = get(conn, ~p"/api/comics", %{"filter" => %{"inserted_after" => "#{dt}"}})
+      conn = get(conn, @api_path, %{"filter" => %{"inserted_after" => "#{dt}"}})
       assert %{"data" => results} = json_response(conn, 200)
       refute Enum.empty?(results)
       [_result] = Enum.filter(results, fn c -> c["id"] == inserted.id end)
       # inserted_before
-      conn = get(conn, ~p"/api/comics", %{"filter" => %{"inserted_before" => "#{dt}"}})
+      conn = get(conn, @api_path, %{"filter" => %{"inserted_before" => "#{dt}"}})
       assert %{"data" => results} = json_response(conn, 200)
       refute Enum.empty?(results)
       [] = Enum.filter(results, fn c -> c["id"] == inserted.id end)
@@ -150,12 +152,12 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
       updated_dt = NaiveDateTime.utc_now()
       :timer.sleep(1000)
       {:ok, _updated} = Comics.update_comic(inserted, %{title: Faker.Lorem.sentence()})
-      conn = get(conn, ~p"/api/comics", %{"filter" => %{"updated_after" => "#{updated_dt}"}})
+      conn = get(conn, @api_path, %{"filter" => %{"updated_after" => "#{updated_dt}"}})
       assert %{"data" => results} = json_response(conn, 200)
       refute Enum.empty?(results)
       [_result] = Enum.filter(results, fn c -> c["id"] == inserted.id end)
 
-      conn = get(conn, ~p"/api/comics", %{"filter" => %{"updated_before" => "#{updated_dt}"}})
+      conn = get(conn, @api_path, %{"filter" => %{"updated_before" => "#{updated_dt}"}})
       assert %{"data" => results} = json_response(conn, 200)
       refute Enum.empty?(results)
       [] = Enum.filter(results, fn c -> c["id"] == inserted.id end)
@@ -185,7 +187,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
 
       [{"and", [a.id, b.id]}, {"or", [b.id, c.id]}, {"it", [a.id, b.id]}, {"25", [b.id, c.id]}]
       |> Enum.each(fn {term, expected} ->
-        conn = get(conn, ~p"/api/comics", %{"filter" => term, "sort" => "title"})
+        conn = get(conn, @api_path, %{"filter" => term, "sort" => "title"})
         assert %{"data" => results} = json_response(conn, 200)
         assert expected == results |> Enum.map(fn c -> c["id"] end)
       end)

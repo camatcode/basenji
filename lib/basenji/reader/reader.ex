@@ -27,7 +27,9 @@ defmodule Basenji.Reader do
     info =
       if reader do
         title = location |> Path.basename() |> Path.rootname()
-        {:ok, %{entries: entries}} = reader.read(location, opts)
+        {:ok, response} = reader.read(location, opts)
+        %{entries: entries} = response
+        reader.close(response[:file])
         %{format: reader.format(), resource_location: location, title: title, page_count: Enum.count(entries)}
       else
         {:error, :unreadable}

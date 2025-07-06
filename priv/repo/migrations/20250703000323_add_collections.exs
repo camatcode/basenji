@@ -6,6 +6,7 @@ defmodule Basenji.Repo.Migrations.AddCollections do
       add :id, :uuid, primary_key: true, null: false
       add :title, :string
       add :description, :text
+      add :resource_location, :string
 
       add :parent_id, references(:collections, type: :uuid, on_delete: :nothing)
 

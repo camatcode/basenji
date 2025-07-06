@@ -4,20 +4,20 @@ defmodule BasenjiWeb.JSONAPI.ComicsController do
 
   alias Basenji.Comics
   alias BasenjiWeb.API.Utils
-  alias BasenjiWeb.Plugs.JSONAPIPlug
+  alias BasenjiWeb.Plugs.JSONAPIPlug, as: BasenjiJSONAPIPlug
 
-  plug JSONAPIPlug, api: BasenjiWeb.API, path: "comics", resource: Basenji.Comic
+  plug BasenjiJSONAPIPlug, api: BasenjiWeb.API, path: "comics", resource: Basenji.Comic
 
   def index(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, _params) do
     comics = Comics.list_comics(Utils.to_opts(jsonapi_plug))
     render(conn, "index.json", %{data: comics})
   end
 
-  def create(conn, params) do
+  def create(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, params) do
     # validate params!
     attrs = params["data"]["attributes"] |> Utils.atomize()
 
-    Comics.from_resource(params["data"]["attributes"]["resource_location"], attrs)
+    Comics.from_resource(params["data"]["attributes"]["resource_location"], attrs, Utils.to_opts(jsonapi_plug))
     |> case do
       {:ok, comic} -> render(conn, "create.json", %{data: comic})
       error -> Utils.bad_request_handler(conn, error)
@@ -48,30 +48,5 @@ defmodule BasenjiWeb.JSONAPI.ComicsController do
   def delete(conn, params) do
     {:ok, deleted} = Comics.delete_comic(params["id"])
     render(conn, "show.json", %{data: deleted})
-  end
-
-  def get_page(conn, params) do
-    id = params["id"]
-    page = params["page"]
-
-    with {:ok, page_num} <- Utils.safe_to_int(page),
-         {:ok, page_stream, mime} <- Comics.get_page(id, page_num) do
-      binary = page_stream |> Enum.to_list()
-      {:ok, binary, mime}
-    end
-    |> case do
-      {:ok, binary, mime} ->
-        length = Enum.count(binary)
-
-        conn
-        |> merge_resp_headers([{"access-control-allow-origin", "*"}])
-        |> merge_resp_headers([{"content-type", mime}])
-        |> merge_resp_headers([{"content-length", "#{length}"}])
-        |> merge_resp_headers([{"content-disposition", "attachment"}])
-        |> send_resp(200, binary)
-
-      error ->
-        Utils.bad_request_handler(conn, error)
-    end
   end
 end

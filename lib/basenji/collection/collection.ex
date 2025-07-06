@@ -15,12 +15,14 @@ defmodule Basenji.Collection do
   @attrs [
     :title,
     :description,
-    :parent_id
+    :parent_id,
+    :resource_location
   ]
+
   @derive {
     JSONAPIPlug.Resource,
     type: "collection",
-    attributes: @attrs,
+    attributes: @attrs ++ [:updated_at, :inserted_at],
     relationships: [
       parent: [resource: Basenji.Collection],
       comics: [many: true, resource: Basenji.Comic]
@@ -30,6 +32,7 @@ defmodule Basenji.Collection do
   schema "collections" do
     field(:title, :string)
     field(:description, :string)
+    field(:resource_location, :string)
 
     has_many(:collection_comics, CollectionComic)
     many_to_many(:comics, Comic, join_through: "collection_comics", join_keys: [collection_id: :id, comic_id: :id])

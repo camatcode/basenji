@@ -48,11 +48,11 @@ config :logger, :console,
   metadata: [:request_id]
 
 config :mime, :extensions, %{
-  "json" => "application/json"
+  "json_api" => "application/vnd.api+json"
 }
 
 config :mime, :types, %{
-  "application/vnd.api+json" => ["json"]
+  "application/vnd.api+json" => ["json_api"]
 }
 
 # Use Jason for JSON parsing in Phoenix

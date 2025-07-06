@@ -50,13 +50,13 @@ defmodule Basenji.Reader.CBZReader do
     end
   end
 
-  def read(cbz_file_path, _opts \\ []) do
-    with {:ok, %{entries: file_entries, file: unzip}} <- get_entries(cbz_file_path) do
+  def read(cbz_file_path, opts \\ []) do
+    with {:ok, %{entries: file_entries, file: unzip}} <- get_entries(cbz_file_path, opts) do
       file_entries =
         file_entries
         |> Enum.map(fn entry ->
           entry
-          |> Map.put(:stream_fun, fn -> get_entry_stream!(unzip, entry) end)
+          |> Map.put(:stream_fun, fn -> get_entry_stream!(unzip, entry, opts) end)
         end)
 
       {:ok, %{entries: file_entries, file: unzip}}

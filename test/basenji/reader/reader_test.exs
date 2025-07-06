@@ -52,7 +52,7 @@ defmodule Basenji.ReaderTest do
       assert {:ok, entries} = Reader.read(file)
       refute Enum.empty?(entries)
 
-      assert {:ok, %{entries: optimized_entries}} = Reader.read(file, optimize: true)
+      assert {:ok, %{entries: optimized_entries}} = Reader.read(file, optimize: true, close: false)
       [random_entry] = Enum.shuffle(optimized_entries) |> Enum.take(1)
 
       path = Path.join(tmp_dir, random_entry.file_name)
