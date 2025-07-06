@@ -28,7 +28,8 @@ config :basenji, BasenjiWeb.Endpoint,
 config :basenji, Oban, testing: :manual
 
 config :basenji,
-  comics_dir: "test/support/data/basenji/formats/"
+  comics_dir: "test/support/data/basenji/formats/",
+  allow_delete_resources: false
 
 # Print only warnings and errors during test
 config :logger, level: :warning

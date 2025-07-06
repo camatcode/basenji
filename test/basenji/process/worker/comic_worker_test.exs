@@ -20,6 +20,9 @@ defmodule Basenji.Worker.ComicWorkerTest do
   end
 
   test "delete" do
+    allow_delete = Application.get_env(:basenji, :allow_delete_resources)
+    Application.put_env(:basenji, :allow_delete_resources, true)
+
     %{resource_location: loc} = build(:comic)
     basename = Path.basename(loc)
     cp_to = Path.join(System.tmp_dir!(), basename)
@@ -30,7 +33,7 @@ defmodule Basenji.Worker.ComicWorkerTest do
     {:ok, _} = Comics.delete_comic(comic)
 
     TestHelper.drain_queue(:comic)
-
+    Application.put_env(:basenji, :allow_delete_resources, allow_delete)
     refute File.exists?(cp_to)
   end
 end

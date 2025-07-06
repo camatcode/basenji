@@ -43,10 +43,14 @@ defmodule Basenji.Worker.ComicWorker do
   end
 
   defp delete(%{"resource_location" => loc}) do
-    Comics.list_comics(resource_location: loc)
-    |> case do
-      [] -> File.rm(loc)
-      _ -> :ok
+    if Application.get_env(:basenji, :allow_delete_resources) == true do
+      Comics.list_comics(resource_location: loc)
+      |> case do
+        [] -> File.rm(loc)
+        _ -> :ok
+      end
+    else
+      :ok
     end
   end
 end
