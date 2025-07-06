@@ -1,6 +1,8 @@
 defmodule BasenjiWeb.Router do
   use BasenjiWeb, :router
 
+  import Oban.Web.Router
+
   alias Plug.Swoosh.MailboxPreview
 
   pipeline :browser do
@@ -24,6 +26,7 @@ defmodule BasenjiWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive, :index
+    oban_dashboard("/oban")
   end
 
   scope "/api", BasenjiWeb do

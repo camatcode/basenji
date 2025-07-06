@@ -100,6 +100,9 @@ defmodule Basenji.MixProject do
       {:excoveralls, "~> 0.18", only: [:test]},
       # api deps
       {:jsonapi_plug, "~> 2.0"},
+      # basenji deps
+      {:oban, "~> 2.19"},
+      {:oban_web, "~> 2.11"},
       # phx deps
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},

@@ -30,6 +30,8 @@ defmodule Basenji.ComicsTest do
         files
         |> Enum.each(fn file ->
           {:ok, comic} = Comics.from_resource(file)
+          TestHelper.drain_queue(:comic)
+          {:ok, comic} = Comics.get_comic(comic.id)
           assert comic.title
           assert comic.page_count
           assert comic.resource_location
@@ -74,8 +76,7 @@ defmodule Basenji.ComicsTest do
         assert updated.description == updated_attrs.description
         assert updated.resource_location == updated_attrs.resource_location
         assert updated.released_year == updated_attrs.released_year
-        # not changed
-        assert updated.page_count == comic.page_count
+        assert updated.page_count == updated_attrs.page_count
       end)
     end
 

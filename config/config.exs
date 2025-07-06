@@ -29,6 +29,11 @@ config :basenji, BasenjiWeb.Endpoint,
   pubsub_server: Basenji.PubSub,
   live_view: [signing_salt: "Zg+rRITw"]
 
+config :basenji, Oban,
+  engine: Oban.Engines.Basic,
+  queues: [comic: 10, collection: 10],
+  repo: Basenji.Repo
+
 config :basenji,
   ecto_repos: [Basenji.Repo],
   generators: [timestamp_type: :utc_datetime]

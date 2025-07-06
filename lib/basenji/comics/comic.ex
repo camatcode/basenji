@@ -53,7 +53,7 @@ defmodule Basenji.Comic do
 
   def update_changeset(comic, attrs) do
     comic
-    |> cast(attrs, @attrs -- [:format, :page_count])
+    |> cast(attrs, @attrs)
     |> validate_changeset()
   end
 
