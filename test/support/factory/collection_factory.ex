@@ -21,9 +21,7 @@ defmodule Basenji.Factory.CollectionFactory do
           Map.get(
             attrs,
             :resource_location,
-            if Enum.random([true, false]) do
-              Enum.random(files)
-            end
+            Enum.random(files)
           )
 
         %Basenji.Collection{

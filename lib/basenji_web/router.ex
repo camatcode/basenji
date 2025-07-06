@@ -36,7 +36,7 @@ defmodule BasenjiWeb.Router do
     pipe_through :json_api
 
     resources "/comics", ComicsController, only: [:index, :create, :show, :update, :delete]
-    resources "/collections", CollectionsController, only: [:index, :show]
+    resources "/collections", CollectionsController, only: [:index, :create, :show, :update, :delete]
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

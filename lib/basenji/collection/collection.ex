@@ -22,7 +22,7 @@ defmodule Basenji.Collection do
   @derive {
     JSONAPIPlug.Resource,
     type: "collection",
-    attributes: @attrs,
+    attributes: @attrs ++ [:updated_at, :inserted_at],
     relationships: [
       parent: [resource: Basenji.Collection],
       comics: [many: true, resource: Basenji.Comic]

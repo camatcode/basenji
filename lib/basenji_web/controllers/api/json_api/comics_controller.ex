@@ -13,11 +13,11 @@ defmodule BasenjiWeb.JSONAPI.ComicsController do
     render(conn, "index.json", %{data: comics})
   end
 
-  def create(conn, params) do
+  def create(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, params) do
     # validate params!
     attrs = params["data"]["attributes"] |> Utils.atomize()
 
-    Comics.from_resource(params["data"]["attributes"]["resource_location"], attrs)
+    Comics.from_resource(params["data"]["attributes"]["resource_location"], attrs, Utils.to_opts(jsonapi_plug))
     |> case do
       {:ok, comic} -> render(conn, "create.json", %{data: comic})
       error -> Utils.bad_request_handler(conn, error)
