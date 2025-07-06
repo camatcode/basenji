@@ -5,29 +5,19 @@ defmodule Basenji.Comics do
   import Ecto.Query, warn: false
 
   alias Basenji.Comic
+  alias Basenji.Processor
   alias Basenji.Reader
   alias Basenji.Repo
 
   def from_resource(location, attrs \\ %{}, opts \\ []) do
-    with {:ok, info} <- Reader.info(location) do
-      Map.merge(info, attrs)
-      |> create_comic(opts)
-    end
+    attrs |> Map.put(:resource_location, location) |> create_comic(opts)
   end
 
   def create_comic(attrs, opts \\ []) do
     opts = Keyword.merge([repo_opts: []], opts)
 
-    with {:ok, comic} <-
-           %Comic{}
-           |> Comic.changeset(attrs)
-           |> Repo.insert(opts[:repo_opts]) do
-      if opts[:preload] do
-        get_comic(comic.id, opts)
-      else
-        {:ok, comic}
-      end
-    end
+    insert_comic(attrs, opts)
+    |> handle_insert_side_effects()
   end
 
   def list_comics(opts \\ []) do
@@ -70,6 +60,7 @@ defmodule Basenji.Comics do
   end
 
   def delete_comic(%Comic{id: _comic_id} = comic) do
+    Processor.process(comic, [:delete])
     Repo.delete(comic)
   end
 
@@ -113,6 +104,26 @@ defmodule Basenji.Comics do
   def get_page(comic_id, page_num, opts) when is_bitstring(comic_id) do
     with {:ok, comic} <- get_comic(comic_id) do
       get_page(comic, page_num, opts)
+    end
+  end
+
+  defp handle_insert_side_effects({:ok, comic}) do
+    Processor.process(comic, [:insert])
+    {:ok, comic}
+  end
+
+  defp handle_insert_side_effects(result), do: result
+
+  defp insert_comic(attrs, opts) do
+    with {:ok, comic} <-
+           %Comic{}
+           |> Comic.changeset(attrs)
+           |> Repo.insert(opts[:repo_opts]) do
+      if opts[:preload] do
+        get_comic(comic.id, opts)
+      else
+        {:ok, comic}
+      end
     end
   end
 
