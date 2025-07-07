@@ -109,6 +109,22 @@ defmodule Basenji.Comics do
     end
   end
 
+  def get_image_preview(comic_ref)
+
+  def get_image_preview(%Comic{image_preview: nil}) do
+    {:error, :no_preview}
+  end
+
+  def get_image_preview(%Comic{image_preview: bytes}) do
+    {:ok, bytes}
+  end
+
+  def get_image_preview(comic_id) when is_bitstring(comic_id) do
+    with {:ok, comic} <- get_comic(comic_id) do
+      get_image_preview(comic)
+    end
+  end
+
   defp handle_insert_side_effects({:ok, comic}) do
     Processor.process(comic, [:insert])
     {:ok, comic}

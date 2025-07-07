@@ -27,4 +27,24 @@ defmodule BasenjiWeb.ComicsController do
         Utils.bad_request_handler(conn, error)
     end
   end
+
+  def get_preview(conn, params) do
+    id = params["id"]
+
+    Comics.get_image_preview(id)
+    |> case do
+      {:ok, binary} ->
+        length = byte_size(binary)
+
+        conn
+        |> merge_resp_headers([{"access-control-allow-origin", "*"}])
+        |> merge_resp_headers([{"content-type", "image/jpeg"}])
+        |> merge_resp_headers([{"content-length", "#{length}"}])
+        |> merge_resp_headers([{"content-disposition", "attachment"}])
+        |> send_resp(200, binary)
+
+      error ->
+        Utils.bad_request_handler(conn, error)
+    end
+  end
 end

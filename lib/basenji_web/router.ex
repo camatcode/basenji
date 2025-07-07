@@ -32,6 +32,7 @@ defmodule BasenjiWeb.Router do
   scope "/api", BasenjiWeb do
     pipe_through :api
     get "/comics/:id/page/:page", ComicsController, :get_page
+    get "/comics/:id/preview", ComicsController, :get_preview
   end
 
   # JSON:API

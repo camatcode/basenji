@@ -69,4 +69,6 @@ defmodule Basenji.Comic do
   end
 
   def formats, do: @formats |> Keyword.keys()
+
+  def attrs, do: @attrs
 end

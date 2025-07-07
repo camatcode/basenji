@@ -221,4 +221,14 @@ defmodule Basenji.ComicsTest do
       refute Enum.empty?(bin_list)
     end)
   end
+
+  test "get_image_preview" do
+    %{resource_location: loc} = build(:comic)
+    {:ok, comic} = Comics.create_comic(%{resource_location: loc})
+
+    {:error, :no_preview} = Comics.get_image_preview(comic.id)
+    %{failure: 0} = TestHelper.drain_queue(:comic)
+    {:ok, bytes} = Comics.get_image_preview(comic.id)
+    assert byte_size(bytes) > 0
+  end
 end
