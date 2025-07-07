@@ -97,13 +97,31 @@ defmodule Basenji.Comics do
         |> Path.extname()
         |> String.replace(".", "")
 
-      {:ok, Enum.at(entries, page_num - 1).stream_fun.(), "image/#{ext}"}
+      bytes = Enum.at(entries, page_num - 1).stream_fun.() |> Enum.to_list() |> :binary.list_to_bin()
+
+      {:ok, bytes, "image/#{ext}"}
     end
   end
 
   def get_page(comic_id, page_num, opts) when is_bitstring(comic_id) do
     with {:ok, comic} <- get_comic(comic_id) do
       get_page(comic, page_num, opts)
+    end
+  end
+
+  def get_image_preview(comic_ref)
+
+  def get_image_preview(%Comic{image_preview: nil}) do
+    {:error, :no_preview}
+  end
+
+  def get_image_preview(%Comic{image_preview: bytes}) do
+    {:ok, bytes}
+  end
+
+  def get_image_preview(comic_id) when is_bitstring(comic_id) do
+    with {:ok, comic} <- get_comic(comic_id) do
+      get_image_preview(comic)
     end
   end
 

@@ -41,6 +41,15 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
     assert valid_comic?(comic)
   end
 
+  test "image_preview ", %{conn: conn} do
+    %{resource_location: loc} = build(:comic)
+    {:ok, comic} = Comics.create_comic(%{resource_location: loc})
+    TestHelper.drain_queue(:comic)
+    conn = get(conn, "#{@api_path}/#{comic.id}", %{})
+
+    assert %{"data" => _comic} = json_response(conn, 200)
+  end
+
   test "update comic", %{conn: conn} do
     %{resource_location: loc, format: format, page_count: page_count, released_year: r_year} =
       comic = insert(:comic) |> Map.from_struct()
