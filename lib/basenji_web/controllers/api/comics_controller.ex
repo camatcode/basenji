@@ -9,14 +9,12 @@ defmodule BasenjiWeb.ComicsController do
     id = params["id"]
     page = params["page"]
 
-    with {:ok, page_num} <- Utils.safe_to_int(page),
-         {:ok, page_stream, mime} <- Comics.get_page(id, page_num) do
-      binary = page_stream |> Enum.to_list()
-      {:ok, binary, mime}
+    with {:ok, page_num} <- Utils.safe_to_int(page) do
+      Comics.get_page(id, page_num)
     end
     |> case do
       {:ok, binary, mime} ->
-        length = Enum.count(binary)
+        length = byte_size(binary)
 
         conn
         |> merge_resp_headers([{"access-control-allow-origin", "*"}])

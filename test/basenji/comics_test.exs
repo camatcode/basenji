@@ -197,10 +197,9 @@ defmodule Basenji.ComicsTest do
     1..comic.page_count
     |> Enum.each(fn page ->
       ref = Enum.random([comic, comic.id])
-      {:ok, stream, mime} = Comics.get_page(ref, page)
+      {:ok, bytes, mime} = Comics.get_page(ref, page)
       assert mime == "image/jpg"
-      bin_list = stream |> Enum.to_list()
-      refute Enum.empty?(bin_list)
+      refute bytes == <<>>
     end)
 
     # overflow

@@ -97,7 +97,9 @@ defmodule Basenji.Comics do
         |> Path.extname()
         |> String.replace(".", "")
 
-      {:ok, Enum.at(entries, page_num - 1).stream_fun.(), "image/#{ext}"}
+      bytes = Enum.at(entries, page_num - 1).stream_fun.() |> Enum.to_list() |> :binary.list_to_bin()
+
+      {:ok, bytes, "image/#{ext}"}
     end
   end
 

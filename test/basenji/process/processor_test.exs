@@ -10,6 +10,6 @@ defmodule Basenji.ProcessorTest do
     jobs = Processor.process(comic, [:insert])
 
     refute Enum.empty?(jobs)
-    TestHelper.drain_queue(:comic)
+    %{failure: 0} = TestHelper.drain_queue(:comic)
   end
 end

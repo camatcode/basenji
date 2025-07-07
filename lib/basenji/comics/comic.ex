@@ -11,6 +11,7 @@ defmodule Basenji.Comic do
   @attrs [
     :title,
     :author,
+    :image_preview,
     :description,
     :resource_location,
     :released_year,
@@ -21,7 +22,7 @@ defmodule Basenji.Comic do
   @derive {
     JSONAPIPlug.Resource,
     type: "comic",
-    attributes: @attrs ++ [:updated_at, :inserted_at],
+    attributes: @attrs ++ ([:updated_at, :inserted_at] -- [:image_preview]),
     relationships: [
       member_collections: [many: true, resource: Basenji.Collection]
     ]
@@ -36,6 +37,7 @@ defmodule Basenji.Comic do
     field(:released_year, :integer)
     field(:page_count, :integer)
     field(:format, Ecto.Enum, values: @formats)
+    field(:image_preview, :binary)
 
     many_to_many(:member_collections, Collection,
       join_through: "collection_comics",
