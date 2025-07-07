@@ -68,6 +68,8 @@ defmodule Basenji.Reader do
 
   def reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
 
+  def reject_directories(e), do: Enum.reject(e, &(Path.extname(&1.file_name) == ""))
+
   def read(file_path, opts \\ []) do
     opts = Keyword.merge([optimize: false], opts)
 
@@ -121,7 +123,8 @@ defmodule Basenji.Reader do
 
           if bytes == magic, do: {:halt, true}, else: {:cont, nil}
         rescue
-          _ -> {:cont, nil}
+          _e ->
+            {:cont, nil}
         end
       end
     )

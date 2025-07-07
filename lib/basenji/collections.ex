@@ -7,39 +7,14 @@ defmodule Basenji.Collections do
   alias Basenji.Collection
   alias Basenji.CollectionComic
   alias Basenji.Comic
-  alias Basenji.Comics
+  alias Basenji.Processor
   alias Basenji.Repo
 
   def create_collection(attrs, opts \\ []) do
     opts = Keyword.merge([repo_opts: []], opts)
 
-    %Collection{collection_comics: []}
-    |> Collection.changeset(attrs)
-    |> Repo.insert(opts[:repo_opts])
-  end
-
-  def from_resource(path, attrs, opts \\ []) do
-    path = Path.expand(path)
-
-    comics =
-      Path.wildcard("#{path}/**/*.cb*")
-      |> Enum.map(fn file ->
-        Comics.from_resource(file, %{})
-        |> case do
-          {:ok, created} ->
-            created
-
-          _ ->
-            nil
-        end
-      end)
-      |> Enum.filter(&Function.identity/1)
-
-    with {:ok, collection} <- create_collection(attrs, opts) do
-      Enum.each(comics, fn c -> add_to_collection(collection, c) end)
-      opts = Keyword.put(opts, :preload, collection_comics: [:comic], parent: [])
-      get_collection(collection.id, opts)
-    end
+    insert_collection(attrs, opts)
+    |> handle_insert_side_effects()
   end
 
   def list_collections(opts \\ []) do
@@ -129,6 +104,26 @@ defmodule Basenji.Collections do
       col_comic -> remove_from_collection(col_comic)
     end
   end
+
+  defp insert_collection(attrs, opts) do
+    with {:ok, collection} <-
+           %Collection{collection_comics: []}
+           |> Collection.changeset(attrs)
+           |> Repo.insert(opts[:repo_opts]) do
+      if opts[:preload] do
+        get_collection(collection.id, opts)
+      else
+        {:ok, collection}
+      end
+    end
+  end
+
+  defp handle_insert_side_effects({:ok, collection}) do
+    Processor.process(collection, [:insert])
+    {:ok, collection}
+  end
+
+  defp handle_insert_side_effects(result), do: result
 
   defp reduce_collection_opts(query, opts) do
     {query, opts} = reduce_opts(query, opts)

@@ -83,8 +83,9 @@ defmodule Basenji.Comics do
 
   def get_page(nil, _, _), do: {:error, :not_found}
 
-  def get_page(%Comic{page_count: page_count}, page_num, _opts) when page_num < 0 or page_num > page_count,
-    do: {:error, :not_found}
+  def get_page(%Comic{page_count: page_count}, page_num, _opts)
+      when page_count != -1 and (page_num < 0 or page_num > page_count),
+      do: {:error, :not_found}
 
   def get_page(%Comic{resource_location: loc} = _comic, page_num, opts) do
     opts = Keyword.merge([optimize: true], opts)

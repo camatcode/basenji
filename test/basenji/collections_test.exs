@@ -2,7 +2,6 @@ defmodule Basenji.CollectionsTest do
   use Basenji.DataCase
 
   alias Basenji.Collections
-  alias Basenji.Comic
 
   @moduletag :capture_log
 
@@ -42,18 +41,24 @@ defmodule Basenji.CollectionsTest do
     test "from_directory" do
       resource_dir = Basenji.Application.get_comics_directory()
 
-      Comic.formats()
-      |> Enum.each(fn format ->
-        dirs = Path.wildcard("#{resource_dir}/**/#{format}")
-        refute Enum.empty?(dirs)
+      {:ok, _} =
+        Collections.create_collection(%{
+          title: "My Comics",
+          description: Faker.Lorem.sentence(),
+          resource_location: resource_dir
+        })
 
-        Enum.each(dirs, fn dir ->
-          title = "#{format}_#{System.monotonic_time()}"
-          description = Faker.Lorem.paragraph(2)
-          {:ok, collection} = Collections.from_resource(dir, %{title: title, description: description})
-          assert valid_collection?(collection)
-        end)
-      end)
+      TestHelper.drain_queues([:collection, :comic])
+
+      made_collections =
+        Collections.list_collections(preload: [:collection_comics]) |> Enum.filter(fn coll -> coll.parent_id end)
+
+      assert Enum.count(made_collections) > 3
+
+      Enum.each(
+        made_collections,
+        fn collection -> assert valid_collection?(collection) end
+      )
     end
 
     test "update" do
@@ -184,7 +189,6 @@ defmodule Basenji.CollectionsTest do
   defp valid_collection?(collection) do
     assert collection.id
     assert collection.title
-    assert collection.description
     refute Enum.empty?(collection.collection_comics)
     assert collection.inserted_at
     assert collection.updated_at

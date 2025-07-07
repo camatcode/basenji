@@ -17,10 +17,13 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
     # validate params!
     attrs = params["data"]["attributes"] |> Utils.atomize()
 
-    Collections.from_resource(params["data"]["attributes"]["resource_location"], attrs, Utils.to_opts(jsonapi_plug))
+    Collections.create_collection(attrs, Utils.to_opts(jsonapi_plug))
     |> case do
-      {:ok, collection} -> render(conn, "create.json", %{data: collection})
-      error -> Utils.bad_request_handler(conn, error)
+      {:ok, collection} ->
+        render(conn, "create.json", %{data: collection})
+
+      error ->
+        Utils.bad_request_handler(conn, error)
     end
   end
 

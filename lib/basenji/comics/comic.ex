@@ -34,8 +34,8 @@ defmodule Basenji.Comic do
     field(:author, :string)
     field(:description, :string)
     field(:resource_location, :string)
-    field(:released_year, :integer)
-    field(:page_count, :integer)
+    field(:released_year, :integer, default: -1)
+    field(:page_count, :integer, default: -1)
     field(:format, Ecto.Enum, values: @formats)
     field(:image_preview, :binary)
 

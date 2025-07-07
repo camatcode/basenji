@@ -21,7 +21,7 @@ defmodule BasenjiWeb.ComicsControllerTest do
 
   test "get_preview", %{conn: conn} do
     %{resource_location: loc} = build(:comic)
-    {:ok, %{title: nil, page_count: nil, format: nil} = comic} = Comics.create_comic(%{resource_location: loc})
+    {:ok, %{title: nil, page_count: -1, format: nil} = comic} = Comics.create_comic(%{resource_location: loc})
 
     %{status: 400, resp_body: ~s({"error":"no_preview"})} =
       get(conn, ~p"/api/comics/#{comic.id}/preview", %{})

@@ -15,6 +15,7 @@ defmodule Basenji.Reader.CBTReader do
         |> Enum.map(&%{file_name: "#{&1}"})
         |> sort_file_names()
         |> reject_macos_preview()
+        |> reject_directories()
 
       {:ok, %{entries: file_entries}}
     end

@@ -10,4 +10,23 @@ defmodule TestHelper do
     Oban.start_queue(start_opts)
     Oban.drain_queue(drain_opts)
   end
+
+  def drain_queues(queues, start_opts \\ [], drain_opts \\ []) do
+    results =
+      queues
+      |> Enum.map(fn queue -> drain_queue(queue, start_opts, drain_opts) end)
+
+    maybe_drain_again?(results, queues, start_opts, drain_opts)
+  end
+
+  defp maybe_drain_again?(results, queues, start_opts, drain_opts) do
+    all_clear =
+      results
+      |> Enum.filter(fn %{success: s} -> s > 0 end)
+      |> Enum.empty?()
+
+    if !all_clear do
+      drain_queues(queues, start_opts, drain_opts)
+    end
+  end
 end
