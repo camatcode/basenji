@@ -3,6 +3,7 @@ defmodule Basenji.Reader.CBRReader do
   import Basenji.Reader
 
   def format, do: :cbr
+  def file_extensions, do: ["cbr"]
   def close(_any), do: :ok
 
   def get_magic_numbers, do: [%{offset: 0, magic: [0x52, 0x61, 0x72, 0x21, 0x1A, 0x07]}]

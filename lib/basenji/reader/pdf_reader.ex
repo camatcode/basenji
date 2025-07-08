@@ -5,6 +5,8 @@ defmodule Basenji.Reader.PDFReader do
 
   def format, do: :pdf
 
+  def file_extensions, do: ["pdf"]
+
   def get_magic_numbers, do: [%{offset: 0, magic: [0x25, 0x50, 0x44, 0x46, 0x2D]}]
 
   def close(_any), do: :ok
@@ -16,7 +18,7 @@ defmodule Basenji.Reader.PDFReader do
       file_entries =
         1..pages
         |> Enum.map(fn idx ->
-          %{file_name: "#{String.pad_leading("#{idx}", padding, "0")}.jpeg"}
+          %{file_name: "#{String.pad_leading("#{idx}", padding, "0")}.jpg"}
         end)
 
       {:ok, %{entries: file_entries}}
@@ -52,8 +54,11 @@ defmodule Basenji.Reader.PDFReader do
       metadata =
         String.split(output, "\n")
         |> Map.new(fn line ->
-          [k, v] = String.split(line, ":", parts: 2)
-          to_metadata(k, v)
+          String.split(line, ":", parts: 2)
+          |> case do
+            [k, v] -> to_metadata(k, v)
+            [v] -> to_metadata("unknown_#{System.monotonic_time()}", v)
+          end
         end)
 
       {:ok, metadata}
@@ -66,8 +71,8 @@ defmodule Basenji.Reader.PDFReader do
     {k, v}
   end
 
-  defp convert_value(:creation_date, v), do: NaiveDateTime.from_iso8601!(v)
-  defp convert_value(:mod_date, v), do: NaiveDateTime.from_iso8601!(v)
+  defp convert_value(:creation_date, v), do: DateTimeParser.parse!(v)
+  defp convert_value(:mod_date, v), do: DateTimeParser.parse!(v)
   defp convert_value(:pages, v), do: String.to_integer(v)
 
   defp convert_value(:filesize, v) do
