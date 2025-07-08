@@ -46,14 +46,14 @@
 ### Features
 
 * ✅ Supports CBZ, CBR, CBT and CB7 comic book formats
-* ✅ Automatically optimizes pages to improve read times and save disk space
-* ✅ Group collections of comics together
-* ✅ CRUD, filtering, sorting
-* ✅ JSON:API
+* ✅ On-the-fly optimizes pages to improve read times 
+* ✅ Efficent CRUD, filtering, sorting
+* ✅ Exposes a JSON:API for third-party clients
 * ✅ Powerful async processing
   * ✅ Organizes deeply nested collections of comics
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
-  * 🚧 Stress tested with 31.9 GB of comics with 1,276 items
+  * 🚧 WIP: Stores optimized versions to save you disk space 
+  * 🚧 WIP: Stress tested with 31.9 GB of comics with 1,276 items
 * 🚧 Rest is in development
 
 ### Attributions
