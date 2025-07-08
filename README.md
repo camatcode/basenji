@@ -49,7 +49,7 @@
 * ✅ On-the-fly optimizes pages to improve read times 
 * ✅ Efficent CRUD, filtering, sorting
 * ✅ Exposes a JSON:API for third-party clients
-* ✅ Powerful async processing
+* ✅ Powerful background processing that
   * ✅ Organizes deeply nested collections of comics
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
   * 🚧 WIP: Stores optimized versions to save you disk space 
