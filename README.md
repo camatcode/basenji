@@ -45,7 +45,7 @@
 
 ### Features
 
-* ✅ Supports CBZ, CBR, CBT and CB7 comic book formats
+* ✅ Supports CBZ, CBR, CBT, CB7, and PDF comic book formats
 * ✅ Optimizes pages to improve read times on-the-fly
 * ✅ Efficent CRUD, filtering, sorting
 * ✅ Exposes a JSON:API for third-party clients

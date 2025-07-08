@@ -6,7 +6,7 @@ defmodule Basenji.Comic do
 
   alias Basenji.Collection
 
-  @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3]
+  @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3, pdf: 4]
 
   @attrs [
     :title,

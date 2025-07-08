@@ -26,8 +26,8 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: basenji_dev
     steps:
-      - name: 'Install unrar, optipng, jpegoptim'
-        run: sudo apt install -y unrar optipng jpegoptim
+      - name: 'Install unrar, optipng, jpegoptim, poppler-utils'
+        run: sudo apt install -y unrar optipng jpegoptim poppler-utils
 
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49
