@@ -19,6 +19,16 @@ defmodule Basenji.ComicsTest do
       end)
     end
 
+    test "create_comics/2" do
+      to_assert =
+        build_list(100, :comic)
+        |> Enum.map(&Map.from_struct/1)
+
+      refute Enum.empty?(to_assert)
+      {:ok, comics} = Comics.create_comics(to_assert)
+      assert Enum.count(comics) == 100
+    end
+
     test "from_resource/2" do
       resource_dir = Basenji.Application.get_comics_directory()
 
@@ -65,7 +75,6 @@ defmodule Basenji.ComicsTest do
           title: Faker.Lorem.sentence(),
           author: Faker.Person.name(),
           description: Faker.Lorem.paragraph(2),
-          resource_location: Faker.App.name() <> ".cbz",
           released_year: Enum.random(2015..2025),
           page_count: Enum.random(1..1000)
         }
@@ -74,7 +83,6 @@ defmodule Basenji.ComicsTest do
         assert updated.title == updated_attrs.title
         assert updated.author == updated_attrs.author
         assert updated.description == updated_attrs.description
-        assert updated.resource_location == updated_attrs.resource_location
         assert updated.released_year == updated_attrs.released_year
         assert updated.page_count == updated_attrs.page_count
       end)
@@ -110,6 +118,7 @@ defmodule Basenji.ComicsTest do
         assert comic.released_year > 0
         assert comic.page_count > 0
         assert comic.format
+        assert comic.byte_size > 0
       end)
     end
 

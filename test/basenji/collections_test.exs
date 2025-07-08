@@ -29,8 +29,10 @@ defmodule Basenji.CollectionsTest do
       collection = insert(:collection)
       comics = insert_list(3, :comic)
 
+      {:ok, c_comics} = Collections.add_to_collection(collection, comics)
+
       Enum.each(comics, fn comic ->
-        {:ok, coll_comic} = Collections.add_to_collection(collection, comic)
+        [coll_comic] = c_comics |> Enum.filter(fn c_comic -> c_comic.comic_id == comic.id end)
         assert coll_comic.comic_id == comic.id
         assert coll_comic.collection_id == collection.id
       end)

@@ -20,6 +20,21 @@ defmodule Basenji.Comics do
     |> handle_insert_side_effects()
   end
 
+  def create_comics(attrs_list, _opts \\ []) when is_list(attrs_list) do
+    Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
+      Ecto.Multi.insert(multi, System.monotonic_time(), Comic.changeset(%Comic{}, attrs))
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, transactions} ->
+        comics = Map.values(transactions)
+        handle_insert_side_effects({:ok, comics})
+
+      e ->
+        e
+    end
+  end
+
   def list_comics(opts \\ []) do
     opts = Keyword.merge([repo_opts: []], opts)
 

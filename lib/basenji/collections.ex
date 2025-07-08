@@ -17,6 +17,25 @@ defmodule Basenji.Collections do
     |> handle_insert_side_effects()
   end
 
+  def create_collections(attrs_list, _opts \\ []) when is_list(attrs_list) do
+    Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
+      Ecto.Multi.insert(
+        multi,
+        System.monotonic_time(),
+        Collection.changeset(%Collection{}, attrs)
+      )
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, transactions} ->
+        c_comics = transactions |> Map.values()
+        handle_insert_side_effects({:ok, c_comics})
+
+      e ->
+        e
+    end
+  end
+
   def list_collections(opts \\ []) do
     opts = Keyword.merge([repo_opts: []], opts)
 
@@ -60,11 +79,30 @@ defmodule Basenji.Collections do
 
   def add_to_collection(collection_ref, comic_ref, attrs \\ %{}, opts \\ [])
 
+  def add_to_collection(%Collection{id: collection_id}, comics, attrs, _opts) when is_list(comics) do
+    Enum.reduce(comics, Ecto.Multi.new(), fn comic, multi ->
+      Ecto.Multi.insert(
+        multi,
+        System.monotonic_time(),
+        CollectionComic.changeset(%CollectionComic{collection_id: collection_id, comic_id: comic.id}, attrs)
+      )
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, transactions} ->
+        c_comics = transactions |> Map.values()
+        {:ok, c_comics}
+
+      e ->
+        e
+    end
+  end
+
   def add_to_collection(%Collection{id: collection_id}, %Comic{id: comic_id}, attrs, opts) do
     add_to_collection(collection_id, comic_id, attrs, opts)
   end
 
-  def add_to_collection(collection_id, comic_id, attrs, opts) do
+  def add_to_collection(collection_id, comic_id, attrs, opts) when is_bitstring(collection_id) and is_bitstring(comic_id) do
     opts = Keyword.merge([repo_opts: []], opts)
 
     %CollectionComic{collection_id: collection_id, comic_id: comic_id}

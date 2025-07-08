@@ -214,6 +214,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
     assert attributes["title"]
     assert attributes["insertedAt"]
     assert attributes["updatedAt"]
+    assert attributes["byteSize"]
     true
   end
 end

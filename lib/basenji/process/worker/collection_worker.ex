@@ -39,32 +39,40 @@ defmodule Basenji.Worker.CollectionWorker do
   defp explore_resource(%Collection{resource_location: resource_location} = collection)
        when is_bitstring(resource_location) do
     path = Path.expand(resource_location)
+
     children = Path.wildcard("#{path}/*")
 
-    children
-    |> Enum.each(fn child ->
-      dir? = File.dir?(child)
-      regular? = File.regular?(child)
-      handle_child(collection, child, dir?, regular?)
+    files =
+      Enum.filter(children, fn file ->
+        File.regular?(file) && Reader.find_reader(file)
+      end)
+
+    dirs = Enum.filter(children, fn file -> File.dir?(file) end)
+
+    if !Enum.empty?(files), do: insert_comics(collection, files)
+    if !Enum.empty?(dirs), do: insert_collections(collection, dirs)
+    :ok
+  end
+
+  defp insert_comics(parent_collection, files) when is_list(files) do
+    {:ok, comics} =
+      Enum.map(files, fn file ->
+        %{resource_location: file}
+      end)
+      |> Comics.create_comics()
+
+    Collections.add_to_collection(parent_collection, comics)
+  end
+
+  defp insert_collections(parent_collection, dirs) do
+    Enum.map(dirs, fn dir ->
+      if comics?(dir) do
+        %{title: Path.basename(dir), parent_id: parent_collection.id, resource_location: dir}
+      end
     end)
+    |> Enum.filter(&(&1 != nil))
+    |> Collections.create_collections()
   end
-
-  defp handle_child(parent_collection, child, true, false) do
-    if comics?(child) do
-      title = Path.basename(child)
-      attrs = %{title: title, parent_id: parent_collection.id, resource_location: child}
-      Collections.create_collection(attrs)
-    end
-  end
-
-  defp handle_child(parent_collection, child, false, true) do
-    with {:ok, _info} <- Reader.info(child),
-         {:ok, comic} <- Comics.from_resource(child, %{}) do
-      Collections.add_to_collection(parent_collection, comic)
-    end
-  end
-
-  defp handle_child(_, _, _, _), do: :ok
 
   defp comics?(path) do
     children = Path.wildcard("#{path}/**/*")
@@ -78,12 +86,12 @@ defmodule Basenji.Worker.CollectionWorker do
     end)
   end
 
-  def comic?(path) do
+  defp comic?(path) do
     if File.regular?(path) do
-      Reader.info(path)
+      Reader.find_reader(path)
       |> case do
-        {:ok, _info} -> true
-        _ -> false
+        nil -> false
+        _ -> true
       end
     else
       false

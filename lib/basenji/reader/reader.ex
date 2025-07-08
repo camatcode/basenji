@@ -30,6 +30,7 @@ defmodule Basenji.Reader do
         {:ok, response} = reader.read(location, opts)
         %{entries: entries} = response
         reader.close(response[:file])
+
         %{format: reader.format(), resource_location: location, title: title, page_count: Enum.count(entries)}
       else
         {:error, :unreadable}
@@ -83,7 +84,7 @@ defmodule Basenji.Reader do
     end
   end
 
-  defp find_reader(file_path) do
+  def find_reader(file_path) do
     @readers
     |> Enum.reduce_while(
       nil,
