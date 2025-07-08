@@ -5,25 +5,30 @@ defmodule Basenji.Worker.ComicWorker do
 
   alias __MODULE__, as: ComicWorker
   alias Basenji.Comics
-  alias Basenji.ImageProcessor
   alias Basenji.Reader
+  alias Basenji.Worker.ComicLowWorker
 
   require Logger
 
   def to_job(%{action: :insert, comic_id: comic_id}) do
-    [:extract_metadata, :snapshot]
-    |> Enum.map(&to_job(%{action: &1, comic_id: comic_id}))
+    [
+      to_job(%{action: :extract_metadata, comic_id: comic_id}),
+      to_low_job(%{action: :snapshot, comic_id: comic_id}, schedule_in: 10)
+    ]
   end
 
-  def to_job(args) do
-    ComicWorker.new(args)
+  def to_low_job(args, opts \\ []) do
+    ComicLowWorker.new(args, opts)
+  end
+
+  def to_job(args, opts \\ []) do
+    ComicWorker.new(args, opts)
   end
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "comic_id" => comic_id} = args}) do
     case action do
       "extract_metadata" -> extract_metadata(comic_id, args)
-      "snapshot" -> snapshot(comic_id, args)
       "delete" -> delete(args)
       _ -> {:error, "Unknown action #{action}"}
     end
@@ -38,13 +43,10 @@ defmodule Basenji.Worker.ComicWorker do
          {:ok, attrs} <- Reader.info(comic.resource_location) do
       Comics.update_comic(comic, attrs)
     end
-  end
-
-  defp snapshot(comic_id, _args) do
-    with {:ok, comic} <- Comics.get_comic(comic_id),
-         {:ok, bytes, _mime} = Comics.get_page(comic, 1),
-         {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 600, 600) do
-      Comics.update_comic(comic, %{image_preview: preview_bytes})
+    |> case do
+      {:error, :unreadable} -> Comics.delete_comic(comic_id)
+      {:error, :no_reader_found} -> Comics.delete_comic(comic_id)
+      resp -> resp
     end
   end
 

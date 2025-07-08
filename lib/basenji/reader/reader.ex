@@ -80,7 +80,7 @@ defmodule Basenji.Reader do
       read_result = reader.read(file_path, opts)
       if opts[:optimize], do: optimize_entries(read_result), else: read_result
     else
-      {:error, "No Reader found for: #{file_path}. Unknown file type"}
+      {:error, :no_reader_found}
     end
   end
 
