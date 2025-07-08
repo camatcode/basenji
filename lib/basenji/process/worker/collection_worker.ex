@@ -41,7 +41,7 @@ defmodule Basenji.Worker.CollectionWorker do
     children = Path.wildcard("#{path}/*")
 
     files = Enum.filter(children, &File.regular?/1)
-    dirs = Enum.filter(children, &File.dir?/1)
+    dirs = children -- files
 
     if Enum.empty?(files) && Enum.empty?(dirs) do
       Collections.delete_collection(collection)
