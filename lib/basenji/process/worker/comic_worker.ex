@@ -35,8 +35,8 @@ defmodule Basenji.Worker.ComicWorker do
 
   defp extract_metadata(comic_id, _args) do
     with {:ok, comic} <- Comics.get_comic(comic_id),
-         {:ok, info} <- Reader.info(comic.resource_location) do
-      Comics.update_comic(comic, info)
+         {:ok, attrs} <- Reader.info(comic.resource_location) do
+      Comics.update_comic(comic, attrs)
     end
   end
 

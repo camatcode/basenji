@@ -7,38 +7,32 @@ defmodule Basenji.Collections do
   alias Basenji.Collection
   alias Basenji.CollectionComic
   alias Basenji.Comic
-  alias Basenji.Comics
+  alias Basenji.Processor
   alias Basenji.Repo
 
   def create_collection(attrs, opts \\ []) do
     opts = Keyword.merge([repo_opts: []], opts)
 
-    %Collection{collection_comics: []}
-    |> Collection.changeset(attrs)
-    |> Repo.insert(opts[:repo_opts])
+    insert_collection(attrs, opts)
+    |> handle_insert_side_effects()
   end
 
-  def from_resource(path, attrs, opts \\ []) do
-    path = Path.expand(path)
+  def create_collections(attrs_list, _opts \\ []) when is_list(attrs_list) do
+    Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
+      Ecto.Multi.insert(
+        multi,
+        System.monotonic_time(),
+        Collection.changeset(%Collection{}, attrs)
+      )
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, transactions} ->
+        c_comics = transactions |> Map.values()
+        handle_insert_side_effects({:ok, c_comics})
 
-    comics =
-      Path.wildcard("#{path}/**/*.cb*")
-      |> Enum.map(fn file ->
-        Comics.from_resource(file, %{})
-        |> case do
-          {:ok, created} ->
-            created
-
-          _ ->
-            nil
-        end
-      end)
-      |> Enum.filter(&Function.identity/1)
-
-    with {:ok, collection} <- create_collection(attrs, opts) do
-      Enum.each(comics, fn c -> add_to_collection(collection, c) end)
-      opts = Keyword.put(opts, :preload, collection_comics: [:comic], parent: [])
-      get_collection(collection.id, opts)
+      e ->
+        e
     end
   end
 
@@ -85,11 +79,30 @@ defmodule Basenji.Collections do
 
   def add_to_collection(collection_ref, comic_ref, attrs \\ %{}, opts \\ [])
 
+  def add_to_collection(%Collection{id: collection_id}, comics, attrs, _opts) when is_list(comics) do
+    Enum.reduce(comics, Ecto.Multi.new(), fn comic, multi ->
+      Ecto.Multi.insert(
+        multi,
+        System.monotonic_time(),
+        CollectionComic.changeset(%CollectionComic{collection_id: collection_id, comic_id: comic.id}, attrs)
+      )
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, transactions} ->
+        c_comics = transactions |> Map.values()
+        {:ok, c_comics}
+
+      e ->
+        e
+    end
+  end
+
   def add_to_collection(%Collection{id: collection_id}, %Comic{id: comic_id}, attrs, opts) do
     add_to_collection(collection_id, comic_id, attrs, opts)
   end
 
-  def add_to_collection(collection_id, comic_id, attrs, opts) do
+  def add_to_collection(collection_id, comic_id, attrs, opts) when is_bitstring(collection_id) and is_bitstring(comic_id) do
     opts = Keyword.merge([repo_opts: []], opts)
 
     %CollectionComic{collection_id: collection_id, comic_id: comic_id}
@@ -129,6 +142,26 @@ defmodule Basenji.Collections do
       col_comic -> remove_from_collection(col_comic)
     end
   end
+
+  defp insert_collection(attrs, opts) do
+    with {:ok, collection} <-
+           %Collection{collection_comics: []}
+           |> Collection.changeset(attrs)
+           |> Repo.insert(opts[:repo_opts]) do
+      if opts[:preload] do
+        get_collection(collection.id, opts)
+      else
+        {:ok, collection}
+      end
+    end
+  end
+
+  defp handle_insert_side_effects({:ok, collection}) do
+    Processor.process(collection, [:insert])
+    {:ok, collection}
+  end
+
+  defp handle_insert_side_effects(result), do: result
 
   defp reduce_collection_opts(query, opts) do
     {query, opts} = reduce_opts(query, opts)

@@ -34,6 +34,8 @@ defmodule Basenji.Factory.ComicFactory do
         }
         |> merge_attributes(attrs)
         |> evaluate_lazy_attributes()
+        |> Basenji.Comic.changeset(%{})
+        |> Ecto.Changeset.apply_action!(:validate)
       end
     end
   end

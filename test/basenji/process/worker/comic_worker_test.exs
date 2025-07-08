@@ -10,7 +10,7 @@ defmodule Basenji.Worker.ComicWorkerTest do
 
   test "extract_metadata" do
     %{resource_location: loc} = build(:comic)
-    {:ok, %{title: nil, page_count: nil, format: nil} = comic} = Comics.create_comic(%{resource_location: loc})
+    {:ok, %{title: nil, page_count: -1, format: nil} = comic} = Comics.create_comic(%{resource_location: loc})
     %{failure: 0} = TestHelper.drain_queue(:comic)
 
     {:ok, comic} = Comics.get_comic(comic.id)
@@ -21,7 +21,7 @@ defmodule Basenji.Worker.ComicWorkerTest do
 
   test "snapshot" do
     %{resource_location: loc} = build(:comic)
-    {:ok, %{title: nil, page_count: nil, format: nil} = comic} = Comics.create_comic(%{resource_location: loc})
+    {:ok, %{image_preview: nil} = comic} = Comics.create_comic(%{resource_location: loc})
     %{failure: 0} = TestHelper.drain_queue(:comic)
     {:ok, comic} = Comics.get_comic(comic.id)
     assert byte_size(comic.image_preview) > 0
