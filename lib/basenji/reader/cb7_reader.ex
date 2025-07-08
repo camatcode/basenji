@@ -5,6 +5,8 @@ defmodule Basenji.Reader.CB7Reader do
 
   def format, do: :cb7
 
+  def file_extensions, do: ["cb7"]
+
   def close(_any), do: :ok
 
   def get_magic_numbers, do: [%{offset: 0, magic: [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C]}]

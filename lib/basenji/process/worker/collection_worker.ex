@@ -30,8 +30,8 @@ defmodule Basenji.Worker.CollectionWorker do
   end
 
   defp explore_resource(collection_id, _args) do
-    with {:ok, collection} <- Collections.get_collection(collection_id) do
-      explore_resource(collection)
+    with {:ok, %{resource_location: resource_location} = collection} <- Collections.get_collection(collection_id) do
+      if resource_location, do: explore_resource(collection), else: :ok
     end
   end
 

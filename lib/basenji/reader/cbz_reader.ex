@@ -4,6 +4,8 @@ defmodule Basenji.Reader.CBZReader do
 
   def format, do: :cbz
 
+  def file_extensions, do: ["cbz"]
+
   def get_magic_numbers, do: [%{offset: 0, magic: [0x50, 0x4B, 0x03, 0x04]}]
 
   # opts[:close] - will close the stream after reading

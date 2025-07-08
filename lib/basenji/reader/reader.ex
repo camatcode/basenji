@@ -91,7 +91,9 @@ defmodule Basenji.Reader do
     |> Enum.reduce_while(
       nil,
       fn reader, _acc ->
-        if matches_magic?(reader, file_path), do: {:halt, reader}, else: {:cont, nil}
+        if matches_extension?(reader, file_path) && matches_magic?(reader, file_path),
+          do: {:halt, reader},
+          else: {:cont, nil}
       end
     )
   end
@@ -109,6 +111,15 @@ defmodule Basenji.Reader do
 
       {:ok, stream}
     end
+  end
+
+  def matches_extension?(reader, filepath) do
+    file_ext = Path.extname(filepath) |> String.downcase()
+
+    reader.file_extensions()
+    |> Enum.reduce_while(false, fn ext, acc ->
+      if String.ends_with?(file_ext, ext), do: {:halt, true}, else: {:cont, acc}
+    end)
   end
 
   def matches_magic?(reader, file_path) do

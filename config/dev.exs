@@ -17,7 +17,7 @@ config :basenji, Basenji.Repo,
   # Watch static and templates for browser reloading.
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  pool_size: 10
+  pool_size: 15
 
 config :basenji, BasenjiWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],

@@ -26,5 +26,9 @@ defmodule Basenji.Worker.ComicLowWorker do
          {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 600, 600) do
       Comics.update_comic(comic, %{image_preview: preview_bytes})
     end
+    |> case do
+      {:error, :not_found} -> :ok
+      other -> other
+    end
   end
 end

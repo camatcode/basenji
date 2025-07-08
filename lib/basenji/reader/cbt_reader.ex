@@ -6,6 +6,8 @@ defmodule Basenji.Reader.CBTReader do
 
   def close(_any), do: :ok
 
+  def file_extensions, do: ["cbt"]
+
   def get_magic_numbers, do: [%{offset: 257, magic: ~c"ustar"}]
 
   def get_entries(cbz_file_path, _opts \\ []) do
