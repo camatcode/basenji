@@ -5,6 +5,7 @@ defmodule Basenji.Reader do
   alias Basenji.Reader.CBRReader
   alias Basenji.Reader.CBTReader
   alias Basenji.Reader.CBZReader
+  alias Basenji.Reader.PDFReader
   alias Basenji.Reader.Process.JPEGOptimizer
   alias Basenji.Reader.Process.PNGOptimizer
   alias Porcelain.Result
@@ -13,7 +14,8 @@ defmodule Basenji.Reader do
     CBZReader,
     CBRReader,
     CB7Reader,
-    CBTReader
+    CBTReader,
+    PDFReader
   ]
 
   @optimizers [

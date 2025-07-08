@@ -4,7 +4,7 @@ defmodule Basenji.Factory.ComicFactory do
   defmacro __using__(_opts) do
     quote do
       def comic_factory(attrs) do
-        format = Map.get(attrs, :format, Enum.random([:cbz, :cbt, :cb7, :cbr]))
+        format = Map.get(attrs, :format, Enum.random(Basenji.Comic.formats()))
 
         resource_dir = Basenji.Application.get_comics_directory()
 

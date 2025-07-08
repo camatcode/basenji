@@ -104,6 +104,7 @@ defmodule Basenji.MixProject do
       {:oban, "~> 2.19"},
       {:oban_web, "~> 2.11"},
       {:image, "~> 0.61"},
+      {:proper_case, "~> 1.3"},
       # phx deps
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},

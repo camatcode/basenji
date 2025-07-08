@@ -8,7 +8,7 @@ defmodule Basenji.ReaderTest do
   test "info" do
     examples = Basenji.Application.get_comics_directory()
 
-    files = Path.wildcard("#{examples}/**/*.cb*")
+    files = Path.wildcard("#{examples}/**/*.cb*") ++ Path.wildcard("#{examples}/**/*.pdf")
     refute Enum.empty?(files)
 
     files
@@ -24,7 +24,7 @@ defmodule Basenji.ReaderTest do
   test "stream pages" do
     examples = Basenji.Application.get_comics_directory()
 
-    files = Path.wildcard("#{examples}/**/*.cb*")
+    files = Path.wildcard("#{examples}/**/*.cb*") ++ Path.wildcard("#{examples}/**/*.pdf")
     refute Enum.empty?(files)
 
     files
@@ -44,7 +44,7 @@ defmodule Basenji.ReaderTest do
 
     examples = Basenji.Application.get_comics_directory()
 
-    files = Path.wildcard("#{examples}/**/*.cb*")
+    files = Path.wildcard("#{examples}/**/*.cb*") ++ Path.wildcard("#{examples}/**/*.pdf")
     refute Enum.empty?(files)
 
     files
