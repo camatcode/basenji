@@ -50,7 +50,10 @@
 * ✅ Group collections of comics together
 * ✅ CRUD, filtering, sorting
 * ✅ JSON:API
-* 🚧 In Progress: Async processing to extract metadata, create snapshots, handle comic life cycle
+* ✅ Powerful async processing
+  * ✅ Explores deeply nested collections of comics
+  * ✅ Creates image previews, extracts metadata, handles the comic life cycle
+  * 🚧 Stress tested with 31.9 GB of comics with 1,276 items
 * 🚧 Rest is in development
 
 ### Attributions
