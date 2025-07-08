@@ -52,8 +52,8 @@
 * ✅ Powerful background processing that
   * ✅ Organizes deeply nested collections of comics
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
-  * 🚧 WIP: Stores optimized versions to save you disk space 
-  * 🚧 WIP: Stress tested with 31.9 GB of comics with 1,276 items
+  * ✅ Stress tested with 31.9 GB of comics with 1,276 items
+  * 🚧 WIP: Stores optimized versions to save you disk space
 * 🚧 Rest is in development
 
 ### Attributions

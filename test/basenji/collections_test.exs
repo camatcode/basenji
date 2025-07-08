@@ -53,7 +53,8 @@ defmodule Basenji.CollectionsTest do
       TestHelper.drain_queues([:collection, :comic])
 
       made_collections =
-        Collections.list_collections(preload: [:collection_comics]) |> Enum.filter(fn coll -> coll.parent_id end)
+        Collections.list_collections(preload: [:collection_comics])
+        |> Enum.filter(fn coll -> coll.parent_id && not Enum.empty?(coll.collection_comics) end)
 
       assert Enum.count(made_collections) > 3
 

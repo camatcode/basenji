@@ -31,7 +31,7 @@ config :basenji, BasenjiWeb.Endpoint,
 
 config :basenji, Oban,
   engine: Oban.Engines.Basic,
-  queues: [comic: 20, collection: 10],
+  queues: [comic: 50, comic_low: 20, collection: 25],
   repo: Basenji.Repo
 
 config :basenji,

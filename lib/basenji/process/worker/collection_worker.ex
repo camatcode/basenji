@@ -7,7 +7,6 @@ defmodule Basenji.Worker.CollectionWorker do
   alias Basenji.Collection
   alias Basenji.Collections
   alias Basenji.Comics
-  alias Basenji.Reader
 
   require Logger
 
@@ -39,19 +38,17 @@ defmodule Basenji.Worker.CollectionWorker do
   defp explore_resource(%Collection{resource_location: resource_location} = collection)
        when is_bitstring(resource_location) do
     path = Path.expand(resource_location)
-
     children = Path.wildcard("#{path}/*")
 
-    files =
-      Enum.filter(children, fn file ->
-        File.regular?(file) && Reader.find_reader(file)
-      end)
+    files = Enum.filter(children, &File.regular?/1)
+    dirs = children -- files
 
-    dirs = Enum.filter(children, fn file -> File.dir?(file) end)
-
-    if !Enum.empty?(files), do: insert_comics(collection, files)
-    if !Enum.empty?(dirs), do: insert_collections(collection, dirs)
-    :ok
+    if Enum.empty?(files) && Enum.empty?(dirs) do
+      Collections.delete_collection(collection)
+    else
+      insert_comics(collection, files)
+      if Enum.empty?(dirs), do: :ok, else: insert_collections(collection, dirs)
+    end
   end
 
   defp insert_comics(parent_collection, files) when is_list(files) do
@@ -66,35 +63,9 @@ defmodule Basenji.Worker.CollectionWorker do
 
   defp insert_collections(parent_collection, dirs) do
     Enum.map(dirs, fn dir ->
-      if comics?(dir) do
-        %{title: Path.basename(dir), parent_id: parent_collection.id, resource_location: dir}
-      end
+      %{title: Path.basename(dir), parent_id: parent_collection.id, resource_location: dir}
     end)
     |> Enum.filter(&(&1 != nil))
     |> Collections.create_collections()
-  end
-
-  defp comics?(path) do
-    children = Path.wildcard("#{path}/**/*")
-
-    Enum.reduce_while(children, false, fn child, acc ->
-      if comic?(child) do
-        {:halt, true}
-      else
-        {:cont, acc}
-      end
-    end)
-  end
-
-  defp comic?(path) do
-    if File.regular?(path) do
-      Reader.find_reader(path)
-      |> case do
-        nil -> false
-        _ -> true
-      end
-    else
-      false
-    end
   end
 end
