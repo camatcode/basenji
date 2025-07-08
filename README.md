@@ -51,7 +51,7 @@
 * ✅ CRUD, filtering, sorting
 * ✅ JSON:API
 * ✅ Powerful async processing
-  * ✅ Explores deeply nested collections of comics
+  * ✅ Organizes deeply nested collections of comics
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
   * 🚧 Stress tested with 31.9 GB of comics with 1,276 items
 * 🚧 Rest is in development
