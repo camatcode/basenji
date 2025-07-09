@@ -3,25 +3,36 @@ defmodule Basenji.Factory.ComicFactory do
 
   defmacro __using__(_opts) do
     quote do
-      def comic_factory(attrs) do
-        format = Map.get(attrs, :format, Enum.random(Basenji.Comic.formats()))
+      use ExUnit.Case
 
+      defp make_resource_location(%{resource_location: rec_loc}, format) when is_bitstring(rec_loc) do
+        {:ok, %{entries: entries}} = Basenji.Reader.read(rec_loc)
+        page_count = Enum.count(entries)
+        {rec_loc, page_count}
+      end
+
+      defp make_resource_location(_attrs, format) do
         resource_dir = Basenji.Application.get_comics_directory()
 
         files = Path.wildcard("#{resource_dir}/**/*.#{format}")
+        random_file = Enum.random(files)
 
-        resource_location =
-          Map.get(attrs, :resource_location, Enum.random(files))
+        tmp = Path.join(System.tmp_dir!(), Path.dirname(random_file) <> "#{System.monotonic_time()}")
+        File.mkdir_p!(tmp)
+        rec_loc = Path.join(tmp, Path.basename(random_file))
+        File.cp!(random_file, rec_loc)
+        on_exit(fn -> File.rm_rf!(tmp) end)
 
-        page_count =
-          Map.get(attrs, :page_count, fn ->
-            if String.starts_with?(resource_location, resource_dir) do
-              {:ok, %{entries: entries}} = Basenji.Reader.read(resource_location)
-              Enum.count(entries)
-            else
-              Enum.random(1..1000)
-            end
-          end)
+        {:ok, %{entries: entries}} = Basenji.Reader.read(rec_loc)
+        page_count = Enum.count(entries)
+
+        {rec_loc, page_count}
+      end
+
+      def comic_factory(attrs) do
+        format = Map.get(attrs, :format, Enum.random(Basenji.Comic.formats()))
+
+        {resource_location, page_count} = make_resource_location(attrs, format)
 
         %Basenji.Comic{
           title: Faker.Lorem.sentence(),

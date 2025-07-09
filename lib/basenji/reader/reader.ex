@@ -23,6 +23,24 @@ defmodule Basenji.Reader do
     PNGOptimizer
   ]
 
+  @image_extensions [
+    "jpeg",
+    "jpg",
+    "jpe",
+    "jif",
+    "jfi",
+    "jfif",
+    "heif",
+    "heic",
+    "png",
+    "gif",
+    "svg",
+    "eps",
+    "webp",
+    "tiff",
+    "tif"
+  ]
+
   def info(location, opts \\ []) do
     reader = find_reader(location)
 
@@ -72,6 +90,13 @@ defmodule Basenji.Reader do
   def reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
 
   def reject_directories(e), do: Enum.reject(e, &(Path.extname(&1.file_name) == ""))
+
+  def reject_non_image(e) do
+    Enum.filter(e, fn ent ->
+      ext = Path.extname(ent.file_name) |> String.replace(".", "") |> String.downcase()
+      ext in @image_extensions
+    end)
+  end
 
   def read(file_path, opts \\ []) do
     opts = Keyword.merge([optimize: false], opts)

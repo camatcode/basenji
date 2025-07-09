@@ -50,6 +50,7 @@ defmodule Basenji.Collection do
     |> validate_required([:title])
     |> foreign_key_constraint(:parent_id)
     |> validate_not_self_parent()
+    |> unique_constraint([:title])
   end
 
   defp validate_not_self_parent(changeset) do

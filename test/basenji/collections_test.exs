@@ -23,6 +23,25 @@ defmodule Basenji.CollectionsTest do
         assert coll_comic.comic_id == comic.id
         assert coll_comic.collection_id == collection.id
       end)
+
+      # test unique constraint
+      {:ok, already_made} = Collections.create_collection(attrs)
+      assert collection.id == already_made.id
+    end
+
+    test "create collections" do
+      attrs_list = [
+        %{title: Faker.Lorem.sentence(), description: Faker.Lorem.paragraph(2)},
+        %{title: Faker.Lorem.sentence(), description: Faker.Lorem.paragraph(2)}
+      ]
+
+      {:ok, collections} = Collections.create_collections(attrs_list)
+      assert Enum.count(collections) == 2
+
+      {:ok, already_made} = Collections.create_collections(attrs_list)
+      assert Enum.count(already_made) == 2
+
+      assert 2 == Collections.list_collections() |> Enum.count()
     end
 
     test "get" do

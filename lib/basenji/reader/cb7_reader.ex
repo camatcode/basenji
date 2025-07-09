@@ -24,6 +24,7 @@ defmodule Basenji.Reader.CB7Reader do
         |> sort_file_names()
         |> reject_macos_preview()
         |> reject_directories()
+        |> reject_non_image()
 
       {:ok, %{entries: file_entries}}
     end
