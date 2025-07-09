@@ -3,6 +3,7 @@ defmodule BasenjiWeb.Router do
 
   import Oban.Web.Router
 
+  alias Absinthe.Plug.GraphiQL
   alias Plug.Swoosh.MailboxPreview
 
   pipeline :browser do
@@ -33,6 +34,19 @@ defmodule BasenjiWeb.Router do
     pipe_through :api
     get "/comics/:id/page/:page", ComicsController, :get_page
     get "/comics/:id/preview", ComicsController, :get_preview
+  end
+
+  # GraphQL API
+  scope "/api" do
+    pipe_through :api
+
+    forward "/graphql", Absinthe.Plug, schema: BasenjiWeb.Schema
+
+    if Application.compile_env(:basenji, :dev_routes) do
+      forward "/graphiql", GraphiQL,
+        schema: BasenjiWeb.Schema,
+        interface: :simple
+    end
   end
 
   # JSON:API

@@ -90,6 +90,7 @@ defmodule Basenji.MixProject do
   defp deps do
     [
       # general deps
+      {:tidewave, "~> 0.1", only: :dev},
       {:ex_doc, "~> 0.37", only: :dev, runtime: false},
       {:ex_license, "~> 0.1", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -100,6 +101,8 @@ defmodule Basenji.MixProject do
       {:excoveralls, "~> 0.18", only: [:test]},
       # api deps
       {:jsonapi_plug, "~> 2.0"},
+      {:absinthe, "~> 1.7"},
+      {:absinthe_plug, "~> 1.5"},
       # basenji deps
       {:oban, "~> 2.19"},
       {:oban_web, "~> 2.11"},
