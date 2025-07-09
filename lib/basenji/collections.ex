@@ -187,10 +187,9 @@ defmodule Basenji.Collections do
         query
 
       {:search, search}, query ->
-        term = "%#{search}%"
+        search_term = "%#{search}%"
 
-        where(query, [c], ilike(c.title, ^term))
-        |> or_where([c], ilike(c.description, ^term))
+        where(query, [c], ilike(fragment("? || ' ' || COALESCE(?, '')", c.title, c.description), ^search_term))
 
       {:title, search}, query ->
         term = "%#{search}%"
