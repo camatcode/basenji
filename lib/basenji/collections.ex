@@ -22,7 +22,8 @@ defmodule Basenji.Collections do
       Ecto.Multi.insert(
         multi,
         System.monotonic_time(),
-        Collection.changeset(%Collection{}, attrs)
+        Collection.changeset(%Collection{}, attrs),
+        on_conflict: :nothing
       )
     end)
     |> Repo.transaction()
@@ -145,13 +146,20 @@ defmodule Basenji.Collections do
 
   defp insert_collection(attrs, opts) do
     with {:ok, collection} <-
-           %Collection{collection_comics: []}
+           %Collection{}
            |> Collection.changeset(attrs)
-           |> Repo.insert(opts[:repo_opts]) do
-      if opts[:preload] do
-        get_collection(collection.id, opts)
-      else
-        {:ok, collection}
+           |> Repo.insert(on_conflict: :nothing) do
+      get_collection(collection.id, opts)
+      |> case do
+        {:error, :not_found} ->
+          collection =
+            list_collections(title: collection.title)
+            |> Enum.at(0)
+
+          if collection, do: {:ok, collection}, else: {:error, :not_found}
+
+        other ->
+          other
       end
     end
   end

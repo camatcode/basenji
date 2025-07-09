@@ -22,7 +22,7 @@ defmodule Basenji.Comics do
 
   def create_comics(attrs_list, _opts \\ []) when is_list(attrs_list) do
     Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
-      Ecto.Multi.insert(multi, System.monotonic_time(), Comic.changeset(%Comic{}, attrs))
+      Ecto.Multi.insert(multi, System.monotonic_time(), Comic.changeset(%Comic{}, attrs), on_conflict: :nothing)
     end)
     |> Repo.transaction()
     |> case do
@@ -152,11 +152,18 @@ defmodule Basenji.Comics do
     with {:ok, comic} <-
            %Comic{}
            |> Comic.changeset(attrs)
-           |> Repo.insert(opts[:repo_opts]) do
-      if opts[:preload] do
-        get_comic(comic.id, opts)
-      else
-        {:ok, comic}
+           |> Repo.insert(on_conflict: :nothing) do
+      get_comic(comic.id, opts)
+      |> case do
+        {:error, :not_found} ->
+          comic =
+            list_comics(resource_location: comic.resource_location)
+            |> Enum.at(0)
+
+          if comic, do: {:ok, comic}, else: {:error, :not_found}
+
+        other ->
+          other
       end
     end
   end

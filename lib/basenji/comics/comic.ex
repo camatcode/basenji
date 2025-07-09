@@ -69,6 +69,7 @@ defmodule Basenji.Comic do
     |> validate_length(:author, max: 255, min: 3)
     |> validate_number(:released_year, greater_than: 0)
     |> validate_number(:page_count, greater_than: 0)
+    |> unique_constraint([:resource_location])
   end
 
   defp validate_resource_location(changeset) do

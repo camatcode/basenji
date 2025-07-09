@@ -8,15 +8,27 @@ defmodule Basenji.ComicsTest do
       to_assert = build_list(100, :comic)
       refute Enum.empty?(to_assert)
 
-      Enum.each(to_assert, fn comic ->
-        {:ok, created} =
-          comic
-          |> Map.from_struct()
-          |> Comics.create_comic()
+      comics =
+        Enum.map(to_assert, fn comic ->
+          {:ok, created} =
+            comic
+            |> Map.from_struct()
+            |> Comics.create_comic()
 
-        assert created.id
-        assert created.title == comic.title
-      end)
+          assert created.id
+          assert created.title == comic.title
+
+          created
+        end)
+
+      # test unique constraint
+      already_inserted_comic_id = hd(comics).id
+      [already_inserted | _] = to_assert
+
+      {:ok, %{id: ^already_inserted_comic_id}} =
+        already_inserted
+        |> Map.from_struct()
+        |> Comics.create_comic()
     end
 
     test "create_comics/2" do
@@ -27,6 +39,12 @@ defmodule Basenji.ComicsTest do
       refute Enum.empty?(to_assert)
       {:ok, comics} = Comics.create_comics(to_assert)
       assert Enum.count(comics) == 100
+
+      # test unique constraint
+      {:ok, inserted_again} = Comics.create_comics(to_assert)
+      assert Enum.count(inserted_again) == 100
+
+      assert 100 == Comics.list_comics() |> Enum.count()
     end
 
     test "from_resource/2" do
