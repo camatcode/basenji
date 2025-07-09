@@ -29,8 +29,12 @@ defmodule Basenji.Collections do
     |> Repo.transaction()
     |> case do
       {:ok, transactions} ->
-        c_comics = transactions |> Map.values()
-        handle_insert_side_effects({:ok, c_comics})
+        collections =
+          transactions
+          |> Map.values()
+          |> Enum.map(fn collection -> list_collections(title: collection.title) |> hd() end)
+
+        handle_insert_side_effects({:ok, collections})
 
       e ->
         e
@@ -85,7 +89,8 @@ defmodule Basenji.Collections do
       Ecto.Multi.insert(
         multi,
         System.monotonic_time(),
-        CollectionComic.changeset(%CollectionComic{collection_id: collection_id, comic_id: comic.id}, attrs)
+        CollectionComic.changeset(%CollectionComic{collection_id: collection_id, comic_id: comic.id}, attrs),
+        on_conflict: :nothing
       )
     end)
     |> Repo.transaction()
@@ -104,7 +109,7 @@ defmodule Basenji.Collections do
   end
 
   def add_to_collection(collection_id, comic_id, attrs, opts) when is_bitstring(collection_id) and is_bitstring(comic_id) do
-    opts = Keyword.merge([repo_opts: []], opts)
+    opts = Keyword.merge([repo_opts: [on_conflict: :nothing]], opts)
 
     %CollectionComic{collection_id: collection_id, comic_id: comic_id}
     |> Basenji.CollectionComic.changeset(attrs)

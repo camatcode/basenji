@@ -4,6 +4,7 @@ defmodule Basenji.Worker.ComicWorker do
   use Oban.Worker, queue: :comic, unique: [period: 30], max_attempts: 3
 
   alias __MODULE__, as: ComicWorker
+  alias Basenji.Comic
   alias Basenji.Comics
   alias Basenji.Reader
   alias Basenji.Worker.ComicLowWorker
@@ -38,15 +39,22 @@ defmodule Basenji.Worker.ComicWorker do
       reraise e, __STACKTRACE__
   end
 
-  defp extract_metadata(comic_id, _args) do
-    with {:ok, comic} <- Comics.get_comic(comic_id),
-         {:ok, attrs} <- Reader.info(comic.resource_location) do
+  defp extract_metadata(%Comic{} = comic, _args) do
+    with {:ok, attrs} <- Reader.info(comic.resource_location) do
       Comics.update_comic(comic, attrs)
     end
     |> case do
-      {:error, :unreadable} -> Comics.delete_comic(comic_id)
-      {:error, :no_reader_found} -> Comics.delete_comic(comic_id)
+      {:error, :unreadable} -> Comics.delete_comic(comic.id)
+      {:error, :no_reader_found} -> Comics.delete_comic(comic.id)
       resp -> resp
+    end
+  end
+
+  defp extract_metadata(comic_id, args) do
+    Comics.get_comic(comic_id)
+    |> case do
+      {:ok, %{page_count: -1} = comic} -> extract_metadata(comic, args)
+      _ -> :ok
     end
   end
 

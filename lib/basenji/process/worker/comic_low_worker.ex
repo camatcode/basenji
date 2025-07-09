@@ -10,9 +10,16 @@ defmodule Basenji.Worker.ComicLowWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "comic_id" => comic_id} = args}) do
-    case action do
-      "snapshot" -> snapshot(comic_id, args)
-      _ -> {:error, "Unknown action #{action}"}
+    Comics.get_comic(comic_id)
+    |> case do
+      {:ok, comic} ->
+        case action do
+          "snapshot" -> snapshot(comic, args)
+          _ -> {:error, "Unknown action #{action}"}
+        end
+
+      _ ->
+        :ok
     end
   rescue
     e ->
@@ -20,15 +27,12 @@ defmodule Basenji.Worker.ComicLowWorker do
       reraise e, __STACKTRACE__
   end
 
-  defp snapshot(comic_id, _args) do
-    with {:ok, comic} <- Comics.get_comic(comic_id),
-         {:ok, bytes, _mime} = Comics.get_page(comic, 1),
+  defp snapshot(%{image_preview: preview}, _args) when is_binary(preview), do: :ok
+
+  defp snapshot(comic, _args) do
+    with {:ok, bytes, _mime} <- Comics.get_page(comic, 1),
          {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 600, 600) do
       Comics.update_comic(comic, %{image_preview: preview_bytes})
-    end
-    |> case do
-      {:error, :not_found} -> :ok
-      other -> other
     end
   end
 end

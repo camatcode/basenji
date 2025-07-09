@@ -16,6 +16,7 @@ defmodule Basenji.Reader.CBZReader do
         |> sort_file_names()
         |> reject_macos_preview()
         |> reject_directories()
+        |> reject_non_image()
 
       if opts[:close] do
         close(unzip)

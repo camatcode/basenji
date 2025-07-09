@@ -18,6 +18,7 @@ defmodule Basenji.Reader.CBTReader do
         |> sort_file_names()
         |> reject_macos_preview()
         |> reject_directories()
+        |> reject_non_image()
 
       {:ok, %{entries: file_entries}}
     end

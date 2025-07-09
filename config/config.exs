@@ -32,7 +32,12 @@ config :basenji, BasenjiWeb.Endpoint,
 config :basenji, Oban,
   engine: Oban.Engines.Basic,
   queues: [comic: 50, comic_low: 5, collection: 25],
-  repo: Basenji.Repo
+  repo: Basenji.Repo,
+  plugins: [
+    {Oban.Plugins.Pruner, max_age: to_timeout(hour: 6)},
+    # Rescue jobs that have been running for more than 5 days
+    {Oban.Plugins.Lifeline, rescue_after: to_timeout(minute: 60 * 24 * 5)}
+  ]
 
 config :basenji,
   ecto_repos: [Basenji.Repo],
