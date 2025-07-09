@@ -4,6 +4,7 @@ defmodule Basenji.Repo.Migrations.AddGinToComics do
   def up do
     execute "CREATE INDEX comics_title_gin_idx ON comics USING gin(title gin_trgm_ops)"
     execute "CREATE INDEX comics_author_gin_idx ON comics USING gin(author gin_trgm_ops)"
+
     execute "CREATE INDEX comics_description_gin_idx ON comics USING gin(description gin_trgm_ops)"
 
     execute """

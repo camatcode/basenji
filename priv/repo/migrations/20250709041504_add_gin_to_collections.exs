@@ -3,6 +3,7 @@ defmodule Basenji.Repo.Migrations.AddGinToCollections do
 
   def up do
     execute "CREATE INDEX collections_title_gin_idx ON collections USING gin(title gin_trgm_ops)"
+
     execute "CREATE INDEX collections_description_gin_idx ON collections USING gin(description gin_trgm_ops)"
 
     execute """
