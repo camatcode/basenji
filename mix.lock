@@ -77,5 +77,5 @@
   "websock": {:hex, :websock, "0.5.3", "2f69a6ebe810328555b6fe5c831a851f485e303a7c8ce6c5f675abeb20ebdadc", [:mix], [], "hexpm", "6105453d7fac22c712ad66fab1d45abdf049868f253cf719b625151460b8b453"},
   "websock_adapter": {:hex, :websock_adapter, "0.5.8", "3b97dc94e407e2d1fc666b2fb9acf6be81a1798a2602294aac000260a7c4a47d", [:mix], [{:bandit, ">= 0.6.0", [hex: :bandit, repo: "hexpm", optional: true]}, {:plug, "~> 1.14", [hex: :plug, repo: "hexpm", optional: false]}, {:plug_cowboy, "~> 2.6", [hex: :plug_cowboy, repo: "hexpm", optional: true]}, {:websock, "~> 0.5", [hex: :websock, repo: "hexpm", optional: false]}], "hexpm", "315b9a1865552212b5f35140ad194e67ce31af45bcee443d4ecb96b5fd3f3782"},
   "xxh3": {:hex, :xxh3, "0.3.6", "79f4ac59120dc18cedcd1c31db0108141e1b07bd4b64655400b24a7f11386994", [:rebar3], [], "hexpm", "6009d066bed9a0327f01227bf22409740b134a14301307e6c96e57c1b6464dac"},
-  "zstream": {:hex, :zstream, "0.6.6", "61f079476120d41512b91df68cee7881836621203a5c9169058d124c1274bf1d", [:mix], [], "hexpm", "131eab1ae2315a2d44ee8781c8107e5ee81e00ff66ee347b5a8f01d659994642"},
+  "zstream": {:hex, :zstream, "0.6.7", "ae74c7544f4e0563ffbe71324bf1c9bbc0ab33bb580a0ae718da511fb8a5c9d6", [:mix], [], "hexpm", "48c43ae0f00cfcda1ccb69c1d044755663d43b2ee8a0a65763648bf2078d634d"},
 }
