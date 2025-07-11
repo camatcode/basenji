@@ -25,7 +25,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
   test "get comic with invalid id", %{conn: conn} do
     query = build_query("comic", "id: \"#{Ecto.UUID.generate()}\"")
-    %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, query)
+    %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, query)
   end
 
   describe "list" do
@@ -44,16 +44,19 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
     end
 
     test "offset/limit", %{conn: conn} do
-      insert_list(100, :comic)
+      insert_list(50, :comic)
 
-      0..9
-      |> Enum.reduce(nil, fn page_idx, offset ->
-        query = build_query("comics", "limit: 10, offset: #{offset || 0}")
-        %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, query)
+      query = build_query("comics", "limit: 10, offset: 0")
+      %{"data" => %{"comics" => first_page}} = execute_query(@api_path, conn, query)
+      assert Enum.count(first_page) == 10
+      first_page_ids = Enum.map(first_page, & &1["id"])
 
-        assert Enum.count(found) == 10
-        (page_idx + 1) * 10
-      end)
+      query = build_query("comics", "limit: 10, offset: 10")
+      %{"data" => %{"comics" => second_page}} = execute_query(@api_path, conn, query)
+      assert Enum.count(second_page) == 10
+      second_page_ids = Enum.map(second_page, & &1["id"])
+
+      refute Enum.any?(first_page_ids, &Enum.member?(second_page_ids, &1))
     end
 
     test "search by", %{conn: conn} do
@@ -75,12 +78,10 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
           assert_exact_comic_match(response, comic_id)
         end)
 
-        # Test format search (special case with uppercase)
         format_query = build_query("comics", "format: #{comic.format |> Atom.to_string() |> String.upcase()}")
         format_response = execute_query(@api_path, conn, format_query)
         assert_comic_in_response(format_response, comic_id)
 
-        # Test released_year search
         year_query = build_search_query("released_year", comic.released_year)
         year_response = execute_query(@api_path, conn, year_query)
         assert_comic_in_response(year_response, comic_id)
@@ -94,12 +95,10 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       :timer.sleep(1000)
       comic_id = insert(:comic).id
 
-      # Test inserted_after
       after_query = build_search_query("inserted_after", dt)
       after_response = execute_query(@api_path, conn, after_query)
       assert_exact_comic_match(after_response, comic_id)
 
-      # Test insertedBefore
       before_query = build_search_query("insertedBefore", dt)
       %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, before_query)
 
@@ -234,7 +233,6 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       assert updated["author"] == updated_author
       assert updated["description"] == updated_description
       assert updated["releasedYear"] == updated_year
-      # Should remain unchanged
       assert updated["resourceLocation"] == comic.resource_location
     end
 
@@ -249,7 +247,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       }
       """
 
-      %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, mutation)
+      %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, mutation)
     end
 
     test "delete comic", %{conn: conn} do
@@ -263,7 +261,6 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
       %{"data" => %{"deleteComic" => true}} = execute_query(@api_path, conn, mutation)
 
-      # Verify comic is deleted
       {:error, :not_found} = Comics.get_comic(comic.id)
     end
 
@@ -274,7 +271,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       }
       """
 
-      %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, mutation)
+      %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, mutation)
     end
   end
 end

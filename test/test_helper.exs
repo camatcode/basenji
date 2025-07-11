@@ -83,6 +83,11 @@ defmodule TestHelper.GraphQL do
     build_query("comics", "#{field}: #{formatted_value}", fields)
   end
 
+  def build_search_query_for(query_name, field, value, fields \\ "id") do
+    formatted_value = format_graphql_value(value)
+    build_query(query_name, "#{field}: #{formatted_value}", fields)
+  end
+
   defp format_graphql_value(value) when is_binary(value), do: "\"#{value}\""
   defp format_graphql_value(value) when is_atom(value), do: value |> to_string() |> String.upcase()
   defp format_graphql_value(value), do: to_string(value)
@@ -98,5 +103,13 @@ defmodule TestHelper.GraphQL do
 
   def assert_single_comic(response, comic_id, query_name) do
     %{"data" => %{^query_name => %{"id" => ^comic_id}}} = response
+  end
+
+  def assert_single_object(response, object_id, query_name) do
+    %{"data" => %{^query_name => %{"id" => ^object_id}}} = response
+  end
+
+  def assert_exact_collection_match(response, collection_id) do
+    %{"data" => %{"collections" => [%{"id" => ^collection_id}]}} = response
   end
 end

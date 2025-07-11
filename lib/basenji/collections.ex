@@ -125,7 +125,10 @@ defmodule Basenji.Collections do
   end
 
   def delete_collection(collection_id) do
-    Repo.delete(%Collection{id: collection_id})
+    case get_collection(collection_id) do
+      {:ok, collection} -> Repo.delete(collection)
+      error -> error
+    end
   end
 
   def remove_from_collection(%CollectionComic{id: _coll_comic_id} = coll_comic) do
@@ -148,6 +151,8 @@ defmodule Basenji.Collections do
       col_comic -> remove_from_collection(col_comic)
     end
   end
+
+  def attrs, do: Collection.attrs()
 
   defp insert_collection(attrs, opts) do
     with {:ok, collection} <-

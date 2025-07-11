@@ -10,10 +10,10 @@ defmodule BasenjiWeb.GraphQL.GraphQLUtils do
   def handle_result(result) do
     case result do
       {:ok, data} -> {:ok, data}
-      {:error, :not_found} -> {:error, "Comic not found"}
+      {:error, :not_found} -> {:error, "Not found"}
       {:error, %Ecto.Changeset{} = changeset} -> {:error, format_changeset_errors(changeset)}
       {:error, message} when is_binary(message) -> {:error, message}
-      _error_tuple -> {:error, "An error occurred"}
+      _ -> {:error, "An error occurred"}
     end
   end
 
