@@ -27,33 +27,15 @@ defmodule BasenjiWeb.GraphQL.CollectionsResolver do
 
   def create_collection(_root, %{input: attrs}, info) do
     case Collections.create_collection(attrs) do
-      {:ok, collection} ->
-        preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
-
-        if Enum.empty?(preload_opts) do
-          {:ok, collection}
-        else
-          Collections.get_collection(collection.id, preload_opts)
-        end
-
-      error ->
-        GraphQLUtils.handle_result(error)
+      {:ok, collection} -> maybe_preload_collection(collection, info)
+      error -> GraphQLUtils.handle_result(error)
     end
   end
 
   def update_collection(_root, %{id: id, input: attrs}, info) do
     case Collections.update_collection(id, attrs) do
-      {:ok, collection} ->
-        preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
-
-        if Enum.empty?(preload_opts) do
-          {:ok, collection}
-        else
-          Collections.get_collection(collection.id, preload_opts)
-        end
-
-      error ->
-        GraphQLUtils.handle_result(error)
+      {:ok, collection} -> maybe_preload_collection(collection, info)
+      error -> GraphQLUtils.handle_result(error)
     end
   end
 
@@ -65,4 +47,14 @@ defmodule BasenjiWeb.GraphQL.CollectionsResolver do
   end
 
   def order_by_attrs, do: Collections.attrs()
+
+  defp maybe_preload_collection(collection, info) do
+    preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
+
+    if Enum.empty?(preload_opts) do
+      {:ok, collection}
+    else
+      Collections.get_collection(collection.id, preload_opts)
+    end
+  end
 end

@@ -21,25 +21,8 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
 
   def create_comic(_root, %{input: attrs}, info) do
     case Comics.create_comic(attrs) do
-      {:ok, comic} ->
-        preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
-
-        if Enum.empty?(preload_opts) do
-          processed_comic = comic |> set_image_preview() |> set_pages()
-          {:ok, processed_comic}
-        else
-          case Comics.get_comic(comic.id, preload_opts) do
-            {:ok, preloaded_comic} ->
-              processed_comic = preloaded_comic |> set_image_preview() |> set_pages()
-              {:ok, processed_comic}
-
-            error ->
-              GraphQLUtils.handle_result(error)
-          end
-        end
-
-      error ->
-        GraphQLUtils.handle_result(error)
+      {:ok, comic} -> maybe_preload_and_process_comic(comic, info)
+      error -> GraphQLUtils.handle_result(error)
     end
   end
 
@@ -59,25 +42,8 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
 
   def update_comic(_root, %{id: id, input: attrs}, info) do
     case Comics.update_comic(id, attrs) do
-      {:ok, comic} ->
-        preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
-
-        if Enum.empty?(preload_opts) do
-          processed_comic = comic |> set_image_preview() |> set_pages()
-          {:ok, processed_comic}
-        else
-          case Comics.get_comic(comic.id, preload_opts) do
-            {:ok, preloaded_comic} ->
-              processed_comic = preloaded_comic |> set_image_preview() |> set_pages()
-              {:ok, processed_comic}
-
-            error ->
-              GraphQLUtils.handle_result(error)
-          end
-        end
-
-      error ->
-        GraphQLUtils.handle_result(error)
+      {:ok, comic} -> maybe_preload_and_process_comic(comic, info)
+      error -> GraphQLUtils.handle_result(error)
     end
   end
 
@@ -115,5 +81,25 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
 
   defp set_image_preview(comic) do
     Map.put(comic, :image_preview, "/api/comics/#{comic.id}/preview")
+  end
+
+  defp maybe_preload_and_process_comic(comic, info) do
+    preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
+
+    case {Enum.empty?(preload_opts), preload_opts} do
+      {true, _} ->
+        processed_comic = comic |> set_image_preview() |> set_pages()
+        {:ok, processed_comic}
+
+      {false, preload_opts} ->
+        case Comics.get_comic(comic.id, preload_opts) do
+          {:ok, preloaded_comic} ->
+            processed_comic = preloaded_comic |> set_image_preview() |> set_pages()
+            {:ok, processed_comic}
+
+          error ->
+            GraphQLUtils.handle_result(error)
+        end
+    end
   end
 end
