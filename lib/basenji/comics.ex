@@ -144,6 +144,8 @@ defmodule Basenji.Comics do
     end
   end
 
+  def formats, do: Comic.formats()
+
   defp handle_insert_side_effects({:ok, comic}) do
     Processor.process(comic, [:insert])
     {:ok, comic}

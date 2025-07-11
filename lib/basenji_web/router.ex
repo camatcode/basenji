@@ -4,6 +4,7 @@ defmodule BasenjiWeb.Router do
   import Oban.Web.Router
 
   alias Absinthe.Plug.GraphiQL
+  alias BasenjiWeb.GraphQL.Schema
   alias Plug.Swoosh.MailboxPreview
 
   pipeline :browser do
@@ -40,11 +41,11 @@ defmodule BasenjiWeb.Router do
   scope "/api" do
     pipe_through :api
 
-    forward "/graphql", Absinthe.Plug, schema: BasenjiWeb.Schema
+    forward "/graphql", Absinthe.Plug, schema: Schema
 
     if Application.compile_env(:basenji, :dev_routes) do
       forward "/graphiql", GraphiQL,
-        schema: BasenjiWeb.Schema,
+        schema: Schema,
         interface: :simple
     end
   end

@@ -46,7 +46,10 @@ defmodule Basenji.ContextUtils do
         {:offset, offset}, query ->
           offset(query, [p], ^offset)
 
-        {:order_by, order}, query ->
+        {:order_by, order}, query when is_bitstring(order) ->
+          order_by(query, [], ^safe_to_existing_atom(order))
+
+        {:order_by, order}, query when is_atom(order) ->
           order_by(query, [], ^order)
 
         {:preload, pre}, query ->

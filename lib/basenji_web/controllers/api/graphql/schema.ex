@@ -1,11 +1,11 @@
-defmodule BasenjiWeb.Schema do
-  @moduledoc """
-  Main GraphQL schema for Basenji API
-  """
+defmodule BasenjiWeb.GraphQL.Schema do
+  @moduledoc false
   use Absinthe.Schema
 
+  alias Absinthe.Type.Custom
   alias BasenjiWeb.GraphQL.ComicsSchema
 
+  import_types(Custom)
   import_types(ComicsSchema)
 
   query do
