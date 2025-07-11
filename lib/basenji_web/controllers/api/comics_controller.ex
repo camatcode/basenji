@@ -13,14 +13,14 @@ defmodule BasenjiWeb.ComicsController do
       Comics.get_page(id, page_num)
     end
     |> case do
-      {:ok, binary, mime} ->
+      {:ok, binary, _mime} ->
         length = byte_size(binary)
 
         conn
         |> merge_resp_headers([{"access-control-allow-origin", "*"}])
-        |> merge_resp_headers([{"content-type", mime}])
+        |> merge_resp_headers([{"content-type", "image/jpeg"}])
         |> merge_resp_headers([{"content-length", "#{length}"}])
-        |> merge_resp_headers([{"content-disposition", "attachment"}])
+        # |> merge_resp_headers([{"content-disposition", "attachment"}])
         |> send_resp(200, binary)
 
       error ->
@@ -40,7 +40,7 @@ defmodule BasenjiWeb.ComicsController do
         |> merge_resp_headers([{"access-control-allow-origin", "*"}])
         |> merge_resp_headers([{"content-type", "image/jpeg"}])
         |> merge_resp_headers([{"content-length", "#{length}"}])
-        |> merge_resp_headers([{"content-disposition", "attachment"}])
+        #    |> merge_resp_headers([{"content-disposition", "attachment"}])
         |> send_resp(200, binary)
 
       error ->

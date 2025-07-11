@@ -73,8 +73,10 @@ defmodule Basenji.Comics do
   def delete_comic(nil), do: nil
 
   def delete_comic(comic_id) when is_binary(comic_id) do
-    %Comic{id: comic_id}
-    |> delete_comic()
+    case get_comic(comic_id) do
+      {:ok, comic} -> delete_comic(comic)
+      error -> error
+    end
   end
 
   def delete_comic(%Comic{id: _comic_id} = comic) do
@@ -143,6 +145,10 @@ defmodule Basenji.Comics do
       get_image_preview(comic)
     end
   end
+
+  def formats, do: Comic.formats()
+
+  def attrs, do: Comic.attrs()
 
   defp handle_insert_side_effects({:ok, comic}) do
     Processor.process(comic, [:insert])
