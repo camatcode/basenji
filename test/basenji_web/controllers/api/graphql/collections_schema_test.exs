@@ -389,4 +389,547 @@ defmodule BasenjiWeb.GraphQL.CollectionsSchemaTest do
       end)
     end
   end
+
+  describe "comics relationships" do
+    test "retrieve collection with comics", %{conn: conn} do
+      collection = insert(:collection)
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
+
+      query = """
+      {
+        collection(id: "#{collection.id}") {
+          id
+          title
+          comics {
+            id
+            title
+            author
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"collection" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == collection.id
+      assert result["title"] == collection.title
+      assert Enum.count(result["comics"]) == 2
+
+      comic_ids = Enum.map(result["comics"], & &1["id"])
+      assert Enum.member?(comic_ids, comic1.id)
+      assert Enum.member?(comic_ids, comic2.id)
+    end
+
+    test "list collections with comics", %{conn: conn} do
+      collection1 = insert(:collection)
+      collection2 = insert(:collection)
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection1.id, comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection2.id, comic2.id)
+
+      query = """
+      {
+        collections {
+          id
+          title
+          comics {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"collections" => results}} = execute_query(@api_path, conn, query)
+
+      collection1_result = Enum.find(results, fn c -> c["id"] == collection1.id end)
+      collection2_result = Enum.find(results, fn c -> c["id"] == collection2.id end)
+
+      assert collection1_result["comics"] |> Enum.map(& &1["id"]) |> Enum.member?(comic1.id)
+      assert collection2_result["comics"] |> Enum.map(& &1["id"]) |> Enum.member?(comic2.id)
+    end
+
+    test "retrieve collection without comics field requested", %{conn: conn} do
+      collection = insert(:collection)
+      comic = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, comic.id)
+
+      query = """
+      {
+        collection(id: "#{collection.id}") {
+          id
+          title
+        }
+      }
+      """
+
+      %{"data" => %{"collection" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == collection.id
+      assert result["title"] == collection.title
+      refute Map.has_key?(result, "comics")
+    end
+
+    test "retrieve collection with empty comics list", %{conn: conn} do
+      collection = insert(:collection)
+
+      query = """
+      {
+        collection(id: "#{collection.id}") {
+          id
+          title
+          comics {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"collection" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == collection.id
+      assert result["title"] == collection.title
+      assert result["comics"] == []
+    end
+  end
+
+  describe "update collection with comics" do
+    test "add comics to empty collection", %{conn: conn} do
+      collection = insert(:collection, title: "Original Title")
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{comic1.id}", "#{comic2.id}"]
+        }) {
+          id
+          title
+          comics {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["id"] == collection.id
+      assert result["title"] == "Original Title"
+      assert Enum.count(result["comics"]) == 2
+
+      comic_ids = Enum.map(result["comics"], & &1["id"])
+      assert Enum.member?(comic_ids, comic1.id)
+      assert Enum.member?(comic_ids, comic2.id)
+    end
+
+    test "add comics to collection with existing comics", %{conn: conn} do
+      collection = insert(:collection)
+      existing_comic = insert(:comic)
+      new_comic1 = insert(:comic)
+      new_comic2 = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, existing_comic.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{new_comic1.id}", "#{new_comic2.id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 3
+      comic_ids = Enum.map(result["comics"], & &1["id"])
+      assert Enum.member?(comic_ids, existing_comic.id)
+      assert Enum.member?(comic_ids, new_comic1.id)
+      assert Enum.member?(comic_ids, new_comic2.id)
+    end
+
+    test "remove comics from collection", %{conn: conn} do
+      collection = insert(:collection)
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+      comic3 = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, comic3.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToRemove: ["#{comic1.id}", "#{comic3.id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 1
+      assert Enum.at(result["comics"], 0)["id"] == comic2.id
+    end
+
+    test "add and remove comics in same operation", %{conn: conn} do
+      collection = insert(:collection)
+      existing_comic1 = insert(:comic)
+      existing_comic2 = insert(:comic)
+      new_comic = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, existing_comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, existing_comic2.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{new_comic.id}"]
+          comicsToRemove: ["#{existing_comic1.id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 2
+      comic_ids = Enum.map(result["comics"], & &1["id"])
+      refute Enum.member?(comic_ids, existing_comic1.id)
+      assert Enum.member?(comic_ids, existing_comic2.id)
+      assert Enum.member?(comic_ids, new_comic.id)
+    end
+
+    test "add existing comic (idempotent)", %{conn: conn} do
+      collection = insert(:collection)
+      comic = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, comic.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{comic.id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 1
+      assert Enum.at(result["comics"], 0)["id"] == comic.id
+    end
+
+    test "remove non-existent comic (idempotent)", %{conn: conn} do
+      collection = insert(:collection)
+      existing_comic = insert(:comic)
+      non_existent_comic = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, existing_comic.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToRemove: ["#{non_existent_comic.id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 1
+      assert Enum.at(result["comics"], 0)["id"] == existing_comic.id
+    end
+
+    test "add same comic in both add and remove (add then remove - comic ends up removed)", %{conn: conn} do
+      collection = insert(:collection)
+      comic = insert(:comic)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{comic.id}"]
+          comicsToRemove: ["#{comic.id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["comics"] == []
+    end
+
+    test "add invalid comic ids (skips invalid, processes valid)", %{conn: conn} do
+      collection = insert(:collection)
+      valid_comic = insert(:comic)
+      invalid_comic_id = Ecto.UUID.generate()
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{valid_comic.id}", "#{invalid_comic_id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 1
+      assert Enum.at(result["comics"], 0)["id"] == valid_comic.id
+    end
+
+    test "update title and comics together", %{conn: conn} do
+      collection = insert(:collection, title: "Original Title")
+      comic = insert(:comic)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          title: "Updated Title"
+          comicsToAdd: ["#{comic.id}"]
+        }) {
+          id
+          title
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["id"] == collection.id
+      assert result["title"] == "Updated Title"
+      assert Enum.count(result["comics"]) == 1
+      assert Enum.at(result["comics"], 0)["id"] == comic.id
+    end
+
+    test "update without comics fields (no change to existing comics)", %{conn: conn} do
+      collection = insert(:collection, title: "Original Title")
+      existing_comic = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, existing_comic.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          title: "Updated Title"
+        }) {
+          id
+          title
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["title"] == "Updated Title"
+      assert Enum.count(result["comics"]) == 1
+      assert Enum.at(result["comics"], 0)["id"] == existing_comic.id
+    end
+
+    test "update collection with invalid id", %{conn: conn} do
+      invalid_id = Ecto.UUID.generate()
+      comic = insert(:comic)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{invalid_id}", input: {
+          comicsToAdd: ["#{comic.id}"]
+        }) {
+          id
+        }
+      }
+      """
+
+      %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, mutation)
+    end
+
+    test "bulk add multiple comics", %{conn: conn} do
+      collection = insert(:collection)
+      comics = insert_list(5, :comic)
+      comic_ids = Enum.map(comics, & &1.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: #{inspect(comic_ids)}
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 5
+      result_comic_ids = Enum.map(result["comics"], & &1["id"])
+
+      Enum.each(comic_ids, fn comic_id ->
+        assert Enum.member?(result_comic_ids, comic_id)
+      end)
+    end
+
+    test "bulk remove multiple comics", %{conn: conn} do
+      collection = insert(:collection)
+      comics_to_keep = insert_list(2, :comic)
+      comics_to_remove = insert_list(3, :comic)
+
+      all_comics = comics_to_keep ++ comics_to_remove
+
+      Enum.each(all_comics, fn comic ->
+        {:ok, _} = Collections.add_to_collection(collection.id, comic.id)
+      end)
+
+      remove_ids = Enum.map(comics_to_remove, & &1.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToRemove: #{inspect(remove_ids)}
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 2
+      result_comic_ids = Enum.map(result["comics"], & &1["id"])
+
+      Enum.each(comics_to_keep, fn comic ->
+        assert Enum.member?(result_comic_ids, comic.id)
+      end)
+
+      Enum.each(comics_to_remove, fn comic ->
+        refute Enum.member?(result_comic_ids, comic.id)
+      end)
+    end
+
+    test "complex operation: mix of valid/invalid adds and removes", %{conn: conn} do
+      collection = insert(:collection)
+      existing_comic1 = insert(:comic)
+      existing_comic2 = insert(:comic)
+      new_valid_comic = insert(:comic)
+      invalid_comic_id = Ecto.UUID.generate()
+
+      {:ok, _} = Collections.add_to_collection(collection.id, existing_comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, existing_comic2.id)
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{new_valid_comic.id}", "#{invalid_comic_id}"]
+          comicsToRemove: ["#{existing_comic1.id}", "#{invalid_comic_id}"]
+        }) {
+          id
+          comics {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert Enum.count(result["comics"]) == 2
+      result_comic_ids = Enum.map(result["comics"], & &1["id"])
+
+      refute Enum.member?(result_comic_ids, existing_comic1.id)
+      assert Enum.member?(result_comic_ids, existing_comic2.id)
+      assert Enum.member?(result_comic_ids, new_valid_comic.id)
+    end
+
+    test "collection comics preserve full comic data", %{conn: conn} do
+      collection = insert(:collection)
+
+      comic =
+        insert(:comic,
+          title: "Amazing Comic",
+          author: "Great Author",
+          description: "A wonderful story"
+        )
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          comicsToAdd: ["#{comic.id}"]
+        }) {
+          id
+          comics {
+            id
+            title
+            author
+            description
+            resourceLocation
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      comic_result = Enum.at(result["comics"], 0)
+      assert comic_result["id"] == comic.id
+      assert comic_result["title"] == "Amazing Comic"
+      assert comic_result["author"] == "Great Author"
+      assert comic_result["description"] == "A wonderful story"
+      assert comic_result["resourceLocation"] == comic.resource_location
+    end
+  end
 end

@@ -13,6 +13,7 @@ defmodule BasenjiWeb.GraphQL.CollectionsSchema do
     field :resource_location, :string
 
     field :parent, :collection
+    field :comics, list_of(:comic)
   end
 
   object :collections_queries do
@@ -42,6 +43,8 @@ defmodule BasenjiWeb.GraphQL.CollectionsSchema do
     field :title, :string
     field :description, :string
     field :resource_location, :string
+    field :comics_to_add, list_of(non_null(:id))
+    field :comics_to_remove, list_of(non_null(:id))
   end
 
   object :collections_mutations do

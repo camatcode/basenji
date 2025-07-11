@@ -208,6 +208,112 @@ defmodule Basenji.CollectionsTest do
     end
   end
 
+  describe "update collection with comics" do
+    test "basic add comics functionality" do
+      collection = insert(:collection)
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+
+      {:ok, _} =
+        Collections.update_collection_with_comics(collection.id, %{
+          comics_to_add: [comic1.id, comic2.id]
+        })
+
+      {:ok, collection_with_comics} = Collections.get_collection(collection.id, preload: [:comics])
+      comic_ids = Enum.map(collection_with_comics.comics, & &1.id)
+      assert Enum.member?(comic_ids, comic1.id)
+      assert Enum.member?(comic_ids, comic2.id)
+      assert Enum.count(comic_ids) == 2
+    end
+
+    test "basic remove comics functionality" do
+      collection = insert(:collection)
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
+
+      {:ok, _} =
+        Collections.update_collection_with_comics(collection.id, %{
+          comics_to_remove: [comic1.id]
+        })
+
+      {:ok, collection_with_comics} = Collections.get_collection(collection.id, preload: [:comics])
+      comic_ids = Enum.map(collection_with_comics.comics, & &1.id)
+      refute Enum.member?(comic_ids, comic1.id)
+      assert Enum.member?(comic_ids, comic2.id)
+      assert Enum.count(comic_ids) == 1
+    end
+
+    test "add then remove same comic in one operation" do
+      collection = insert(:collection)
+      comic = insert(:comic)
+
+      {:ok, _} =
+        Collections.update_collection_with_comics(collection.id, %{
+          comics_to_add: [comic.id],
+          comics_to_remove: [comic.id]
+        })
+
+      {:ok, collection_with_comics} = Collections.get_collection(collection.id, preload: [:comics])
+      assert Enum.empty?(collection_with_comics.comics)
+    end
+
+    test "skip invalid comic IDs" do
+      collection = insert(:collection)
+      valid_comic = insert(:comic)
+      invalid_comic_id = Ecto.UUID.generate()
+
+      {:ok, _} =
+        Collections.update_collection_with_comics(collection.id, %{
+          comics_to_add: [valid_comic.id, invalid_comic_id]
+        })
+
+      {:ok, collection_with_comics} = Collections.get_collection(collection.id, preload: [:comics])
+      comic_ids = Enum.map(collection_with_comics.comics, & &1.id)
+      assert Enum.count(comic_ids) == 1
+      assert Enum.member?(comic_ids, valid_comic.id)
+    end
+
+    test "transaction atomicity - rollback on collection update failure" do
+      collection = insert(:collection, title: "Original Title")
+      comic = insert(:comic)
+
+      {:error, changeset} =
+        Collections.update_collection_with_comics(collection.id, %{
+          title: nil,
+          comics_to_add: [comic.id]
+        })
+
+      {:ok, unchanged_collection} = Collections.get_collection(collection.id, preload: [:comics])
+      assert unchanged_collection.title == "Original Title"
+      assert Enum.empty?(unchanged_collection.comics)
+
+      assert %Ecto.Changeset{} = changeset
+      refute changeset.valid?
+    end
+
+    test "update collection fields and comics together" do
+      collection = insert(:collection, title: "Original Title")
+      comic = insert(:comic)
+
+      {:ok, updated_collection} =
+        Collections.update_collection_with_comics(collection.id, %{
+          title: "Updated Title",
+          comics_to_add: [comic.id]
+        })
+
+      assert updated_collection.title == "Updated Title"
+
+      {:ok, collection_with_comics} = Collections.get_collection(collection.id, preload: [:comics])
+      assert collection_with_comics.title == "Updated Title"
+      comic_ids = Enum.map(collection_with_comics.comics, & &1.id)
+      assert Enum.count(comic_ids) == 1
+      assert Enum.member?(comic_ids, comic.id)
+    end
+  end
+
   defp valid_collection?(collection) do
     assert collection.id
     assert collection.title

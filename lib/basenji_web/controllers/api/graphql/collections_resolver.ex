@@ -4,7 +4,8 @@ defmodule BasenjiWeb.GraphQL.CollectionsResolver do
   alias BasenjiWeb.GraphQL.GraphQLUtils
 
   @preload_mapping %{
-    "parent" => :parent
+    "parent" => :parent,
+    "comics" => :comics
   }
 
   def list_collections(_root, args, info) do
