@@ -77,8 +77,40 @@ defmodule Basenji.Collections do
   end
 
   def update_collection(id, attrs, opts) when is_bitstring(id) do
-    with {:ok, collection} <- get_collection(id, opts) do
-      update_collection(collection, attrs, opts)
+    has_comics_operations = Map.has_key?(attrs, :comics_to_add) || Map.has_key?(attrs, :comics_to_remove)
+
+    if has_comics_operations do
+      update_collection_with_comics(id, attrs, opts)
+    else
+      with {:ok, collection} <- get_collection(id, opts) do
+        update_collection(collection, attrs, opts)
+      end
+    end
+  end
+
+  def update_collection_with_comics(collection_id, attrs, opts \\ []) do
+    comics_to_add = Map.get(attrs, :comics_to_add, [])
+    comics_to_remove = Map.get(attrs, :comics_to_remove, [])
+
+    collection_attrs = Map.drop(attrs, [:comics_to_add, :comics_to_remove])
+
+    with {:ok, collection} <- get_collection(collection_id, []) do
+      Ecto.Multi.new()
+      |> Ecto.Multi.update(:collection, Collection.changeset(collection, collection_attrs))
+      |> add_comics_to_multi(collection_id, comics_to_add)
+      |> remove_comics_from_multi(collection_id, comics_to_remove)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{collection: updated_collection}} ->
+          if opts[:preload] do
+            get_collection(updated_collection.id, opts)
+          else
+            {:ok, updated_collection}
+          end
+
+        {:error, _failed_operation, changeset, _changes} ->
+          {:error, changeset}
+      end
     end
   end
 
@@ -125,7 +157,10 @@ defmodule Basenji.Collections do
   end
 
   def delete_collection(collection_id) do
-    Repo.delete(%Collection{id: collection_id})
+    case get_collection(collection_id) do
+      {:ok, collection} -> Repo.delete(collection)
+      error -> error
+    end
   end
 
   def remove_from_collection(%CollectionComic{id: _coll_comic_id} = coll_comic) do
@@ -148,6 +183,46 @@ defmodule Basenji.Collections do
       col_comic -> remove_from_collection(col_comic)
     end
   end
+
+  # Helper functions for comics operations in multi transactions
+  defp add_comics_to_multi(multi, _collection_id, nil), do: multi
+  defp add_comics_to_multi(multi, _collection_id, []), do: multi
+
+  defp add_comics_to_multi(multi, collection_id, comic_ids) do
+    existing_comic_ids = from(c in Comic, where: c.id in ^comic_ids, select: c.id) |> Repo.all()
+
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    comic_attrs =
+      Enum.map(existing_comic_ids, fn comic_id ->
+        %{
+          collection_id: collection_id,
+          comic_id: comic_id,
+          inserted_at: now,
+          updated_at: now
+        }
+      end)
+
+    Ecto.Multi.insert_all(multi, :add_comics, CollectionComic, comic_attrs,
+      on_conflict: :nothing,
+      conflict_target: [:collection_id, :comic_id]
+    )
+  end
+
+  defp remove_comics_from_multi(multi, _collection_id, nil), do: multi
+  defp remove_comics_from_multi(multi, _collection_id, []), do: multi
+
+  defp remove_comics_from_multi(multi, collection_id, comic_ids) do
+    Ecto.Multi.delete_all(
+      multi,
+      :remove_comics,
+      from(cc in CollectionComic,
+        where: cc.collection_id == ^collection_id and cc.comic_id in ^comic_ids
+      )
+    )
+  end
+
+  def attrs, do: Collection.attrs()
 
   defp insert_collection(attrs, opts) do
     with {:ok, collection} <-

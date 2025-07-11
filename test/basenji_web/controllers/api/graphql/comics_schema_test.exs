@@ -25,7 +25,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
   test "get comic with invalid id", %{conn: conn} do
     query = build_query("comic", "id: \"#{Ecto.UUID.generate()}\"")
-    %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, query)
+    %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, query)
   end
 
   describe "list" do
@@ -44,16 +44,19 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
     end
 
     test "offset/limit", %{conn: conn} do
-      insert_list(100, :comic)
+      insert_list(50, :comic)
 
-      0..9
-      |> Enum.reduce(nil, fn page_idx, offset ->
-        query = build_query("comics", "limit: 10, offset: #{offset || 0}")
-        %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, query)
+      query = build_query("comics", "limit: 10, offset: 0")
+      %{"data" => %{"comics" => first_page}} = execute_query(@api_path, conn, query)
+      assert Enum.count(first_page) == 10
+      first_page_ids = Enum.map(first_page, & &1["id"])
 
-        assert Enum.count(found) == 10
-        (page_idx + 1) * 10
-      end)
+      query = build_query("comics", "limit: 10, offset: 10")
+      %{"data" => %{"comics" => second_page}} = execute_query(@api_path, conn, query)
+      assert Enum.count(second_page) == 10
+      second_page_ids = Enum.map(second_page, & &1["id"])
+
+      refute Enum.any?(first_page_ids, &Enum.member?(second_page_ids, &1))
     end
 
     test "search by", %{conn: conn} do
@@ -75,12 +78,10 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
           assert_exact_comic_match(response, comic_id)
         end)
 
-        # Test format search (special case with uppercase)
         format_query = build_query("comics", "format: #{comic.format |> Atom.to_string() |> String.upcase()}")
         format_response = execute_query(@api_path, conn, format_query)
         assert_comic_in_response(format_response, comic_id)
 
-        # Test released_year search
         year_query = build_search_query("released_year", comic.released_year)
         year_response = execute_query(@api_path, conn, year_query)
         assert_comic_in_response(year_response, comic_id)
@@ -94,12 +95,10 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       :timer.sleep(1000)
       comic_id = insert(:comic).id
 
-      # Test inserted_after
       after_query = build_search_query("inserted_after", dt)
       after_response = execute_query(@api_path, conn, after_query)
       assert_exact_comic_match(after_response, comic_id)
 
-      # Test insertedBefore
       before_query = build_search_query("insertedBefore", dt)
       %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, before_query)
 
@@ -234,7 +233,6 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       assert updated["author"] == updated_author
       assert updated["description"] == updated_description
       assert updated["releasedYear"] == updated_year
-      # Should remain unchanged
       assert updated["resourceLocation"] == comic.resource_location
     end
 
@@ -249,7 +247,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       }
       """
 
-      %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, mutation)
+      %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, mutation)
     end
 
     test "delete comic", %{conn: conn} do
@@ -263,7 +261,6 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
       %{"data" => %{"deleteComic" => true}} = execute_query(@api_path, conn, mutation)
 
-      # Verify comic is deleted
       {:error, :not_found} = Comics.get_comic(comic.id)
     end
 
@@ -274,7 +271,206 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       }
       """
 
-      %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, mutation)
+      %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, mutation)
+    end
+  end
+
+  describe "member collections relationships" do
+    test "retrieve comic with member collections", %{conn: conn} do
+      comic = insert(:comic)
+      collection1 = insert(:collection)
+      collection2 = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection1.id, comic.id)
+      {:ok, _} = Basenji.Collections.add_to_collection(collection2.id, comic.id)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          title
+          memberCollections {
+            id
+            title
+            description
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == comic.id
+      assert result["title"] == comic.title
+      assert Enum.count(result["memberCollections"]) == 2
+
+      collection_ids = Enum.map(result["memberCollections"], & &1["id"])
+      assert Enum.member?(collection_ids, collection1.id)
+      assert Enum.member?(collection_ids, collection2.id)
+    end
+
+    test "list comics with member collections", %{conn: conn} do
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+      collection1 = insert(:collection)
+      collection2 = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection1.id, comic1.id)
+      {:ok, _} = Basenji.Collections.add_to_collection(collection2.id, comic2.id)
+
+      query = """
+      {
+        comics {
+          id
+          title
+          memberCollections {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comics" => results}} = execute_query(@api_path, conn, query)
+
+      comic1_result = Enum.find(results, fn c -> c["id"] == comic1.id end)
+      comic2_result = Enum.find(results, fn c -> c["id"] == comic2.id end)
+
+      assert comic1_result["memberCollections"] |> Enum.map(& &1["id"]) |> Enum.member?(collection1.id)
+      assert comic2_result["memberCollections"] |> Enum.map(& &1["id"]) |> Enum.member?(collection2.id)
+    end
+
+    test "retrieve comic without member collections field requested", %{conn: conn} do
+      comic = insert(:comic)
+      collection = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection.id, comic.id)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          title
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == comic.id
+      assert result["title"] == comic.title
+      refute Map.has_key?(result, "memberCollections")
+    end
+
+    test "retrieve comic with empty member collections list", %{conn: conn} do
+      comic = insert(:comic)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          title
+          memberCollections {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == comic.id
+      assert result["title"] == comic.title
+      assert result["memberCollections"] == []
+    end
+
+    test "create comic and verify empty member collections", %{conn: conn} do
+      %{resource_location: loc} = build(:comic)
+
+      mutation = """
+      mutation {
+        createComic(input: {
+          title: "New Comic"
+          resourceLocation: "#{loc}"
+        }) {
+          id
+          title
+          memberCollections {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"createComic" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["title"] == "New Comic"
+      assert result["memberCollections"] == []
+    end
+
+    test "update comic and verify member collections preserved", %{conn: conn} do
+      comic = insert(:comic)
+      collection = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection.id, comic.id)
+
+      mutation = """
+      mutation {
+        updateComic(id: "#{comic.id}", input: {
+          title: "Updated Comic Title"
+        }) {
+          id
+          title
+          memberCollections {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateComic" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["id"] == comic.id
+      assert result["title"] == "Updated Comic Title"
+      assert Enum.count(result["memberCollections"]) == 1
+      assert Enum.at(result["memberCollections"], 0)["id"] == collection.id
+    end
+
+    test "comic with multiple collections preserves collection data", %{conn: conn} do
+      comic = insert(:comic)
+      collection1 = insert(:collection, title: "First Collection", description: "Description One")
+      collection2 = insert(:collection, title: "Second Collection", description: "Description Two")
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection1.id, comic.id)
+      {:ok, _} = Basenji.Collections.add_to_collection(collection2.id, comic.id)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          memberCollections {
+            id
+            title
+            description
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      collections = result["memberCollections"]
+      assert Enum.count(collections) == 2
+
+      collection1_result = Enum.find(collections, fn c -> c["id"] == collection1.id end)
+      collection2_result = Enum.find(collections, fn c -> c["id"] == collection2.id end)
+
+      assert collection1_result["title"] == "First Collection"
+      assert collection1_result["description"] == "Description One"
+      assert collection2_result["title"] == "Second Collection"
+      assert collection2_result["description"] == "Description Two"
     end
   end
 end

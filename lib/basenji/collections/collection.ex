@@ -60,4 +60,6 @@ defmodule Basenji.Collection do
       changeset
     end
   end
+
+  def attrs, do: @attrs
 end
