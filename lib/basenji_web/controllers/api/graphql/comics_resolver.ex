@@ -13,6 +13,15 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
     {:ok, comics}
   end
 
+  def create_comic(_root, %{input: attrs}, _info) do
+    with {:ok, comic} <- Comics.create_comic(attrs) do
+      comic
+      |> set_image_preview()
+      |> set_pages()
+      |> then(&{:ok, &1})
+    end
+  end
+
   def get_comic(_root, %{id: id} = args, _info) do
     opts = Map.to_list(args)
 
@@ -22,6 +31,19 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
       |> set_pages()
       |> then(&{:ok, &1})
     end
+  end
+
+  def update_comic(_root, %{id: id, input: attrs}, _info) do
+    with {:ok, comic} <- Comics.update_comic(id, attrs) do
+      comic
+      |> set_image_preview()
+      |> set_pages()
+      |> then(&{:ok, &1})
+    end
+  end
+
+  def delete_comic(_root, %{id: id}, _info) do
+    Comics.delete_comic(id)
   end
 
   def formats, do: Comics.formats()

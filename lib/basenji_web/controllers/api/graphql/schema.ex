@@ -11,4 +11,8 @@ defmodule BasenjiWeb.GraphQL.Schema do
   query do
     import_fields(:comics_queries)
   end
+
+  mutation do
+    import_fields(:comics_mutations)
+  end
 end

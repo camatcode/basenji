@@ -24,7 +24,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     @desc "Lists comics"
     field :comics, list_of(:comic) do
       list_args()
-      arg(:order_by, :order_by_attr, description: "Key to order results")
+      arg(:order_by, :comic_order_by, description: "Key to order results")
 
       arg(:title, :string)
       arg(:author, :string)
@@ -43,6 +43,43 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     end
   end
 
+  input_object :comic_input do
+    field :title, :string
+    field :author, :string
+    field :description, :string
+    field :resource_location, non_null(:string)
+    field :released_year, :integer
+    field :format, :comic_format
+  end
+
+  input_object :comic_update_input do
+    field :title, :string
+    field :author, :string
+    field :description, :string
+    field :released_year, :integer
+  end
+
+  object :comics_mutations do
+    @desc "Create a new comic"
+    field :create_comic, :comic do
+      arg(:input, non_null(:comic_input))
+      resolve(&ComicsResolver.create_comic/3)
+    end
+
+    @desc "Update an existing comic"
+    field :update_comic, :comic do
+      arg(:id, non_null(:id))
+      arg(:input, non_null(:comic_update_input))
+      resolve(&ComicsResolver.update_comic/3)
+    end
+
+    @desc "Delete a comic"
+    field :delete_comic, :boolean do
+      arg(:id, non_null(:id))
+      resolve(&ComicsResolver.delete_comic/3)
+    end
+  end
+
   enum(:comic_format, values: ComicsResolver.formats())
-  enum(:order_by_attr, values: ComicsResolver.order_by_attrs())
+  enum(:comic_order_by, values: ComicsResolver.order_by_attrs())
 end
