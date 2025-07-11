@@ -1,6 +1,7 @@
 defmodule BasenjiWeb.GraphQL.ComicsResolver do
   @moduledoc false
   alias Basenji.Comics
+  alias BasenjiWeb.GraphQL.GraphQLUtils
 
   def list_comics(_root, args, _info) do
     opts = Map.to_list(args)
@@ -14,36 +15,45 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
   end
 
   def create_comic(_root, %{input: attrs}, _info) do
-    with {:ok, comic} <- Comics.create_comic(attrs) do
-      comic
-      |> set_image_preview()
-      |> set_pages()
-      |> then(&{:ok, &1})
+    case Comics.create_comic(attrs) do
+      {:ok, comic} ->
+        processed_comic = comic |> set_image_preview() |> set_pages()
+        {:ok, processed_comic}
+
+      error ->
+        GraphQLUtils.handle_result(error)
     end
   end
 
   def get_comic(_root, %{id: id} = args, _info) do
     opts = Map.to_list(args)
 
-    with {:ok, comic} <- Comics.get_comic(id, opts) do
-      comic
-      |> set_image_preview()
-      |> set_pages()
-      |> then(&{:ok, &1})
+    case Comics.get_comic(id, opts) do
+      {:ok, comic} ->
+        processed_comic = comic |> set_image_preview() |> set_pages()
+        {:ok, processed_comic}
+
+      error ->
+        GraphQLUtils.handle_result(error)
     end
   end
 
   def update_comic(_root, %{id: id, input: attrs}, _info) do
-    with {:ok, comic} <- Comics.update_comic(id, attrs) do
-      comic
-      |> set_image_preview()
-      |> set_pages()
-      |> then(&{:ok, &1})
+    case Comics.update_comic(id, attrs) do
+      {:ok, comic} ->
+        processed_comic = comic |> set_image_preview() |> set_pages()
+        {:ok, processed_comic}
+
+      error ->
+        GraphQLUtils.handle_result(error)
     end
   end
 
   def delete_comic(_root, %{id: id}, _info) do
-    Comics.delete_comic(id)
+    case Comics.delete_comic(id) do
+      {:ok, _deleted} -> {:ok, true}
+      error -> GraphQLUtils.handle_result(error)
+    end
   end
 
   def formats, do: Comics.formats()

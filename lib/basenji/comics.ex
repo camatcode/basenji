@@ -73,8 +73,10 @@ defmodule Basenji.Comics do
   def delete_comic(nil), do: nil
 
   def delete_comic(comic_id) when is_binary(comic_id) do
-    %Comic{id: comic_id}
-    |> delete_comic()
+    case get_comic(comic_id) do
+      {:ok, comic} -> delete_comic(comic)
+      error -> error
+    end
   end
 
   def delete_comic(%Comic{id: _comic_id} = comic) do

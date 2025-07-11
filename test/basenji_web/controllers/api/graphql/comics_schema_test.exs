@@ -3,6 +3,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
   import TestHelper.GraphQL
 
+  alias Basenji.Comics
   alias BasenjiWeb.GraphQL.ComicsSchema
 
   @moduletag :capture_log
@@ -20,6 +21,11 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       response = execute_query(@api_path, conn, query)
       assert_single_comic(response, comic_id, query_name)
     end)
+  end
+
+  test "get comic with invalid id", %{conn: conn} do
+    query = build_query("comic", "id: \"#{Ecto.UUID.generate()}\"")
+    %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, query)
   end
 
   describe "list" do
@@ -136,6 +142,139 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
         found_ids = Enum.map(found, & &1["id"])
         assert found_ids == expected_ids
       end)
+    end
+  end
+
+  describe "mutations" do
+    test "create comic", %{conn: conn} do
+      %{resource_location: loc, released_year: r_year} = build(:comic)
+
+      input = %{
+        title: Faker.Lorem.sentence(),
+        description: Faker.Lorem.paragraph(2),
+        author: Faker.Person.name(),
+        resourceLocation: loc,
+        releasedYear: r_year
+      }
+
+      mutation = """
+      mutation {
+        createComic(input: {
+          title: "#{input.title}"
+          description: "#{input.description}"
+          author: "#{input.author}"
+          resourceLocation: "#{input.resourceLocation}"
+          releasedYear: #{input.releasedYear}
+        }) {
+          id
+          title
+          description
+          author
+          resourceLocation
+          releasedYear
+        }
+      }
+      """
+
+      %{"data" => %{"createComic" => comic}} = execute_query(@api_path, conn, mutation)
+
+      assert comic["title"] == input.title
+      assert comic["description"] == input.description
+      assert comic["author"] == input.author
+      assert comic["resourceLocation"] == input.resourceLocation
+      assert comic["releasedYear"] == input.releasedYear
+      assert comic["id"]
+    end
+
+    test "create comic with invalid data", %{conn: conn} do
+      mutation = """
+      mutation {
+        createComic(input: {
+          resourceLocation: "/nonexistent/path.cbz"
+        }) {
+          id
+        }
+      }
+      """
+
+      %{"errors" => [%{"message" => message}]} = execute_query(@api_path, conn, mutation)
+      assert String.contains?(message, "resource_location does not exist")
+    end
+
+    test "update comic", %{conn: conn} do
+      comic = insert(:comic)
+
+      updated_title = Faker.Lorem.sentence()
+      updated_author = Faker.Person.name()
+      updated_description = Faker.Lorem.paragraph(2)
+      updated_year = 2023
+
+      mutation = """
+      mutation {
+        updateComic(id: "#{comic.id}", input: {
+          title: "#{updated_title}"
+          author: "#{updated_author}"
+          description: "#{updated_description}"
+          releasedYear: #{updated_year}
+        }) {
+          id
+          title
+          author
+          description
+          releasedYear
+          resourceLocation
+        }
+      }
+      """
+
+      %{"data" => %{"updateComic" => updated}} = execute_query(@api_path, conn, mutation)
+
+      assert updated["id"] == comic.id
+      assert updated["title"] == updated_title
+      assert updated["author"] == updated_author
+      assert updated["description"] == updated_description
+      assert updated["releasedYear"] == updated_year
+      # Should remain unchanged
+      assert updated["resourceLocation"] == comic.resource_location
+    end
+
+    test "update comic with invalid id", %{conn: conn} do
+      mutation = """
+      mutation {
+        updateComic(id: "#{Ecto.UUID.generate()}", input: {
+          title: "New Title"
+        }) {
+          id
+        }
+      }
+      """
+
+      %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, mutation)
+    end
+
+    test "delete comic", %{conn: conn} do
+      comic = insert(:comic)
+
+      mutation = """
+      mutation {
+        deleteComic(id: "#{comic.id}")
+      }
+      """
+
+      %{"data" => %{"deleteComic" => true}} = execute_query(@api_path, conn, mutation)
+
+      # Verify comic is deleted
+      {:error, :not_found} = Comics.get_comic(comic.id)
+    end
+
+    test "delete comic with invalid id", %{conn: conn} do
+      mutation = """
+      mutation {
+        deleteComic(id: "#{Ecto.UUID.generate()}")
+      }
+      """
+
+      %{"errors" => [%{"message" => "Comic not found"}]} = execute_query(@api_path, conn, mutation)
     end
   end
 end
