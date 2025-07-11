@@ -1,9 +1,8 @@
 defmodule BasenjiWeb.GraphQL.ComicsResolver do
   @moduledoc false
   alias Basenji.Comics
-  alias BasenjiWeb.API.Utils
 
-  def list_comics(_root, args, info) do
+  def list_comics(_root, args, _info) do
     opts = Map.to_list(args)
 
     comics =

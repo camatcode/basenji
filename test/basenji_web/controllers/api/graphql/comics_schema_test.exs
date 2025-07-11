@@ -10,13 +10,15 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
   @api_path "/api/graphql"
 
   test "list comics", %{conn: conn} do
-    query_name = "listComics"
+    query_name = "comics"
     comic_ids = insert_list(100, :comic) |> Enum.map(& &1.id)
 
     query = """
-    query{ #{query_name} {
-      id
-    }}
+    {
+      #{query_name} {
+        id
+      }
+    }
     """
 
     %{"data" => %{^query_name => found}} =
@@ -32,6 +34,6 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
     end)
   end
 
-  test "get comic", %{conn: conn} do
+  test "get comic", %{conn: _conn} do
   end
 end

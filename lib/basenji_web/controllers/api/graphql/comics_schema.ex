@@ -5,7 +5,6 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
   import BasenjiWeb.GraphQL.CommonSchema
 
   alias BasenjiWeb.GraphQL.ComicsResolver
-  alias BasenjiWeb.GraphQL.GraphQLUtils
 
   object :comic do
     object_fields()
