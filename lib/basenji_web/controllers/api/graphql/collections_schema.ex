@@ -11,6 +11,8 @@ defmodule BasenjiWeb.GraphQL.CollectionsSchema do
     field :title, non_null(:string)
     field :description, :string
     field :resource_location, :string
+
+    field :parent, :collection
   end
 
   object :collections_queries do

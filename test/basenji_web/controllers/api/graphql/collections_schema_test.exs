@@ -242,4 +242,151 @@ defmodule BasenjiWeb.GraphQL.CollectionsSchemaTest do
       %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, mutation)
     end
   end
+
+  describe "parent relationships" do
+    test "retrieve collection with parent", %{conn: conn} do
+      parent = insert(:collection)
+      collection = insert(:collection, parent: parent)
+
+      query = """
+      {
+        collection(id: "#{collection.id}") {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"collection" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == collection.id
+      assert result["title"] == collection.title
+      assert result["parent"]["id"] == parent.id
+      assert result["parent"]["title"] == parent.title
+    end
+
+    test "list collections with parent", %{conn: conn} do
+      parent = insert(:collection)
+      child1 = insert(:collection, parent: parent)
+      child2 = insert(:collection, parent: parent)
+      insert(:collection)
+
+      query = """
+      {
+        collections {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"collections" => results}} = execute_query(@api_path, conn, query)
+
+      children_results = Enum.filter(results, fn c -> c["parent"] != nil end)
+      assert Enum.count(children_results) >= 2
+
+      child1_result = Enum.find(children_results, fn c -> c["id"] == child1.id end)
+      child2_result = Enum.find(children_results, fn c -> c["id"] == child2.id end)
+
+      assert child1_result["parent"]["id"] == parent.id
+      assert child2_result["parent"]["id"] == parent.id
+    end
+
+    test "update collection with parent preserves parent relationship", %{conn: conn} do
+      parent = insert(:collection)
+      collection = insert(:collection, parent: parent)
+
+      updated_title = "Updated Collection Title"
+
+      mutation = """
+      mutation {
+        updateCollection(id: "#{collection.id}", input: {
+          title: "#{updated_title}"
+        }) {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateCollection" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["id"] == collection.id
+      assert result["title"] == updated_title
+      assert result["parent"]["id"] == parent.id
+      assert result["parent"]["title"] == parent.title
+    end
+
+    test "delete collection with parent", %{conn: conn} do
+      parent = insert(:collection)
+      collection = insert(:collection, parent: parent)
+
+      mutation = """
+      mutation {
+        deleteCollection(id: "#{collection.id}")
+      }
+      """
+
+      %{"data" => %{"deleteCollection" => true}} = execute_query(@api_path, conn, mutation)
+
+      {:error, :not_found} = Collections.get_collection(collection.id)
+
+      {:ok, parent_still_exists} = Collections.get_collection(parent.id)
+      assert parent_still_exists.id == parent.id
+    end
+
+    test "retrieve collection without parent field requested", %{conn: conn} do
+      parent = insert(:collection)
+      collection = insert(:collection, parent: parent)
+
+      query = """
+      {
+        collection(id: "#{collection.id}") {
+          id
+          title
+        }
+      }
+      """
+
+      %{"data" => %{"collection" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == collection.id
+      assert result["title"] == collection.title
+      refute Map.has_key?(result, "parent")
+    end
+
+    test "list collections without parent field requested", %{conn: conn} do
+      parent = insert(:collection)
+      insert(:collection, parent: parent)
+
+      query = """
+      {
+        collections(limit: 5) {
+          id
+          title
+        }
+      }
+      """
+
+      %{"data" => %{"collections" => results}} = execute_query(@api_path, conn, query)
+
+      Enum.each(results, fn result ->
+        assert Map.has_key?(result, "id")
+        assert Map.has_key?(result, "title")
+        refute Map.has_key?(result, "parent")
+      end)
+    end
+  end
 end

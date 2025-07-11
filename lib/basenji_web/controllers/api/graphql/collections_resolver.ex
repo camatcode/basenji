@@ -3,14 +3,20 @@ defmodule BasenjiWeb.GraphQL.CollectionsResolver do
   alias Basenji.Collections
   alias BasenjiWeb.GraphQL.GraphQLUtils
 
-  def list_collections(_root, args, _info) do
-    opts = Map.to_list(args)
+  @preload_mapping %{
+    "parent" => :parent
+  }
+
+  def list_collections(_root, args, info) do
+    preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
+    opts = Map.to_list(args) ++ preload_opts
     collections = Collections.list_collections(opts)
     {:ok, collections}
   end
 
-  def get_collection(_root, %{id: id} = args, _info) do
-    opts = Map.to_list(args)
+  def get_collection(_root, %{id: id} = args, info) do
+    preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
+    opts = Map.to_list(args) ++ preload_opts
 
     case Collections.get_collection(id, opts) do
       {:ok, collection} -> {:ok, collection}
@@ -18,17 +24,35 @@ defmodule BasenjiWeb.GraphQL.CollectionsResolver do
     end
   end
 
-  def create_collection(_root, %{input: attrs}, _info) do
+  def create_collection(_root, %{input: attrs}, info) do
     case Collections.create_collection(attrs) do
-      {:ok, collection} -> {:ok, collection}
-      error -> GraphQLUtils.handle_result(error)
+      {:ok, collection} ->
+        preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
+
+        if Enum.empty?(preload_opts) do
+          {:ok, collection}
+        else
+          Collections.get_collection(collection.id, preload_opts)
+        end
+
+      error ->
+        GraphQLUtils.handle_result(error)
     end
   end
 
-  def update_collection(_root, %{id: id, input: attrs}, _info) do
+  def update_collection(_root, %{id: id, input: attrs}, info) do
     case Collections.update_collection(id, attrs) do
-      {:ok, collection} -> {:ok, collection}
-      error -> GraphQLUtils.handle_result(error)
+      {:ok, collection} ->
+        preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)
+
+        if Enum.empty?(preload_opts) do
+          {:ok, collection}
+        else
+          Collections.get_collection(collection.id, preload_opts)
+        end
+
+      error ->
+        GraphQLUtils.handle_result(error)
     end
   end
 
