@@ -48,7 +48,7 @@
 * ✅ Supports CBZ, CBR, CBT, CB7, and PDF comic book formats
 * ✅ Optimizes pages to improve read times on-the-fly
 * ✅ Efficent CRUD, filtering, sorting
-* ✅ Exposes a JSON:API for third-party clients
+* ✅ Exposes a GraphQL API and JSON:API for third-party clients
 * ✅ Powerful background processing that
   * ✅ Organizes deeply nested collections of comics
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
