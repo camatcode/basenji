@@ -25,6 +25,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     field :comics, list_of(:comic) do
       list_args()
       arg(:order_by, :order_by_attr, description: "Key to order results")
+
       arg(:title, :string)
       arg(:author, :string)
       arg(:description, :string)

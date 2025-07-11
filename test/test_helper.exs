@@ -56,3 +56,47 @@ defmodule TestHelper do
     Oban.drain_queue(drain_opts)
   end
 end
+
+defmodule TestHelper.GraphQL do
+  use BasenjiWeb.ConnCase
+
+  def execute_query(api_path, conn, query) do
+    conn
+    |> post(api_path, %{query: query})
+    |> json_response(200)
+  end
+
+  def build_query(field_name \\ "comics", args \\ "", fields \\ "id") do
+    args_str = if args == "", do: "", else: "(#{args})"
+
+    """
+    {
+      #{field_name}#{args_str} {
+        #{fields}
+      }
+    }
+    """
+  end
+
+  def build_search_query(field, value, fields \\ "id") do
+    formatted_value = format_graphql_value(value)
+    build_query("comics", "#{field}: #{formatted_value}", fields)
+  end
+
+  defp format_graphql_value(value) when is_binary(value), do: "\"#{value}\""
+  defp format_graphql_value(value) when is_atom(value), do: value |> to_string() |> String.upcase()
+  defp format_graphql_value(value), do: to_string(value)
+
+  def assert_comic_in_response(response, comic_id, query_name \\ "comics") do
+    %{"data" => %{^query_name => found}} = response
+    assert Enum.member?(found, %{"id" => comic_id})
+  end
+
+  def assert_exact_comic_match(response, comic_id, query_name \\ "comics") do
+    %{"data" => %{^query_name => [%{"id" => ^comic_id}]}} = response
+  end
+
+  def assert_single_comic(response, comic_id, query_name) do
+    %{"data" => %{^query_name => %{"id" => ^comic_id}}} = response
+  end
+end

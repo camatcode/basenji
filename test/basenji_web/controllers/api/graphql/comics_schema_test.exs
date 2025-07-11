@@ -1,6 +1,8 @@
 defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
   use BasenjiWeb.ConnCase
 
+  import TestHelper.GraphQL
+
   alias BasenjiWeb.GraphQL.ComicsSchema
 
   @moduletag :capture_log
@@ -9,23 +11,23 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
   @api_path "/api/graphql"
 
+  test "get comic", %{conn: conn} do
+    comics = insert_list(10, :comic)
+    query_name = "comic"
+
+    Enum.each(comics, fn %{id: comic_id} ->
+      query = build_query(query_name, "id: \"#{comic_id}\"")
+      response = execute_query(@api_path, conn, query)
+      assert_single_comic(response, comic_id, query_name)
+    end)
+  end
+
   describe "list" do
     test "simple list", %{conn: conn} do
       comic_ids = insert_list(100, :comic) |> Enum.map(& &1.id)
-      query_name = "comics"
 
-      query = """
-      {
-        #{query_name} {
-          id
-        }
-      }
-      """
-
-      %{"data" => %{^query_name => found}} =
-        conn
-        |> post(@api_path, %{query: query})
-        |> json_response(200)
+      query = build_query("comics")
+      %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, query)
 
       assert Enum.count(found) == Enum.count(comic_ids)
 
@@ -37,22 +39,11 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
     test "offset/limit", %{conn: conn} do
       insert_list(100, :comic)
-      query_name = "comics"
 
       0..9
       |> Enum.reduce(nil, fn page_idx, offset ->
-        query = """
-        {
-          #{query_name}(limit: 10, offset: #{offset || 0}) {
-            id
-          }
-        }
-        """
-
-        %{"data" => %{^query_name => found}} =
-          conn
-          |> post(@api_path, %{query: query})
-          |> json_response(200)
+        query = build_query("comics", "limit: 10, offset: #{offset || 0}")
+        %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, query)
 
         assert Enum.count(found) == 10
         (page_idx + 1) * 10
@@ -62,78 +53,31 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
     test "search by", %{conn: conn} do
       comics = insert_list(10, :comic)
 
+      search_fields = [
+        {"title", fn comic -> comic.title end},
+        {"author", fn comic -> comic.author end},
+        {"resource_location", fn comic -> comic.resource_location end}
+      ]
+
       Enum.each(comics, fn comic ->
-        query_name = "comics"
         comic_id = comic.id
 
-        query = """
-        {
-          #{query_name}(title: "#{comic.title}") {
-            id
-          }
-        }
-        """
+        # Test individual field searches
+        Enum.each(search_fields, fn {field, value_fn} ->
+          query = build_search_query(field, value_fn.(comic))
+          response = execute_query(@api_path, conn, query)
+          assert_exact_comic_match(response, comic_id)
+        end)
 
-        %{"data" => %{^query_name => [%{"id" => ^comic_id}]}} =
-          conn
-          |> post(@api_path, %{query: query})
-          |> json_response(200)
+        # Test format search (special case with uppercase)
+        format_query = build_query("comics", "format: #{comic.format |> Atom.to_string() |> String.upcase()}")
+        format_response = execute_query(@api_path, conn, format_query)
+        assert_comic_in_response(format_response, comic_id)
 
-        query = """
-        {
-          #{query_name}(author: "#{comic.author}") {
-            id
-          }
-        }
-        """
-
-        %{"data" => %{^query_name => [%{"id" => ^comic_id}]}} =
-          conn
-          |> post(@api_path, %{query: query})
-          |> json_response(200)
-
-        query = """
-        {
-          #{query_name}(resource_location: "#{comic.resource_location}") {
-            id
-          }
-        }
-        """
-
-        %{"data" => %{^query_name => [%{"id" => ^comic_id}]}} =
-          conn
-          |> post(@api_path, %{query: query})
-          |> json_response(200)
-
-        query = """
-        {
-          #{query_name}(format: #{comic.format |> Atom.to_string() |> String.upcase()}) {
-            id
-          }
-        }
-        """
-
-        %{"data" => %{^query_name => found}} =
-          conn
-          |> post(@api_path, %{query: query})
-          |> json_response(200)
-
-        assert Enum.member?(found, %{"id" => comic_id})
-
-        query = """
-        {
-          #{query_name}(released_year: #{comic.released_year}) {
-            id
-          }
-        }
-        """
-
-        %{"data" => %{^query_name => found}} =
-          conn
-          |> post(@api_path, %{query: query})
-          |> json_response(200)
-
-        assert Enum.member?(found, %{"id" => comic_id})
+        # Test released_year search
+        year_query = build_search_query("released_year", comic.released_year)
+        year_response = execute_query(@api_path, conn, year_query)
+        assert_comic_in_response(year_response, comic_id)
       end)
     end
 
@@ -143,38 +87,18 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       dt = DateTime.utc_now() |> DateTime.to_iso8601()
       :timer.sleep(1000)
       comic_id = insert(:comic).id
-      query_name = "comics"
 
-      query = """
-      {
-        #{query_name}(inserted_after: "#{dt}") {
-          id
-        }
-      }
-      """
+      # Test inserted_after
+      after_query = build_search_query("inserted_after", dt)
+      after_response = execute_query(@api_path, conn, after_query)
+      assert_exact_comic_match(after_response, comic_id)
 
-      %{"data" => %{^query_name => [%{"id" => ^comic_id}]}} =
-        conn
-        |> post(@api_path, %{query: query})
-        |> json_response(200)
-
-      query = """
-      {
-        #{query_name}(insertedBefore: "#{dt}") {
-          id
-        }
-      }
-      """
-
-      %{"data" => %{^query_name => found}} =
-        conn
-        |> post(@api_path, %{query: query})
-        |> json_response(200)
+      # Test insertedBefore
+      before_query = build_search_query("insertedBefore", dt)
+      %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, before_query)
 
       refute Enum.empty?(found)
       refute Enum.member?(found, %{"id" => comic_id})
-
-      #  updated before / after
     end
 
     test "generic search", %{conn: conn} do
@@ -199,70 +123,19 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
           description: "25 chapters of dense reading"
         )
 
-      query_name = "comics"
+      search_cases = [
+        {"and", [a_id, b_id]},
+        {"or", [b_id, c_id]},
+        {"25", [b_id, c_id]}
+      ]
 
-      query = """
-      {
-        #{query_name}(order_by: TITLE, search: "and") {
-          id
-        }
-      }
-      """
+      Enum.each(search_cases, fn {search_term, expected_ids} ->
+        query = build_query("comics", "order_by: TITLE, search: \"#{search_term}\"")
+        %{"data" => %{"comics" => found}} = execute_query(@api_path, conn, query)
 
-      %{
-        "data" => %{
-          ^query_name => [
-            %{"id" => ^a_id},
-            %{"id" => ^b_id}
-          ]
-        }
-      } =
-        conn
-        |> post(@api_path, %{query: query})
-        |> json_response(200)
-
-      query = """
-      {
-        #{query_name}(order_by: TITLE, search: "or") {
-          id
-        }
-      }
-      """
-
-      %{
-        "data" => %{
-          ^query_name => [
-            %{"id" => ^b_id},
-            %{"id" => ^c_id}
-          ]
-        }
-      } =
-        conn
-        |> post(@api_path, %{query: query})
-        |> json_response(200)
-
-      query = """
-      {
-        #{query_name}(order_by: TITLE, search: "25") {
-          id
-        }
-      }
-      """
-
-      %{
-        "data" => %{
-          ^query_name => [
-            %{"id" => ^b_id},
-            %{"id" => ^c_id}
-          ]
-        }
-      } =
-        conn
-        |> post(@api_path, %{query: query})
-        |> json_response(200)
+        found_ids = Enum.map(found, & &1["id"])
+        assert found_ids == expected_ids
+      end)
     end
-  end
-
-  test "get comic", %{conn: _conn} do
   end
 end
