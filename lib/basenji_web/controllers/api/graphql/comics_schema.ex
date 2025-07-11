@@ -18,6 +18,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     field :format, :comic_format
     field :image_preview, :string
     field :byte_size, :integer
+    field :member_collections, list_of(:collection)
   end
 
   object :comics_queries do

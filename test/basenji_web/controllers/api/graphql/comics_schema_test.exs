@@ -274,4 +274,203 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
       %{"errors" => [%{"message" => "Not found"}]} = execute_query(@api_path, conn, mutation)
     end
   end
+
+  describe "member collections relationships" do
+    test "retrieve comic with member collections", %{conn: conn} do
+      comic = insert(:comic)
+      collection1 = insert(:collection)
+      collection2 = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection1.id, comic.id)
+      {:ok, _} = Basenji.Collections.add_to_collection(collection2.id, comic.id)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          title
+          memberCollections {
+            id
+            title
+            description
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == comic.id
+      assert result["title"] == comic.title
+      assert Enum.count(result["memberCollections"]) == 2
+
+      collection_ids = Enum.map(result["memberCollections"], & &1["id"])
+      assert Enum.member?(collection_ids, collection1.id)
+      assert Enum.member?(collection_ids, collection2.id)
+    end
+
+    test "list comics with member collections", %{conn: conn} do
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+      collection1 = insert(:collection)
+      collection2 = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection1.id, comic1.id)
+      {:ok, _} = Basenji.Collections.add_to_collection(collection2.id, comic2.id)
+
+      query = """
+      {
+        comics {
+          id
+          title
+          memberCollections {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comics" => results}} = execute_query(@api_path, conn, query)
+
+      comic1_result = Enum.find(results, fn c -> c["id"] == comic1.id end)
+      comic2_result = Enum.find(results, fn c -> c["id"] == comic2.id end)
+
+      assert comic1_result["memberCollections"] |> Enum.map(& &1["id"]) |> Enum.member?(collection1.id)
+      assert comic2_result["memberCollections"] |> Enum.map(& &1["id"]) |> Enum.member?(collection2.id)
+    end
+
+    test "retrieve comic without member collections field requested", %{conn: conn} do
+      comic = insert(:comic)
+      collection = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection.id, comic.id)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          title
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == comic.id
+      assert result["title"] == comic.title
+      refute Map.has_key?(result, "memberCollections")
+    end
+
+    test "retrieve comic with empty member collections list", %{conn: conn} do
+      comic = insert(:comic)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          title
+          memberCollections {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      assert result["id"] == comic.id
+      assert result["title"] == comic.title
+      assert result["memberCollections"] == []
+    end
+
+    test "create comic and verify empty member collections", %{conn: conn} do
+      %{resource_location: loc} = build(:comic)
+
+      mutation = """
+      mutation {
+        createComic(input: {
+          title: "New Comic"
+          resourceLocation: "#{loc}"
+        }) {
+          id
+          title
+          memberCollections {
+            id
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"createComic" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["title"] == "New Comic"
+      assert result["memberCollections"] == []
+    end
+
+    test "update comic and verify member collections preserved", %{conn: conn} do
+      comic = insert(:comic)
+      collection = insert(:collection)
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection.id, comic.id)
+
+      mutation = """
+      mutation {
+        updateComic(id: "#{comic.id}", input: {
+          title: "Updated Comic Title"
+        }) {
+          id
+          title
+          memberCollections {
+            id
+            title
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"updateComic" => result}} = execute_query(@api_path, conn, mutation)
+
+      assert result["id"] == comic.id
+      assert result["title"] == "Updated Comic Title"
+      assert Enum.count(result["memberCollections"]) == 1
+      assert Enum.at(result["memberCollections"], 0)["id"] == collection.id
+    end
+
+    test "comic with multiple collections preserves collection data", %{conn: conn} do
+      comic = insert(:comic)
+      collection1 = insert(:collection, title: "First Collection", description: "Description One")
+      collection2 = insert(:collection, title: "Second Collection", description: "Description Two")
+
+      {:ok, _} = Basenji.Collections.add_to_collection(collection1.id, comic.id)
+      {:ok, _} = Basenji.Collections.add_to_collection(collection2.id, comic.id)
+
+      query = """
+      {
+        comic(id: "#{comic.id}") {
+          id
+          memberCollections {
+            id
+            title
+            description
+          }
+        }
+      }
+      """
+
+      %{"data" => %{"comic" => result}} = execute_query(@api_path, conn, query)
+
+      collections = result["memberCollections"]
+      assert Enum.count(collections) == 2
+
+      collection1_result = Enum.find(collections, fn c -> c["id"] == collection1.id end)
+      collection2_result = Enum.find(collections, fn c -> c["id"] == collection2.id end)
+
+      assert collection1_result["title"] == "First Collection"
+      assert collection1_result["description"] == "Description One"
+      assert collection2_result["title"] == "Second Collection"
+      assert collection2_result["description"] == "Description Two"
+    end
+  end
 end
