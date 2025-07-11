@@ -14,7 +14,7 @@ defmodule BasenjiWeb.GraphQL.CommonSchema do
     quote do
       arg(:limit, :integer, description: "Number of items to return")
       arg(:offset, :integer, description: "Number of items to skip")
-      arg(:order_by, :string, description: "Key to order results")
+      arg(:search, :string, description: "Search term")
       arg(:inserted_before, :datetime, description: "Only results inserted before this DateTime")
       arg(:inserted_after, :datetime, description: "Only results inserted after this DateTime")
       arg(:updated_before, :datetime, description: "Only results updated before this DateTime")

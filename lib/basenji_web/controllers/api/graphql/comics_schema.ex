@@ -24,9 +24,11 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     @desc "Lists comics"
     field :comics, list_of(:comic) do
       list_args()
+      arg(:order_by, :order_by_attr, description: "Key to order results")
       arg(:title, :string)
       arg(:author, :string)
       arg(:description, :string)
+      arg(:resource_location, :string)
       arg(:released_year, :integer)
       arg(:page_count, :integer)
       arg(:format, :comic_format)
@@ -41,4 +43,5 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
   end
 
   enum(:comic_format, values: ComicsResolver.formats())
+  enum(:order_by_attr, values: ComicsResolver.order_by_attrs())
 end

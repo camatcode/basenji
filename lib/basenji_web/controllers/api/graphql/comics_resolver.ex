@@ -26,6 +26,8 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
 
   def formats, do: Comics.formats()
 
+  def order_by_attrs, do: Comics.attrs() -- [:image_preview]
+
   defp set_pages(comics) when is_list(comics) do
     comics
     |> Enum.map(&set_pages/1)
