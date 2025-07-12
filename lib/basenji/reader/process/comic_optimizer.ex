@@ -1,6 +1,7 @@
 defmodule Basenji.Reader.Process.ComicOptimizer do
   @moduledoc false
 
+  alias Basenji.FilenameSanitizer
   alias Basenji.Reader
 
   def optimize(comic_file_path, result_directory) do
@@ -12,29 +13,32 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
       comic_name =
         Path.basename(comic_file_path)
         |> Path.rootname()
-        |> ProperCase.snake_case()
+        |> FilenameSanitizer.sanitize()
 
-      images_dir = Path.join(result_directory, "#{comic_name}_images")
+      image_dir_name = "images#{System.monotonic_time()}"
+      images_dir = Path.join(result_directory, image_dir_name)
       :ok = File.mkdir_p!(images_dir)
 
       with {:ok, %{page_count: page_count}} <- Reader.info(comic_file_path),
-           {:ok, %{entries: entries}} <- Reader.read(comic_file_path),
-           {:ok, stream} <- Reader.stream_pages(comic_file_path, optimize: true) do
-        padding = String.length("#{page_count}") - 1
+           {:ok, %{entries: entries}} <- Reader.read(comic_file_path, optimize: false) do
+        padding = String.length("#{page_count}")
 
-        stream
-        |> Stream.with_index()
-        |> Enum.each(fn {page, page_idx} ->
-          page_bytes = page |> Enum.to_list()
-          ext = Enum.at(entries, page_idx) |> Map.get(:file_name) |> Path.extname()
-
-          file_name = "#{String.pad_leading("#{page_idx + 1}", padding, "0")}#{ext}"
-          :ok = File.write!(Path.join(images_dir, file_name), page_bytes)
+        1..page_count
+        |> Enum.each(fn page_idx ->
+          %{file_name: file_name, stream_fun: stream_func} = Enum.at(entries, page_idx - 1)
+          ext = Path.extname(file_name)
+          clean_name = "#{String.pad_leading("#{page_idx + 1}", padding, "0")}#{ext}"
+          file_path =  Path.join(images_dir, clean_name)
+          File.open!(file_path, [:write, :binary], fn file ->
+            stream_func.() |> Enum.each(&IO.binwrite(file, &1))
+          end)
         end)
+
+        Reader.optimize_directory(images_dir)
 
         optimized_name = "#{comic_name}_optimized.cbz"
 
-        response = zip(result_directory, "#{comic_name}_images", optimized_name)
+        response = zip(result_directory, image_dir_name, optimized_name)
         File.rm_rf!(images_dir)
         response
       end

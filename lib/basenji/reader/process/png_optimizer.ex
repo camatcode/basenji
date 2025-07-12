@@ -36,4 +36,10 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
       optimized_bytes
     end
   end
+
+  def optimize_directory(file_path) do
+    cmd_opts = ["-fix", "-quiet", "#{file_path}/*"]
+    cmd = "optipng"
+    exec(cmd, cmd_opts)
+  end
 end

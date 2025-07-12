@@ -19,6 +19,12 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
     end
   end
 
+  def optimize_directory(file_path) do
+    cmd_opts = ["#{file_path}/*"] |> IO.inspect()
+    cmd = "jpegoptim"
+    exec(cmd, cmd_opts) |> IO.inspect(label: :jpegoptim)
+  end
+
   # opts - target_size_kb - a size target you want to hit
   defp optimize_impl(bytes, opts) when is_binary(bytes) do
     opts = Keyword.merge([target_size_kb: min(byte_size(bytes) / 1000, 1000)], opts)
