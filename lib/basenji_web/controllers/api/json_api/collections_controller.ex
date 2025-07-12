@@ -41,37 +41,14 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
   def update(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, params) do
     id = params["id"]
 
-    # Handle both attributes and relationships
-    attrs = params["data"]["attributes"] |> Utils.atomize()
+    attrs = extract_attributes(params)
     relationships = Map.get(params["data"], "relationships", %{})
 
-    # If comics relationship is provided, handle it
-    attrs_with_relationships =
-      case Map.get(relationships, "comics") do
-        %{"data" => comics_data} when is_list(comics_data) ->
-          # For JSON:API, we replace the entire relationship
-          new_comic_ids = Enum.map(comics_data, fn %{"id" => id} -> id end)
+    final_attrs =
+      attrs
+      |> maybe_add_comics_operations(id, relationships)
 
-          # Get current comics to determine what to add/remove
-          case Collections.get_collection(id, preload: [:comics]) do
-            {:ok, current_collection} ->
-              current_comic_ids = Enum.map(current_collection.comics, & &1.id)
-              comics_to_add = new_comic_ids -- current_comic_ids
-              comics_to_remove = current_comic_ids -- new_comic_ids
-
-              attrs
-              |> Map.put(:comics_to_add, comics_to_add)
-              |> Map.put(:comics_to_remove, comics_to_remove)
-
-            _ ->
-              attrs
-          end
-
-        _ ->
-          attrs
-      end
-
-    Collections.update_collection(id, attrs_with_relationships, Utils.to_opts(jsonapi_plug))
+    Collections.update_collection(id, final_attrs, Utils.to_opts(jsonapi_plug))
     |> case do
       {:ok, collection} -> render(conn, "update.json", %{data: collection})
       e -> Utils.bad_request_handler(conn, e)
@@ -81,5 +58,41 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
   def delete(conn, params) do
     {:ok, deleted} = Collections.delete_collection(params["id"])
     render(conn, "show.json", %{data: deleted})
+  end
+
+  # Helper functions
+  defp extract_attributes(params) do
+    case Map.get(params["data"], "attributes") do
+      nil -> %{}
+      attributes -> Utils.atomize(attributes)
+    end
+  end
+
+  defp maybe_add_comics_operations(attrs, collection_id, relationships) do
+    case Map.get(relationships, "comics") do
+      %{"data" => comics_data} when is_list(comics_data) ->
+        add_comics_operations(attrs, collection_id, comics_data)
+
+      _ ->
+        attrs
+    end
+  end
+
+  defp add_comics_operations(attrs, collection_id, comics_data) do
+    new_comic_ids = Enum.map(comics_data, fn %{"id" => id} -> id end)
+
+    case Collections.get_collection(collection_id, preload: [:comics]) do
+      {:ok, current_collection} ->
+        current_comic_ids = Enum.map(current_collection.comics, & &1.id)
+        comics_to_add = new_comic_ids -- current_comic_ids
+        comics_to_remove = current_comic_ids -- new_comic_ids
+
+        attrs
+        |> Map.put(:comics_to_add, comics_to_add)
+        |> Map.put(:comics_to_remove, comics_to_remove)
+
+      _ ->
+        attrs
+    end
   end
 end

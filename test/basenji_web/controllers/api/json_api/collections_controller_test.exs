@@ -164,110 +164,176 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
     end
   end
 
-  describe "comics relationship endpoints" do
-    test "GET /collections/:id/relationships/comics - show comics relationship", %{conn: conn} do
-      collection = insert(:collection)
-      comic1 = insert(:comic)
-      comic2 = insert(:comic)
 
-      {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
-      {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
-
-      conn = get(conn, "#{@api_path}/#{collection.id}/relationships/comics")
-
-      assert %{"data" => comics_data} = json_response(conn, 200)
-      assert length(comics_data) == 2
-
-      comic_ids = Enum.map(comics_data, & &1["id"])
-      assert Enum.member?(comic_ids, comic1.id)
-      assert Enum.member?(comic_ids, comic2.id)
-
-      Enum.each(comics_data, fn comic_data ->
-        assert comic_data["type"] == "comic"
-        assert comic_data["id"]
-      end)
-    end
-
-    test "POST /collections/:id/relationships/comics - add comics to collection", %{conn: conn} do
+  describe "collections with comic relationships" do
+    test "PATCH /collections/:id - update collection with comics relationship", %{conn: conn} do
       collection = insert(:collection)
       comic1 = insert(:comic)
       comic2 = insert(:comic)
 
       request_body = %{
-        "data" => [
-          %{"type" => "comic", "id" => comic1.id},
-          %{"type" => "comic", "id" => comic2.id}
-        ]
+        "data" => %{
+          "type" => "collection",
+          "id" => collection.id,
+          "attributes" => %{
+            "title" => "Updated Collection"
+          },
+          "relationships" => %{
+            "comics" => %{
+              "data" => [
+                %{"type" => "comic", "id" => comic1.id},
+                %{"type" => "comic", "id" => comic2.id}
+              ]
+            }
+          }
+        }
       }
 
       conn =
         conn
         |> put_req_header("content-type", "application/vnd.api+json")
-        |> post("#{@api_path}/#{collection.id}/relationships/comics", request_body)
+        |> patch("#{@api_path}/#{collection.id}", request_body)
 
-      assert json_response(conn, 204)
+      assert json_response(conn, 200)
 
+      # Verify the relationship was updated
       {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
       comic_ids = Enum.map(updated_collection.comics, & &1.id)
+      assert length(comic_ids) == 2
       assert Enum.member?(comic_ids, comic1.id)
       assert Enum.member?(comic_ids, comic2.id)
+      assert updated_collection.title == "Updated Collection"
     end
 
-    test "DELETE /collections/:id/relationships/comics - remove comics from collection", %{conn: conn} do
-      collection = insert(:collection)
-      comic1 = insert(:comic)
-      comic2 = insert(:comic)
-      comic3 = insert(:comic)
-
-      {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
-      {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
-      {:ok, _} = Collections.add_to_collection(collection.id, comic3.id)
-
-      request_body = %{
-        "data" => [
-          %{"type" => "comic", "id" => comic1.id},
-          %{"type" => "comic", "id" => comic3.id}
-        ]
-      }
-
-      conn =
-        conn
-        |> put_req_header("content-type", "application/vnd.api+json")
-        |> delete("#{@api_path}/#{collection.id}/relationships/comics", request_body)
-
-      assert json_response(conn, 204)
-
-      {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
-      comic_ids = Enum.map(updated_collection.comics, & &1.id)
-      assert length(comic_ids) == 1
-      assert Enum.member?(comic_ids, comic2.id)
-    end
-
-    test "PATCH /collections/:id/relationships/comics - replace all comics", %{conn: conn} do
+    test "PATCH /collections/:id - replace existing comics in collection", %{conn: conn} do
       collection = insert(:collection)
       old_comic = insert(:comic)
-      new_comic = insert(:comic)
+      new_comic1 = insert(:comic)
+      new_comic2 = insert(:comic)
 
+      # Add initial comic
       {:ok, _} = Collections.add_to_collection(collection.id, old_comic.id)
 
       request_body = %{
-        "data" => [
-          %{"type" => "comic", "id" => new_comic.id}
-        ]
+        "data" => %{
+          "type" => "collection",
+          "id" => collection.id,
+          "relationships" => %{
+            "comics" => %{
+              "data" => [
+                %{"type" => "comic", "id" => new_comic1.id},
+                %{"type" => "comic", "id" => new_comic2.id}
+              ]
+            }
+          }
+        }
       }
 
       conn =
         conn
         |> put_req_header("content-type", "application/vnd.api+json")
-        |> patch("#{@api_path}/#{collection.id}/relationships/comics", request_body)
+        |> patch("#{@api_path}/#{collection.id}", request_body)
 
-      assert json_response(conn, 204)
+      assert json_response(conn, 200)
 
+      # Verify the relationship was replaced
+      {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
+      comic_ids = Enum.map(updated_collection.comics, & &1.id)
+      assert length(comic_ids) == 2
+      assert Enum.member?(comic_ids, new_comic1.id)
+      assert Enum.member?(comic_ids, new_comic2.id)
+      refute Enum.member?(comic_ids, old_comic.id)
+    end
+
+    test "PATCH /collections/:id - clear all comics from collection", %{conn: conn} do
+      collection = insert(:collection)
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+
+      # Add initial comics
+      {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
+
+      request_body = %{
+        "data" => %{
+          "type" => "collection",
+          "id" => collection.id,
+          "relationships" => %{
+            "comics" => %{
+              "data" => []
+            }
+          }
+        }
+      }
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+        |> patch("#{@api_path}/#{collection.id}", request_body)
+
+      assert json_response(conn, 200)
+
+      # Verify all comics were removed
+      {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
+      assert Enum.empty?(updated_collection.comics)
+    end
+
+    test "PATCH /collections/:id - update only attributes without affecting relationships", %{conn: conn} do
+      collection = insert(:collection)
+      comic = insert(:comic)
+
+      # Add initial comic
+      {:ok, _} = Collections.add_to_collection(collection.id, comic.id)
+
+      request_body = %{
+        "data" => %{
+          "type" => "collection",
+          "id" => collection.id,
+          "attributes" => %{
+            "title" => "Updated Title Only"
+          }
+        }
+      }
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+        |> patch("#{@api_path}/#{collection.id}", request_body)
+
+      assert json_response(conn, 200)
+
+      # Verify the comic relationship was preserved
       {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
       comic_ids = Enum.map(updated_collection.comics, & &1.id)
       assert length(comic_ids) == 1
-      assert Enum.member?(comic_ids, new_comic.id)
-      refute Enum.member?(comic_ids, old_comic.id)
+      assert Enum.member?(comic_ids, comic.id)
+      assert updated_collection.title == "Updated Title Only"
+    end
+
+    test "GET /collections/:id - includes comics relationship data when requested", %{conn: conn} do
+      collection = insert(:collection)
+      comic1 = insert(:comic)
+      comic2 = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
+      {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
+
+      conn = get(conn, "#{@api_path}/#{collection.id}?include=comics")
+
+      response = json_response(conn, 200)
+      
+      # Check that relationships are included
+      assert response["data"]["relationships"]["comics"]["data"]
+      comics_data = response["data"]["relationships"]["comics"]["data"]
+      assert length(comics_data) == 2
+      
+      comic_ids = Enum.map(comics_data, fn comic -> comic["id"] end)
+      assert Enum.member?(comic_ids, comic1.id)
+      assert Enum.member?(comic_ids, comic2.id)
+
+      # Check that full comic data is in included
+      assert response["included"]
+      assert length(response["included"]) == 2
     end
   end
 
