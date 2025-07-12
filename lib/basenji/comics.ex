@@ -150,6 +150,56 @@ defmodule Basenji.Comics do
 
   def attrs, do: Comic.attrs()
 
+  def create_optimized_comic(original_comic, optimized_attrs) do
+    # Clone attributes from original comic
+    attrs = Comic.clone_attrs(original_comic, optimized_attrs)
+
+    with {:ok, optimized_comic} <- create_comic(attrs) do
+      # Update original to point to optimized version
+      case update_comic(original_comic, %{optimized_id: optimized_comic.id}) do
+        {:ok, _updated_original} -> {:ok, optimized_comic}
+        error -> error
+      end
+    end
+  end
+
+  def get_preferred_comic(comic_id, opts \\ []) do
+    opts = Keyword.merge([prefer_optimized: true], opts)
+
+    with {:ok, comic} <- get_comic(comic_id, Keyword.put(opts, :preload, [:optimized_comic])) do
+      if opts[:prefer_optimized] && comic.optimized_comic do
+        {:ok, comic.optimized_comic}
+      else
+        {:ok, comic}
+      end
+    end
+  end
+
+  def revert_optimization(comic_id) do
+    with {:ok, comic} <- get_comic(comic_id, preload: [:original_comic]) do
+      cond do
+        # This is an optimized version - delete it and clear original's link
+        comic.original_id ->
+          case update_comic(comic.original_comic, %{optimized_id: nil}) do
+            {:ok, original} ->
+              delete_comic(comic)
+              {:ok, original}
+
+            error ->
+              error
+          end
+
+        # This is an original with optimization - just clear the link  
+        comic.optimized_id ->
+          update_comic(comic, %{optimized_id: nil})
+
+        # No optimization relationship
+        true ->
+          {:error, "Comic has no optimization to revert"}
+      end
+    end
+  end
+
   defp handle_insert_side_effects({:ok, comic}) do
     Processor.process(comic, [:insert])
     {:ok, comic}
@@ -186,6 +236,9 @@ defmodule Basenji.Comics do
 
       {_any, nil}, query ->
         query
+
+      {:hide_originals_with_optimized, true}, query ->
+        where(query, [c], is_nil(c.optimized_id))
 
       {:search, search}, query ->
         search_term = "%#{search}%"
