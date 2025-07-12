@@ -2,6 +2,7 @@ defmodule BasenjiWeb.Plugs.JSONAPIPlug do
   @moduledoc false
   import Plug.Conn
 
+  alias JSONAPIPlug.Exceptions.InvalidDocument
   alias Plug.Conn.Status
 
   def init(opts), do: opts
@@ -18,6 +19,14 @@ defmodule BasenjiWeb.Plugs.JSONAPIPlug do
       else
         reraise e, __STACKTRACE__
       end
+
+    # Handle JSONAPIPlug validation errors as 400 Bad Request
+    e in InvalidDocument ->
+      send_400_response(conn, "Invalid JSON:API document: #{Exception.message(e)}")
+
+    # Handle Ecto cast errors (like invalid UUIDs) as 400 Bad Request
+    e in Ecto.Query.CastError ->
+      send_400_response(conn, "Invalid data format: #{Exception.message(e)}")
 
     other_error ->
       reraise other_error, __STACKTRACE__
@@ -41,6 +50,24 @@ defmodule BasenjiWeb.Plugs.JSONAPIPlug do
     |> put_status(415)
     |> put_resp_content_type("application/vnd.api+json")
     |> send_resp(415, Jason.encode!(error_response))
+    |> halt()
+  end
+
+  defp send_400_response(conn, detail) do
+    error_response = %{
+      errors: [
+        %{
+          status: "400",
+          title: "Bad Request",
+          detail: detail
+        }
+      ]
+    }
+
+    conn
+    |> put_status(400)
+    |> put_resp_content_type("application/vnd.api+json")
+    |> send_resp(400, Jason.encode!(error_response))
     |> halt()
   end
 end

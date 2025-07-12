@@ -113,3 +113,28 @@ defmodule TestHelper.GraphQL do
     %{"data" => %{"collections" => [%{"id" => ^collection_id}]}} = response
   end
 end
+
+defmodule TestHelper.JSONAPI do
+  def build_request_body(resource_type, id \\ nil, attributes \\ %{}, relationships \\ %{}) do
+    %{"type" => resource_type}
+    |> maybe_put("id", id)
+    |> maybe_put("attributes", attributes)
+    |> maybe_put("relationships", relationships)
+    |> then(fn data -> %{"data" => data} end)
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, _key, value) when value == %{}, do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
+
+  def build_comics_relationship(comic_ids) when is_list(comic_ids) do
+    comics_data = Enum.map(comic_ids, fn id -> %{"type" => "comic", "id" => id} end)
+    %{"comics" => %{"data" => comics_data}}
+  end
+
+  def build_comics_relationship(comic_id) when is_binary(comic_id) do
+    build_comics_relationship([comic_id])
+  end
+
+  def build_comics_relationship(_), do: %{}
+end
