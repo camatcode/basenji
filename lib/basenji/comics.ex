@@ -166,7 +166,7 @@ defmodule Basenji.Comics do
   def get_preferred_comic(comic_id, opts \\ []) do
     opts = Keyword.merge([prefer_optimized: true], opts)
 
-    with {:ok, comic} <- get_comic(comic_id, Keyword.put(opts, :preload, [:optimized_comic])) do
+    with {:ok, comic} <- get_comic(comic_id, preload: [:optimized_comic]) do
       if opts[:prefer_optimized] && comic.optimized_comic do
         {:ok, comic.optimized_comic}
       else
@@ -178,7 +178,6 @@ defmodule Basenji.Comics do
   def revert_optimization(comic_id) do
     with {:ok, comic} <- get_comic(comic_id, preload: [:original_comic]) do
       cond do
-        # This is an optimized version - delete it and clear original's link
         comic.original_id ->
           case update_comic(comic.original_comic, %{optimized_id: nil}) do
             {:ok, original} ->
@@ -189,11 +188,17 @@ defmodule Basenji.Comics do
               error
           end
 
-        # This is an original with optimization - just clear the link  
-        comic.optimized_id ->
+        not is_nil(Map.get(comic, :optimized_id)) ->
+          optimized_id = Map.get(comic, :optimized_id)
+
+          {1, nil} =
+            Repo.update_all(
+              from(c in Comic, where: c.id == ^optimized_id),
+              set: [original_id: nil]
+            )
+
           update_comic(comic, %{optimized_id: nil})
 
-        # No optimization relationship
         true ->
           {:error, "Comic has no optimization to revert"}
       end
@@ -237,7 +242,7 @@ defmodule Basenji.Comics do
       {_any, nil}, query ->
         query
 
-      {:hide_originals_with_optimized, true}, query ->
+      {:prefer_optimized, true}, query ->
         where(query, [c], is_nil(c.optimized_id))
 
       {:search, search}, query ->

@@ -267,7 +267,7 @@ defmodule Basenji.ComicsTest do
 
       # Create a dummy optimized file for testing
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      on_exit(fn -> File.rm!(optimized_location) end)
 
       {:ok, optimized} =
         Comics.create_optimized_comic(original, %{
@@ -300,7 +300,7 @@ defmodule Basenji.ComicsTest do
       optimized_location = "/tmp/optimized_#{System.monotonic_time()}.cbz"
 
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      on_exit(fn -> File.rm!(optimized_location) end)
 
       {:ok, optimized} =
         Comics.create_optimized_comic(original, %{
@@ -310,7 +310,6 @@ defmodule Basenji.ComicsTest do
           byte_size: 500
         })
 
-      # Verify overrides were applied
       # Cloned
       assert optimized.title == original.title
       # Overridden
@@ -328,8 +327,8 @@ defmodule Basenji.ComicsTest do
       File.touch!(optimized_location_2)
 
       on_exit(fn ->
-        File.rm_rf!(optimized_location_1)
-        File.rm_rf!(optimized_location_2)
+        File.rm!(optimized_location_1)
+        File.rm!(optimized_location_2)
       end)
 
       # Create first optimization
@@ -344,7 +343,7 @@ defmodule Basenji.ComicsTest do
           resource_location: optimized_location_2
         })
 
-      assert "Cannot optimize an already optimized comic" in errors_on(changeset).original_id
+      assert "Comic cannot be both original and optimized" in errors_on(changeset).original_id
     end
 
     test "cannot create second optimized version of same original" do
@@ -356,8 +355,8 @@ defmodule Basenji.ComicsTest do
       File.touch!(optimized_location_2)
 
       on_exit(fn ->
-        File.rm_rf!(optimized_location_1)
-        File.rm_rf!(optimized_location_2)
+        File.rm!(optimized_location_1)
+        File.rm!(optimized_location_2)
       end)
 
       # Create first optimization
@@ -380,7 +379,7 @@ defmodule Basenji.ComicsTest do
       optimized_location = "/tmp/optimized_#{System.monotonic_time()}.cbz"
 
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      on_exit(fn -> File.rm!(optimized_location) end)
 
       {:ok, optimized} =
         Comics.create_optimized_comic(original, %{
@@ -408,7 +407,7 @@ defmodule Basenji.ComicsTest do
       optimized_location = "/tmp/optimized_#{System.monotonic_time()}.cbz"
 
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      on_exit(fn -> File.rm!(optimized_location) end)
 
       {:ok, optimized} =
         Comics.create_optimized_comic(original, %{
@@ -431,7 +430,7 @@ defmodule Basenji.ComicsTest do
       optimized_location = "/tmp/optimized_#{System.monotonic_time()}.cbz"
 
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      on_exit(fn -> File.rm!(optimized_location) end)
 
       {:ok, optimized} =
         Comics.create_optimized_comic(original, %{
@@ -457,15 +456,20 @@ defmodule Basenji.ComicsTest do
       assert message == "Comic has no optimization to revert"
     end
 
-    test "list_comics/1 with hide_originals_with_optimized filters original comics" do
+    test "list_comics/1 with prefer_optimized filters original comics" do
       original1 = insert(:comic)
       original2 = insert(:comic)
-      # No optimization
       original3 = insert(:comic)
 
       optimized_location = "/tmp/optimized_#{System.monotonic_time()}.cbz"
+      optimized_location2 = "/tmp/optimized2_#{System.monotonic_time()}.cbz"
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      File.touch!(optimized_location2)
+
+      on_exit(fn ->
+        File.rm!(optimized_location)
+        File.rm!(optimized_location2)
+      end)
 
       # Create optimizations for first two
       {:ok, optimized1} =
@@ -475,13 +479,9 @@ defmodule Basenji.ComicsTest do
 
       {:ok, _optimized2} =
         Comics.create_optimized_comic(original2, %{
-          resource_location: optimized_location <> "2"
+          resource_location: optimized_location2
         })
 
-      File.touch!(optimized_location <> "2")
-      on_exit(fn -> File.rm_rf!(optimized_location <> "2") end)
-
-      # Without filter - should see all comics
       all_comics = Comics.list_comics()
       comic_ids = Enum.map(all_comics, & &1.id) |> MapSet.new()
       assert MapSet.member?(comic_ids, original1.id)
@@ -490,7 +490,7 @@ defmodule Basenji.ComicsTest do
       assert MapSet.member?(comic_ids, optimized1.id)
 
       # With filter - should hide originals that have optimizations
-      filtered_comics = Comics.list_comics(hide_originals_with_optimized: true)
+      filtered_comics = Comics.list_comics(prefer_optimized: true)
       filtered_ids = Enum.map(filtered_comics, & &1.id) |> MapSet.new()
       # Hidden
       refute MapSet.member?(filtered_ids, original1.id)
@@ -503,14 +503,14 @@ defmodule Basenji.ComicsTest do
     end
 
     test "clone_attrs/2 correctly clones cloneable attributes" do
-      original =
-        insert(:comic,
+      original = insert(:comic)
+      # Update the comic with specific test values after creation
+      {:ok, original} =
+        Comics.update_comic(original, %{
           title: "Test Title",
           author: "Test Author",
-          description: "Test Description",
-          resource_location: "/original/path",
-          byte_size: 5000
-        )
+          description: "Test Description"
+        })
 
       cloned_attrs = Comic.clone_attrs(original)
 
@@ -560,11 +560,11 @@ defmodule Basenji.ComicsTest do
       }
 
       File.touch!("/tmp/test.cbz")
-      on_exit(fn -> File.rm_rf!("/tmp/test.cbz") end)
+      on_exit(fn -> File.rm!("/tmp/test.cbz") end)
 
       changeset = Comic.changeset(%Comic{}, attrs)
       refute changeset.valid?
-      assert "Comic cannot be both original and optimized" in errors_on(changeset).base
+      assert "Comic cannot be both original and optimized" in errors_on(changeset).original_id
     end
 
     test "database constraint prevents optimization chains" do
@@ -572,7 +572,7 @@ defmodule Basenji.ComicsTest do
       optimized_location = "/tmp/optimized_#{System.monotonic_time()}.cbz"
 
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      on_exit(fn -> File.rm!(optimized_location) end)
 
       {:ok, optimized} =
         Comics.create_optimized_comic(original, %{
@@ -593,7 +593,7 @@ defmodule Basenji.ComicsTest do
       optimized_location = "/tmp/optimized_#{System.monotonic_time()}.cbz"
 
       File.touch!(optimized_location)
-      on_exit(fn -> File.rm_rf!(optimized_location) end)
+      on_exit(fn -> File.rm!(optimized_location) end)
 
       {:ok, optimized} =
         Comics.create_optimized_comic(original, %{

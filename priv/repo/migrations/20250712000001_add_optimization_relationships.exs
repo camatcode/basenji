@@ -2,9 +2,13 @@ defmodule Basenji.Repo.Migrations.AddOptimizationRelationships do
   use Ecto.Migration
 
   def change do
-    # Add indexes for performance (foreign keys already exist)
-    create_if_not_exists(index(:comics, [:original_id]))
-    create_if_not_exists(index(:comics, [:optimized_id]))
+    alter table(:comics) do
+      add(:original_id, references(:comics, type: :uuid, on_delete: :nilify_all))
+      add(:optimized_id, references(:comics, type: :uuid, on_delete: :nilify_all))
+    end
+
+    create(index(:comics, [:original_id]))
+    create(index(:comics, [:optimized_id]))
 
     # Add constraint to prevent optimization chains
     create(
