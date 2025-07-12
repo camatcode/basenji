@@ -41,7 +41,37 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
   def update(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, params) do
     id = params["id"]
 
-    Collections.update_collection(id, params["data"]["attributes"], Utils.to_opts(jsonapi_plug))
+    # Handle both attributes and relationships
+    attrs = params["data"]["attributes"] |> Utils.atomize()
+    relationships = Map.get(params["data"], "relationships", %{})
+
+    # If comics relationship is provided, handle it
+    attrs_with_relationships =
+      case Map.get(relationships, "comics") do
+        %{"data" => comics_data} when is_list(comics_data) ->
+          # For JSON:API, we replace the entire relationship
+          new_comic_ids = Enum.map(comics_data, fn %{"id" => id} -> id end)
+
+          # Get current comics to determine what to add/remove
+          case Collections.get_collection(id, preload: [:comics]) do
+            {:ok, current_collection} ->
+              current_comic_ids = Enum.map(current_collection.comics, & &1.id)
+              comics_to_add = new_comic_ids -- current_comic_ids
+              comics_to_remove = current_comic_ids -- new_comic_ids
+
+              attrs
+              |> Map.put(:comics_to_add, comics_to_add)
+              |> Map.put(:comics_to_remove, comics_to_remove)
+
+            _ ->
+              attrs
+          end
+
+        _ ->
+          attrs
+      end
+
+    Collections.update_collection(id, attrs_with_relationships, Utils.to_opts(jsonapi_plug))
     |> case do
       {:ok, collection} -> render(conn, "update.json", %{data: collection})
       e -> Utils.bad_request_handler(conn, e)
