@@ -186,13 +186,6 @@ defmodule Basenji.Reader do
 
   defp optimize_entries(other), do: other
 
-  def optimize_directory(directory_path) do
-    @optimizers
-    |> Enum.each(fn optimizer ->
-      optimizer.optimize_directory(directory_path)
-    end)
-  end
-
   defp optimize(bytes) do
     @optimizers
     |> Enum.reduce(bytes |> Enum.to_list(), fn reader, bytes ->

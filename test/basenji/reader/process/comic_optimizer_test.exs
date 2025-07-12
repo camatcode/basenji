@@ -12,8 +12,8 @@ defmodule Basenji.Reader.Process.ComicOptimizerTest do
     file_path =
       "/home/cam/Documents/comics_backup/done/Wynd Book 01 - The Flight of the Prince (2021) (DR & Quinch-Empire) (AI-HD juvecube).cbz"
 
-    ComicOptimizer.optimize(file_path, "/home/cam/tmp/wynd/") |> IO.inspect()
-    #Basenji.Reader.optimize_directory("/home/cam/tmp/wynd")
+    ComicOptimizer.optimize(file_path, "/home/cam/tmp/wynd/", "/home/cam/tmp/done/") |> IO.inspect()
+    # Basenji.Reader.optimize_directory("/home/cam/tmp/wynd")
   end
 
   test "optimize" do
@@ -23,7 +23,7 @@ defmodule Basenji.Reader.Process.ComicOptimizerTest do
 
     Enum.each(comics, fn file_path ->
       {:ok, original_info} = Reader.info(file_path)
-      {:ok, optimized} = ComicOptimizer.optimize(file_path, TestHelper.get_tmp_dir())
+      {:ok, optimized} = ComicOptimizer.optimize(file_path, TestHelper.get_tmp_dir(), TestHelper.get_tmp_dir())
 
       assert ComicOptimizer.basenji_comment?(optimized)
 

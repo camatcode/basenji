@@ -33,8 +33,9 @@ defmodule Basenji.Worker.ComicLowWorker do
     )
 
     parent_dir = Path.join(Path.dirname(resource_location), "optimized")
+    tmp_dir = Path.join(System.tmp_dir!(), "basenji")
 
-    with {:ok, optimized_resource_location} <- ComicOptimizer.optimize(resource_location, parent_dir) do
+    with {:ok, optimized_resource_location} <- ComicOptimizer.optimize(resource_location, tmp_dir, parent_dir) do
       if optimized_resource_location == resource_location do
         :ok
       else
