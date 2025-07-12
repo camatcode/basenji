@@ -44,14 +44,19 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
     attrs = extract_attributes(params)
     relationships = Map.get(params["data"], "relationships", %{})
 
-    final_attrs =
-      attrs
-      |> maybe_add_comics_operations(id, relationships)
+    try do
+      final_attrs =
+        attrs
+        |> maybe_add_comics_operations(id, relationships)
 
-    Collections.update_collection(id, final_attrs, Utils.to_opts(jsonapi_plug))
-    |> case do
-      {:ok, collection} -> render(conn, "update.json", %{data: collection})
-      e -> Utils.bad_request_handler(conn, e)
+      Collections.update_collection(id, final_attrs, Utils.to_opts(jsonapi_plug))
+      |> case do
+        {:ok, collection} -> render(conn, "update.json", %{data: collection})
+        e -> Utils.bad_request_handler(conn, e)
+      end
+    rescue
+      e in ArgumentError ->
+        Utils.bad_request_handler(conn, {:error, Exception.message(e)})
     end
   end
 
@@ -81,18 +86,33 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
   defp add_comics_operations(attrs, collection_id, comics_data) do
     new_comic_ids = Enum.map(comics_data, fn %{"id" => id} -> id end)
 
-    case Collections.get_collection(collection_id, preload: [:comics]) do
-      {:ok, current_collection} ->
-        current_comic_ids = Enum.map(current_collection.comics, & &1.id)
-        comics_to_add = new_comic_ids -- current_comic_ids
-        comics_to_remove = current_comic_ids -- new_comic_ids
+    case validate_uuids(new_comic_ids) do
+      :ok ->
+        case Collections.get_collection(collection_id, preload: [:comics]) do
+          {:ok, current_collection} ->
+            current_comic_ids = Enum.map(current_collection.comics, & &1.id)
+            comics_to_add = new_comic_ids -- current_comic_ids
+            comics_to_remove = current_comic_ids -- new_comic_ids
 
-        attrs
-        |> Map.put(:comics_to_add, comics_to_add)
-        |> Map.put(:comics_to_remove, comics_to_remove)
+            attrs
+            |> Map.put(:comics_to_add, comics_to_add)
+            |> Map.put(:comics_to_remove, comics_to_remove)
 
-      _ ->
-        attrs
+          _ ->
+            attrs
+        end
+
+      {:error, invalid_id} ->
+        raise ArgumentError, "Invalid UUID format: #{invalid_id}"
     end
+  end
+
+  defp validate_uuids(ids) do
+    Enum.find_value(ids, :ok, fn id ->
+      case Ecto.UUID.cast(id) do
+        {:ok, _} -> nil
+        :error -> {:error, id}
+      end
+    end)
   end
 end

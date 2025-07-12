@@ -12,7 +12,7 @@ defmodule Basenji.Repo do
     super(query, opts)
   rescue
     err in Ecto.Query.CastError ->
-      if err.type == Ecto.UUID do
+      if err.type == Ecto.UUID or match?({:in, Ecto.UUID}, err.type) do
         Logger.warning("Received invalid UUID #{err.value} in query #{inspect(query)}")
         nil
       else
@@ -25,9 +25,9 @@ defmodule Basenji.Repo do
     super(query, opts)
   rescue
     err in Ecto.Query.CastError ->
-      if err.type == Ecto.UUID do
+      if err.type == Ecto.UUID or match?({:in, Ecto.UUID}, err.type) do
         Logger.warning("Received invalid UUID #{err.value} in query #{inspect(query)}")
-        nil
+        []
       else
         reraise err, __STACKTRACE__
       end

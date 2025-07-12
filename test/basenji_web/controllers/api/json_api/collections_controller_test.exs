@@ -16,10 +16,12 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
     collection = %{title: title, description: desc, resource_location: location, parent_id: parent.id}
     include = "parent"
 
+    body = TestHelper.JSONAPI.build_request_body("collection", nil, collection)
+
     conn =
       conn
       |> put_req_header("content-type", "application/vnd.api+json")
-      |> post(@api_path <> "?include=#{include}", %{"data" => %{"attributes" => collection, "type" => "collection"}})
+      |> post(@api_path <> "?include=#{include}", body)
 
     assert %{"data" => collection} = json_response(conn, 200)
     assert valid_collection?(collection)
@@ -52,13 +54,12 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
     }
 
     include = "parent,comics"
+    body = TestHelper.JSONAPI.build_request_body("collection", collection.id, changes)
 
     conn =
       conn
       |> put_req_header("content-type", "application/vnd.api+json")
-      |> patch("#{@api_path}/#{collection.id}" <> "?include=#{include}", %{
-        "data" => %{"attributes" => changes, "type" => "collection"}
-      })
+      |> patch("#{@api_path}/#{collection.id}" <> "?include=#{include}", body)
 
     assert %{"data" => updated} = json_response(conn, 200)
     assert valid_collection?(updated)
@@ -164,39 +165,29 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
     end
   end
 
-
   describe "collections with comic relationships" do
     test "PATCH /collections/:id - update collection with comics relationship", %{conn: conn} do
       collection = insert(:collection)
       comic1 = insert(:comic)
       comic2 = insert(:comic)
 
-      request_body = %{
-        "data" => %{
-          "type" => "collection",
-          "id" => collection.id,
-          "attributes" => %{
-            "title" => "Updated Collection"
-          },
-          "relationships" => %{
-            "comics" => %{
-              "data" => [
-                %{"type" => "comic", "id" => comic1.id},
-                %{"type" => "comic", "id" => comic2.id}
-              ]
-            }
-          }
-        }
-      }
+      comics_relationship = TestHelper.JSONAPI.build_comics_relationship([comic1.id, comic2.id])
+
+      body =
+        TestHelper.JSONAPI.build_request_body(
+          "collection",
+          collection.id,
+          %{"title" => "Updated Collection"},
+          comics_relationship
+        )
 
       conn =
         conn
         |> put_req_header("content-type", "application/vnd.api+json")
-        |> patch("#{@api_path}/#{collection.id}", request_body)
+        |> patch("#{@api_path}/#{collection.id}", body)
 
       assert json_response(conn, 200)
 
-      # Verify the relationship was updated
       {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
       comic_ids = Enum.map(updated_collection.comics, & &1.id)
       assert length(comic_ids) == 2
@@ -211,32 +202,18 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
       new_comic1 = insert(:comic)
       new_comic2 = insert(:comic)
 
-      # Add initial comic
       {:ok, _} = Collections.add_to_collection(collection.id, old_comic.id)
 
-      request_body = %{
-        "data" => %{
-          "type" => "collection",
-          "id" => collection.id,
-          "relationships" => %{
-            "comics" => %{
-              "data" => [
-                %{"type" => "comic", "id" => new_comic1.id},
-                %{"type" => "comic", "id" => new_comic2.id}
-              ]
-            }
-          }
-        }
-      }
+      comics_relationship = TestHelper.JSONAPI.build_comics_relationship([new_comic1.id, new_comic2.id])
+      body = TestHelper.JSONAPI.build_request_body("collection", collection.id, %{}, comics_relationship)
 
       conn =
         conn
         |> put_req_header("content-type", "application/vnd.api+json")
-        |> patch("#{@api_path}/#{collection.id}", request_body)
+        |> patch("#{@api_path}/#{collection.id}", body)
 
       assert json_response(conn, 200)
 
-      # Verify the relationship was replaced
       {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
       comic_ids = Enum.map(updated_collection.comics, & &1.id)
       assert length(comic_ids) == 2
@@ -250,7 +227,6 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
       comic1 = insert(:comic)
       comic2 = insert(:comic)
 
-      # Add initial comics
       {:ok, _} = Collections.add_to_collection(collection.id, comic1.id)
       {:ok, _} = Collections.add_to_collection(collection.id, comic2.id)
 
@@ -273,7 +249,6 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
 
       assert json_response(conn, 200)
 
-      # Verify all comics were removed
       {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
       assert Enum.empty?(updated_collection.comics)
     end
@@ -321,19 +296,135 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
       conn = get(conn, "#{@api_path}/#{collection.id}?include=comics")
 
       response = json_response(conn, 200)
-      
-      # Check that relationships are included
+
       assert response["data"]["relationships"]["comics"]["data"]
       comics_data = response["data"]["relationships"]["comics"]["data"]
       assert length(comics_data) == 2
-      
+
       comic_ids = Enum.map(comics_data, fn comic -> comic["id"] end)
       assert Enum.member?(comic_ids, comic1.id)
       assert Enum.member?(comic_ids, comic2.id)
 
-      # Check that full comic data is in included
       assert response["included"]
       assert length(response["included"]) == 2
+    end
+  end
+
+  describe "validation and error handling" do
+    test "PATCH with malformed relationship data", %{conn: conn} do
+      collection = insert(:collection)
+
+      request_body = %{
+        "data" => %{
+          "type" => "collection",
+          "id" => collection.id,
+          "relationships" => %{
+            "comics" => %{"data" => "this-should-be-an-array"}
+          }
+        }
+      }
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+        |> patch("#{@api_path}/#{collection.id}", request_body)
+
+      response = json_response(conn, 400)
+      assert response["error"] || response["errors"]
+    end
+
+    test "PATCH with invalid comic UUID in relationship", %{conn: conn} do
+      collection = insert(:collection)
+
+      request_body = %{
+        "data" => %{
+          "type" => "collection",
+          "id" => collection.id,
+          "relationships" => %{
+            "comics" => %{
+              "data" => [
+                %{"type" => "comic", "id" => "not-a-uuid"}
+              ]
+            }
+          }
+        }
+      }
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+        |> patch("#{@api_path}/#{collection.id}", request_body)
+
+      response = json_response(conn, 400)
+      assert response["error"] || response["errors"]
+    end
+
+    test "PATCH with non-existent comic UUID in relationship", %{conn: conn} do
+      collection = insert(:collection)
+      fake_comic_id = Ecto.UUID.generate()
+
+      comics_relationship = TestHelper.JSONAPI.build_comics_relationship([fake_comic_id])
+      body = TestHelper.JSONAPI.build_request_body("collection", collection.id, %{}, comics_relationship)
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+        |> patch("#{@api_path}/#{collection.id}", body)
+
+      assert json_response(conn, 200)
+
+      {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
+      assert Enum.empty?(updated_collection.comics)
+    end
+
+    test "POST with missing required attributes", %{conn: conn} do
+      body = TestHelper.JSONAPI.build_request_body("collection", nil, %{"description" => "Has description but no title"})
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+        |> post(@api_path, body)
+
+      response = json_response(conn, 400)
+      assert response["error"] || response["errors"]
+      error_text = response["error"] || Enum.map_join(response["errors"], " ", & &1["detail"])
+      assert String.contains?(error_text, "title")
+    end
+
+    test "GET with invalid collection UUID", %{conn: conn} do
+      conn = get(conn, "#{@api_path}/not-a-uuid")
+
+      response = json_response(conn, 400)
+      assert response["error"]
+    end
+
+    test "PATCH with empty relationship data", %{conn: conn} do
+      collection = insert(:collection)
+      comic = insert(:comic)
+
+      {:ok, _} = Collections.add_to_collection(collection.id, comic.id)
+
+      request_body = %{
+        "data" => %{
+          "type" => "collection",
+          "id" => collection.id,
+          "relationships" => %{
+            "comics" => %{
+              "data" => []
+            }
+          }
+        }
+      }
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+        |> patch("#{@api_path}/#{collection.id}", request_body)
+
+      assert json_response(conn, 200)
+
+      {:ok, updated_collection} = Collections.get_collection(collection.id, preload: [:comics])
+      assert Enum.empty?(updated_collection.comics)
     end
   end
 
