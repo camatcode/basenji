@@ -26,7 +26,7 @@ defmodule Basenji.Reader.CB7ReaderTest do
   end
 
   test "read" do
-    tmp_dir = System.tmp_dir!() |> Path.join("cb7_read_test")
+    tmp_dir = TestHelper.get_tmp_dir() |> Path.join("cb7_read_test")
 
     cb7_dir = Basenji.Application.get_comics_directory()
 

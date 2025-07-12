@@ -33,7 +33,7 @@ defmodule Basenji.Worker.ComicWorkerTest do
 
     %{resource_location: loc} = build(:comic)
     basename = Path.basename(loc)
-    cp_to = Path.join(System.tmp_dir!(), basename)
+    cp_to = Path.join(TestHelper.get_tmp_dir(), basename)
     :ok = File.cp(loc, cp_to)
     on_exit(fn -> File.rm(cp_to) end)
 
