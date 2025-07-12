@@ -38,7 +38,7 @@ defmodule Basenji.Worker.ComicWorkerTest do
     on_exit(fn -> File.rm(cp_to) end)
 
     {:ok, comic} = Comics.from_resource(cp_to, %{})
-    {:ok, _} = Comics.delete_comic(comic)
+    {:ok, _} = Comics.delete_comic(comic, delete_resource: true)
 
     TestHelper.drain_queue(:comic)
     Application.put_env(:basenji, :allow_delete_resources, allow_delete)

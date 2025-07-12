@@ -70,17 +70,24 @@ defmodule Basenji.Comics do
     end
   end
 
-  def delete_comic(nil), do: nil
+  def delete_comic(comic_ref, opts \\ [])
 
-  def delete_comic(comic_id) when is_binary(comic_id) do
+  def delete_comic(nil, _opts), do: nil
+
+  def delete_comic(comic_id, opts) when is_binary(comic_id) do
     case get_comic(comic_id) do
-      {:ok, comic} -> delete_comic(comic)
+      {:ok, comic} -> delete_comic(comic, opts)
       error -> error
     end
   end
 
-  def delete_comic(%Comic{id: _comic_id} = comic) do
-    Processor.process(comic, [:delete])
+  def delete_comic(%Comic{id: _comic_id} = comic, opts) do
+    opts = Keyword.merge([delete_resource: false], opts)
+
+    if opts[:delete_resource] == true do
+      Processor.process(comic, [:delete])
+    end
+
     Repo.delete(comic)
   end
 
@@ -88,8 +95,9 @@ defmodule Basenji.Comics do
 
   def stream_pages(nil, _opts), do: {:error, :not_found}
 
-  def stream_pages(%Comic{resource_location: loc}, opts) do
-    opts = Keyword.merge([optimize: true], opts)
+  def stream_pages(%Comic{resource_location: loc, optimized_id: optimized_id}, opts) do
+    should_optimize? = optimized_id == nil
+    opts = Keyword.merge([optimize: should_optimize?], opts)
     Reader.stream_pages(loc, opts)
   end
 
@@ -107,8 +115,9 @@ defmodule Basenji.Comics do
       when page_count != -1 and (page_num < 0 or page_num > page_count),
       do: {:error, :not_found}
 
-  def get_page(%Comic{resource_location: loc} = _comic, page_num, opts) do
-    opts = Keyword.merge([optimize: true], opts)
+  def get_page(%Comic{resource_location: loc, optimized_id: optimized_id} = _comic, page_num, opts) do
+    should_optimize? = optimized_id == nil
+    opts = Keyword.merge([optimize: should_optimize?], opts)
 
     with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do
       entry = Enum.at(entries, page_num - 1)
