@@ -14,8 +14,7 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
   end
 
   def create(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, params) do
-    # validate params!
-    attrs = params["data"]["attributes"] |> Utils.atomize()
+    attrs = extract_attributes(params)
 
     Collections.create_collection(attrs, Utils.to_opts(jsonapi_plug))
     |> case do
@@ -65,7 +64,6 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
     render(conn, "show.json", %{data: deleted})
   end
 
-  # Helper functions
   defp extract_attributes(params) do
     case Map.get(params["data"], "attributes") do
       nil -> %{}
