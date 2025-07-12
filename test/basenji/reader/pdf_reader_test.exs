@@ -29,7 +29,7 @@ defmodule Basenji.Reader.PDFReaderTest do
   end
 
   test "read" do
-    tmp_dir = System.tmp_dir!() |> Path.join("pdf_read_test")
+    tmp_dir = TestHelper.get_tmp_dir() |> Path.join("pdf_read_test")
 
     dir = Basenji.Application.get_comics_directory()
 

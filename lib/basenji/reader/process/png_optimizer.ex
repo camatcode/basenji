@@ -12,7 +12,7 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
   def optimize(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _rest::binary>> = png_bytes, _opts) do
     cmd = "optipng"
 
-    tmp_dir = System.tmp_dir!() |> Path.join("png_optimize")
+    tmp_dir = System.tmp_dir!() |> Path.join("basenji") |> Path.join("png_optimize")
     :ok = File.mkdir_p!(tmp_dir)
     path = Path.join(tmp_dir, "#{System.monotonic_time(:nanosecond)}.jpg")
 

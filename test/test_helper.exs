@@ -4,6 +4,8 @@ ExUnit.start(timeout: :infinity)
 Ecto.Adapters.SQL.Sandbox.mode(Basenji.Repo, :manual)
 
 defmodule TestHelper do
+  def get_tmp_dir, do: Path.join(System.tmp_dir!(), "basenji")
+
   def drain_queue(queue, start_opts \\ [], drain_opts \\ [])
 
   def drain_queue(:comic, start_opts, drain_opts) do

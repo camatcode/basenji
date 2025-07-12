@@ -30,7 +30,7 @@ defmodule Basenji.Reader.CBZReaderTest do
   end
 
   test "read" do
-    tmp_dir = System.tmp_dir!() |> Path.join("cbz_read_test")
+    tmp_dir = TestHelper.get_tmp_dir() |> Path.join("cbz_read_test")
 
     cbz_dir = Basenji.Application.get_comics_directory()
 
