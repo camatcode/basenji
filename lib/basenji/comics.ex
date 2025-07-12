@@ -160,10 +160,18 @@ defmodule Basenji.Comics do
   def attrs, do: Comic.attrs()
 
   def create_optimized_comic(original_comic, optimized_attrs) do
+    # Ensure we have the original comic with collections preloaded
+    {:ok, original_with_collections} = get_comic(original_comic.id, preload: [:member_collections])
+
     # Clone attributes from original comic
     attrs = Comic.clone_attrs(original_comic, optimized_attrs)
 
     with {:ok, optimized_comic} <- create_comic(attrs) do
+      # Copy collection relationships from original to optimized
+      Enum.each(original_with_collections.member_collections, fn collection ->
+        Basenji.Collections.add_to_collection(collection.id, optimized_comic.id)
+      end)
+
       # Update original to point to optimized version
       case update_comic(original_comic, %{optimized_id: optimized_comic.id}) do
         {:ok, _updated_original} -> {:ok, optimized_comic}

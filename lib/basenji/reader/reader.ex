@@ -50,7 +50,6 @@ defmodule Basenji.Reader do
         {:ok, response} = reader.read(location, opts)
         %{entries: entries} = response
         reader.close(response[:file])
-
         %{format: reader.format(), resource_location: location, title: title, page_count: Enum.count(entries)}
       else
         {:error, :unreadable}

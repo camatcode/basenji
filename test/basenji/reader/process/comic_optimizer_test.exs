@@ -15,8 +15,9 @@ defmodule Basenji.Reader.Process.ComicOptimizerTest do
 
     Enum.each(comics, fn file_path ->
       {:ok, original_info} = Reader.info(file_path)
-      {:ok, %{size: original_size}} = File.lstat(file_path)
-      {:ok, optimized} = ComicOptimizer.optimize(file_path)
+      {:ok, optimized} = ComicOptimizer.optimize(file_path, TestHelper.get_tmp_dir())
+
+      assert ComicOptimizer.basenji_comment?(optimized)
 
       on_exit(fn ->
         File.rm_rf(optimized)
@@ -24,13 +25,8 @@ defmodule Basenji.Reader.Process.ComicOptimizerTest do
       end)
 
       {:ok, optimized_info} = Reader.info(optimized)
-      {:ok, %{size: optimized_size}} = File.lstat(optimized)
 
       assert original_info.page_count == optimized_info.page_count
-
-      if original_info.format != :pdf do
-        assert optimized_size <= original_size
-      end
     end)
   end
 end

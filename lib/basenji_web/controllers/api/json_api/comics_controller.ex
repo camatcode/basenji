@@ -9,7 +9,16 @@ defmodule BasenjiWeb.JSONAPI.ComicsController do
   plug BasenjiJSONAPIPlug, api: BasenjiWeb.API, path: "comics", resource: Basenji.Comic
 
   def index(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, _params) do
-    comics = Comics.list_comics(Utils.to_opts(jsonapi_plug))
+    opts = Utils.to_opts(jsonapi_plug)
+    # Default to prefer_optimized unless explicitly set to false
+    opts =
+      if Keyword.has_key?(opts, :prefer_optimized) do
+        opts
+      else
+        Keyword.put(opts, :prefer_optimized, true)
+      end
+
+    comics = Comics.list_comics(opts)
     render(conn, "index.json", %{data: comics})
   end
 

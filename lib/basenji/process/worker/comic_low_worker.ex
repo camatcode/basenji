@@ -5,6 +5,7 @@ defmodule Basenji.Worker.ComicLowWorker do
 
   alias Basenji.Comics
   alias Basenji.ImageProcessor
+  alias Basenji.Reader.Process.ComicOptimizer
 
   require Logger
 
@@ -15,6 +16,7 @@ defmodule Basenji.Worker.ComicLowWorker do
       {:ok, comic} ->
         case action do
           "snapshot" -> snapshot(comic, args)
+          "optimize" -> optimize(comic, args)
           _ -> {:error, "Unknown action #{action}"}
         end
 
@@ -35,4 +37,22 @@ defmodule Basenji.Worker.ComicLowWorker do
       Comics.update_comic(comic, %{image_preview: preview_bytes})
     end
   end
+
+  defp optimize(%{optimized_id: nil, original_id: nil, resource_location: resource_location} = comic, _args) do
+    Logger.info(
+      "Attempting to optimize comic: #{inspect(%{id: comic.id, optimized_id: comic.optimized_id, original_id: comic.original_id, resource_location: comic.resource_location})}"
+    )
+
+    parent_dir = Path.join(Path.dirname(resource_location), "optimized")
+
+    with {:ok, optimized_resource_location} <- ComicOptimizer.optimize(resource_location, parent_dir) do
+      if optimized_resource_location == resource_location do
+        :ok
+      else
+        Comics.create_optimized_comic(comic, %{resource_location: optimized_resource_location})
+      end
+    end
+  end
+
+  defp optimize(_comic, _args), do: :ok
 end

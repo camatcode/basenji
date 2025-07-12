@@ -81,8 +81,18 @@ defmodule Basenji.Comic do
     |> validate_number(:released_year, greater_than: 0)
     |> validate_number(:page_count, greater_than: 0)
     |> unique_constraint([:resource_location])
-    |> validate_no_optimization_chain()
-    |> validate_no_double_optimization()
+    |> maybe_validate_optimization()
+  end
+
+  defp maybe_validate_optimization(changeset) do
+    # Only run optimization validations if optimization fields are being changed
+    if get_change(changeset, :original_id) || get_change(changeset, :optimized_id) do
+      changeset
+      |> validate_no_optimization_chain()
+      |> validate_no_double_optimization()
+    else
+      changeset
+    end
   end
 
   defp validate_resource_location(changeset) do
