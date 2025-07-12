@@ -17,11 +17,12 @@ defmodule Basenji.Reader.Process.ComicOptimizerTest do
       {:ok, original_info} = Reader.info(file_path)
       {:ok, %{size: original_size}} = File.lstat(file_path)
       {:ok, optimized} = ComicOptimizer.optimize(file_path)
-      on_exit(fn ->
 
+      on_exit(fn ->
         File.rm_rf(optimized)
-      
+        File.rm_rf(TestHelper.get_tmp_dir())
       end)
+
       {:ok, optimized_info} = Reader.info(optimized)
       {:ok, %{size: optimized_size}} = File.lstat(optimized)
 
