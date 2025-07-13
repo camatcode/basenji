@@ -28,6 +28,11 @@ defmodule BasenjiWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive, :index
+    live "/comics", ComicsLive.Index, :index
+    live "/comics/:id", ComicsLive.Show, :show
+    live "/collections", CollectionsLive.Index, :index
+    live "/collections/:id", CollectionsLive.Show, :show
+
     oban_dashboard("/oban")
   end
 
