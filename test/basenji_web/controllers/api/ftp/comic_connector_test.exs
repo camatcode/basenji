@@ -40,13 +40,13 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
 
       # /comics/by-id
       {:ok, comics_by_id} = ComicConnector.get_directory_contents("/comics/by-id", %{})
-      ids = comics_by_id |> Enum.map(&Path.rootname(&1.file_name))
+      ids = comics_by_id |> Enum.map(&String.replace(&1.file_name, "/", ""))
 
       assert ids == Enum.map(comics, & &1.id)
 
       # /comics/by-title
       {:ok, comics_by_title} = ComicConnector.get_directory_contents("/comics/by-title", %{})
-      titles = comics_by_title |> Enum.map(&Path.rootname(&1.file_name))
+      titles = comics_by_title |> Enum.map(&String.replace(&1.file_name, "/", ""))
 
       Enum.each(titles, fn title ->
         assert [_comic] = Enum.filter(comics, fn comic -> comic.title == title end)
@@ -81,12 +81,13 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
       comics = Comics.list_comics(prefer_optimized: true)
 
       Enum.each(comics, fn comic ->
-        {:ok, %File.Stream{}} = ComicConnector.get_content("/comics/by-title/#{comic.title}.#{comic.format}", %{})
+        {:ok, %File.Stream{}} =
+          ComicConnector.get_content("/comics/by-title/#{comic.title}/#{comic.title}.#{comic.format}", %{})
       end)
 
       # /comics/by-id/....
       Enum.each(comics, fn comic ->
-        {:ok, %File.Stream{}} = ComicConnector.get_content("/comics/by-id/#{comic.id}.#{comic.format}", %{})
+        {:ok, %File.Stream{}} = ComicConnector.get_content("/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}", %{})
       end)
 
       # /collections/by-title/{parent}/{some collection}/comics/by-id/...
@@ -97,7 +98,7 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
         Enum.each(child.comics, fn comic ->
           {:ok, %File.Stream{}} =
             ComicConnector.get_content(
-              "/collections/by-title/#{parent.title}/#{child.title}/comics/by-id/#{comic.id}.#{comic.format}",
+              "/collections/by-title/#{parent.title}/#{child.title}/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}",
               %{}
             )
         end)
@@ -108,10 +109,19 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
         Enum.each(child.comics, fn comic ->
           {:ok, %File.Stream{}} =
             ComicConnector.get_content(
-              "/collections/by-title/#{parent.title}/#{child.title}/comics/by-title/#{comic.title}.#{comic.format}",
+              "/collections/by-title/#{parent.title}/#{child.title}/comics/by-title/#{comic.title}/#{comic.title}.#{comic.format}",
               %{}
             )
         end)
+      end)
+    end
+
+    test "pages" do
+      comics = Comics.list_comics(prefer_optimized: true)
+
+      Enum.each(comics, fn comic ->
+        {:ok, bytes} = ComicConnector.get_content("/comics/by-id/#{comic.id}/pages/01.jpg", %{})
+        assert byte_size(bytes) > 0
       end)
     end
   end

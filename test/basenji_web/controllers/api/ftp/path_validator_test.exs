@@ -140,40 +140,40 @@ defmodule BasenjiWeb.FTP.PathValidatorTest do
     end
 
     test "extracts subpaths" do
-      assert_parse("/comics/by-id/123/issue-1.cbz",
+      assert_parse("/comics/by-id/123/123.cbz",
         comic_id: "123",
-        subpath: "issue-1.cbz"
+        subpath: "123.cbz"
       )
 
-      assert_parse("/collections/by-title/456/comics/by-title/batman/vol-1/issue-2.cbz",
+      assert_parse("/collections/by-title/456/comics/by-title/batman/pages/page-001.jpeg",
         collection_title: "456",
         comic_title: "batman",
-        subpath: "vol-1/issue-2.cbz"
+        subpath: "pages/page-001.jpeg"
       )
 
-      assert_parse("/collections/by-title/first/second/third/comics/by-title/batman/vol-1/issue-2.cbz",
+      assert_parse("/collections/by-title/first/second/third/comics/by-title/batman/batman.cbz",
         collection_title: "third",
         comic_title: "batman",
-        subpath: "vol-1/issue-2.cbz"
+        subpath: "batman.cbz"
       )
     end
 
     test "stops at first comic reference" do
       result =
-        assert_parse("/collections/by-title/456/comics/by-id/123/comics/by-title/batman",
+        assert_parse("/collections/by-title/456/comics/by-id/123/pages/page-001.jpeg",
           collection_title: "456",
           comic_id: "123",
-          subpath: "comics/by-title/batman"
+          subpath: "pages/page-001.jpeg"
         )
 
       refute Map.has_key?(result, :comic_title)
     end
 
     test "handles double slash normalization" do
-      assert_parse("/comics//by-id//123//nested//path",
-        path: "/comics//by-id//123//nested//path",
+      assert_parse("/comics//by-id//123//123.cbz",
+        path: "/comics//by-id//123//123.cbz",
         comic_id: "123",
-        subpath: "nested/path"
+        subpath: "123.cbz"
       )
     end
 
