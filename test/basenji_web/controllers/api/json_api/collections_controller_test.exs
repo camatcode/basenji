@@ -143,26 +143,26 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
       [] = Enum.filter(results, fn c -> c["id"] == inserted.id end)
     end
 
-#    test "generic search", %{conn: conn} do
-#      %{id: a} = insert(:collection, title: "Baz and Peace", description: "Thrilling murder mystery comics", parent: nil)
-#
-#      %{id: b} =
-#        insert(:collection, title: "Of foo and bar, or On The 25-fold Path", description: "Romance novels", parent: nil)
-#
-#      %{id: c} =
-#        insert(:collection,
-#          title: "Potion-seller's guide to the galaxy",
-#          description: "25 comics, pretty dense",
-#          parent: nil
-#        )
-#
-#      [{"and", [a, b]}, {"the", [b, c]}, {"comics", [a, c]}, {"25", [b, c]}]
-#      |> Enum.each(fn {term, expected} ->
-#        conn = get(conn, @api_path, %{"filter" => term, "sort" => "title"})
-#        assert %{"data" => results} = json_response(conn, 200)
-#        assert expected == results |> Enum.map(fn c -> c["id"] end)
-#      end)
-#    end
+    #    test "generic search", %{conn: conn} do
+    #      %{id: a} = insert(:collection, title: "Baz and Peace", description: "Thrilling murder mystery comics", parent: nil)
+    #
+    #      %{id: b} =
+    #        insert(:collection, title: "Of foo and bar, or On The 25-fold Path", description: "Romance novels", parent: nil)
+    #
+    #      %{id: c} =
+    #        insert(:collection,
+    #          title: "Potion-seller's guide to the galaxy",
+    #          description: "25 comics, pretty dense",
+    #          parent: nil
+    #        )
+    #
+    #      [{"and", [a, b]}, {"the", [b, c]}, {"comics", [a, c]}, {"25", [b, c]}]
+    #      |> Enum.each(fn {term, expected} ->
+    #        conn = get(conn, @api_path, %{"filter" => term, "sort" => "title"})
+    #        assert %{"data" => results} = json_response(conn, 200)
+    #        assert expected == results |> Enum.map(fn c -> c["id"] end)
+    #      end)
+    #    end
   end
 
   describe "collections with comic relationships" do
