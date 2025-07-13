@@ -39,11 +39,11 @@ npm-debug.log
 *.iml
 .idea/
 
-test/support/data/basenji/formats/cb7/optimized/bobby_make_believe_sample_dir_optimized.cbz
-test/support/data/basenji/formats/cb7/optimized/bobby_make_believe_sample_optimized.cbz
-test/support/data/basenji/formats/cbr/optimized/bobby_make_believe_sample_optimized.cbz
-test/support/data/basenji/formats/cbt/optimized/bobby_make_believe_sample_dir_optimized.cbz
-test/support/data/basenji/formats/cbt/optimized/bobby_make_believe_sample_optimized.cbz
-test/support/data/basenji/formats/cbz/optimized/bobby_make_believe_sample_dir_optimized.cbz
-test/support/data/basenji/formats/cbz/optimized/bobby_make_believe_sample_optimized.cbz
-test/support/data/basenji/formats/pdf/optimized/bobby_make_believe_optimized.cbz
+/test/support/data/basenji/formats/cb7/optimized/bobby_make_believe_sample_dir_optimized.cbz
+/test/support/data/basenji/formats/cb7/optimized/bobby_make_believe_sample_optimized.cbz
+/test/support/data/basenji/formats/cbr/optimized/bobby_make_believe_sample_optimized.cbz
+/test/support/data/basenji/formats/cbt/optimized/bobby_make_believe_sample_dir_optimized.cbz
+/test/support/data/basenji/formats/cbt/optimized/bobby_make_believe_sample_optimized.cbz
+/test/support/data/basenji/formats/cbz/optimized/bobby_make_believe_sample_dir_optimized.cbz
+/test/support/data/basenji/formats/cbz/optimized/bobby_make_believe_sample_optimized.cbz
+/test/support/data/basenji/formats/pdf/optimized/bobby_make_believe_optimized.cbz
