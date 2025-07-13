@@ -274,6 +274,9 @@ defmodule Basenji.Collections do
         term = "%#{search}%"
         where(query, [c], ilike(c.description, ^term))
 
+      {:parent_id, :none}, query ->
+        where(query, [c], is_nil(c.parent_id))
+
       {:parent_id, p_id}, query ->
         where(query, [c], c.parent_id == ^p_id)
 

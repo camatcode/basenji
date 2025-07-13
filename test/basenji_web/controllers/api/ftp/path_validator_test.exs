@@ -30,7 +30,9 @@ defmodule BasenjiWeb.FTP.PathValidatorTest do
       valid_paths = [
         "/comics/by-id/123",
         "/comics/by-title/batman",
-        "/collections/by-title/456/comics/by-title/superman"
+        "/collections/by-title/456/comics/by-title/superman",
+        "/collections/by-title/first/second/third/comics/by-id/123",
+        "/collections/by-title/first/second/third/comics/by-title/batman"
       ]
 
       assert_valid(valid_paths)
@@ -107,6 +109,36 @@ defmodule BasenjiWeb.FTP.PathValidatorTest do
       )
     end
 
+    test "extracts nested collection references" do
+      assert_parse("/collections/by-title/first/second/third",
+        path: "/collections/by-title/first/second/third",
+        collection_title: "third",
+        subpath: nil,
+        is_directory: false
+      )
+
+      assert_parse("/collections/by-title/first/second/third/",
+        path: "/collections/by-title/first/second/third/",
+        collection_title: "third",
+        subpath: nil,
+        is_directory: true
+      )
+    end
+
+    test "extracts nested collection + comic references" do
+      assert_parse("/collections/by-title/first/second/third/comics/by-id/123",
+        collection_title: "third",
+        comic_id: "123",
+        subpath: nil
+      )
+
+      assert_parse("/collections/by-title/first/second/third/comics/by-title/batman",
+        collection_title: "third",
+        comic_title: "batman",
+        subpath: nil
+      )
+    end
+
     test "extracts subpaths" do
       assert_parse("/comics/by-id/123/issue-1.cbz",
         comic_id: "123",
@@ -115,6 +147,12 @@ defmodule BasenjiWeb.FTP.PathValidatorTest do
 
       assert_parse("/collections/by-title/456/comics/by-title/batman/vol-1/issue-2.cbz",
         collection_title: "456",
+        comic_title: "batman",
+        subpath: "vol-1/issue-2.cbz"
+      )
+
+      assert_parse("/collections/by-title/first/second/third/comics/by-title/batman/vol-1/issue-2.cbz",
+        collection_title: "third",
         comic_title: "batman",
         subpath: "vol-1/issue-2.cbz"
       )

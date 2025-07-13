@@ -177,7 +177,7 @@ defmodule BasenjiWeb.FTP.ComicConnector do
   end
 
   defp build_directory_contents(%{path: "/collections/by-title", subpath: nil}) do
-    Collections.list_collections()
+    Collections.list_collections(parent_id: :none)
     |> Enum.map(&collection_to_content_info/1)
   end
 
@@ -186,9 +186,15 @@ defmodule BasenjiWeb.FTP.ComicConnector do
     |> Enum.map(&to_content_info(&1, :directory))
   end
 
-  defp build_directory_contents(%{collection_title: _collection_title, subpath: nil}) do
-    ["comics"]
-    |> Enum.map(&to_content_info(&1, :directory))
+  defp build_directory_contents(%{collection_title: collection_title, subpath: nil}) do
+    with {:ok, collection} <- get_collection_by_title(collection_title) do
+      child_collections = Collections.list_collections(parent_id: collection.id, order_by: :title)
+
+      comics_dir = [to_content_info("comics", :directory)]
+      collection_dirs = Enum.map(child_collections, &collection_to_content_info/1)
+
+      collection_dirs ++ comics_dir
+    end
   end
 
   defp build_directory_contents(%{collection_title: collection_title, subpath: "comics/by-id"}) do
