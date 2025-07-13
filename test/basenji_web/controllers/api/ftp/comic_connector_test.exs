@@ -40,13 +40,13 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
 
       # /comics/by-id
       {:ok, comics_by_id} = ComicConnector.get_directory_contents("/comics/by-id", %{})
-      ids = comics_by_id |> Enum.map(&Path.rootname(&1.file_name))
+      ids = comics_by_id |> Enum.map(&String.replace(&1.file_name, "/", ""))
 
       assert ids == Enum.map(comics, & &1.id)
 
       # /comics/by-title
       {:ok, comics_by_title} = ComicConnector.get_directory_contents("/comics/by-title", %{})
-      titles = comics_by_title |> Enum.map(&Path.rootname(&1.file_name))
+      titles = comics_by_title |> Enum.map(&String.replace(&1.file_name, "/", ""))
 
       Enum.each(titles, fn title ->
         assert [_comic] = Enum.filter(comics, fn comic -> comic.title == title end)
