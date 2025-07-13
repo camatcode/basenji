@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  A modern, self-hostable comic/e-book reader. 
+  A modern, performant, self-hostable comic book reader. 
 </p>
 
 
