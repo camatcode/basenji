@@ -57,6 +57,7 @@
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
   * ✅ Stress tested with 49.9 GB of comics with 2700 items
   * ✅ Stores optimized versions to save you disk space
+* 🚧 In Progress: Front End 
 * 🚧 Rest is in development
 
 ### Attributions
