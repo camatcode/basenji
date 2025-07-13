@@ -43,7 +43,7 @@
 - [Attributions](#attributions)
 
 
-### Features
+### Features / Running Roadmap
 
 * ✅ Supports CBZ, CBR, CBT, CB7, and PDF comic book formats
 * ✅ Optimizes pages to improve read times on-the-fly
