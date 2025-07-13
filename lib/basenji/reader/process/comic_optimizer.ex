@@ -39,7 +39,7 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
             end)
           end,
           max_concurrency: 8,
-          timeout: max(30_000, page_count * 2_000)
+          timeout: max(300_000, page_count * 2_000)
         )
         |> Stream.run()
 

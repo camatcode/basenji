@@ -11,8 +11,9 @@ defmodule Basenji.Reader.CBZReader do
   def get_magic_numbers, do: [%{offset: 0, magic: [0x50, 0x4B, 0x03, 0x04]}]
 
   def get_entries(cbz_file_path, _opts \\ []) do
-    with {:ok, output} <- exec("unzip", ["-l", cbz_file_path]) do
-      file_names = parse_unzip_listing(output)
+    # zipinfo -1 /home/cam/Documents/comics/Great_Lakes_Avengers/Great_Lakes_Avengers_04.cbz
+    with {:ok, output} <- exec("zipinfo", ["-1", cbz_file_path]) do
+      file_names = output |> String.split("\n")
 
       file_entries =
         file_names
@@ -28,7 +29,17 @@ defmodule Basenji.Reader.CBZReader do
 
   def get_entry_stream!(cbz_file_path, entry) do
     create_resource(fn ->
-      with {:ok, output} <- exec("unzip", ["-p", cbz_file_path, entry[:file_name]]) do
+      escaped_filename =
+        String.replace(entry[:file_name], "[", "\\[")
+        |> String.replace("]", "\\]")
+        |> String.replace(" ", "\\ ")
+
+      cbz_file_path =
+        String.replace(cbz_file_path, "[", "\\[")
+        |> String.replace("]", "\\]")
+        |> String.replace(" ", "\\ ")
+
+      with {:ok, output} <- exec("unzip", ["-p", cbz_file_path, escaped_filename]) do
         [output |> :binary.bin_to_list()]
       end
     end)
@@ -44,30 +55,6 @@ defmodule Basenji.Reader.CBZReader do
         end)
 
       {:ok, %{entries: file_entries}}
-    end
-  end
-
-  # Parse unzip -l output to extract filenames
-  defp parse_unzip_listing(output) do
-    output
-    |> String.split("\n")
-    # Skip header
-    |> Enum.drop_while(&(not String.contains?(&1, "----")))
-    # Skip the ---- line itself
-    |> Enum.drop(1)
-    # Take until footer ----
-    |> Enum.take_while(&(not String.contains?(&1, "----")))
-    |> Enum.map(&extract_filename_from_line/1)
-    |> Enum.reject(&(&1 == ""))
-  end
-
-  defp extract_filename_from_line(line) do
-    line
-    |> String.trim()
-    |> String.split()
-    |> case do
-      [_size, _date, _time | filename_parts] -> Enum.join(filename_parts, " ")
-      _ -> ""
     end
   end
 end

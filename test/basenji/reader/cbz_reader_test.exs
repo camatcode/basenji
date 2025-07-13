@@ -17,10 +17,6 @@ defmodule Basenji.Reader.CBZReaderTest do
     entries
     |> Enum.each(fn entry ->
       assert entry.file_name
-      # Note: Command-line approach doesn't provide metadata like the library approach did
-      # assert entry.last_modified_datetime  # No longer available
-      # assert entry.compressed_size         # No longer available  
-      # assert entry.uncompressed_size       # No longer available
     end)
   end
 

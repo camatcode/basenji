@@ -32,7 +32,12 @@ defmodule Basenji.Reader.CB7Reader do
 
   def get_entry_stream!(cbz_file_path, entry) do
     create_resource(fn ->
-      with {:ok, output} <- exec("7z", ["x", "-so", cbz_file_path, entry[:file_name]]) do
+      escaped_filename =
+        String.replace(entry[:file_name], "[", "\\[")
+        |> String.replace("]", "\\]")
+        |> String.replace(" ", "\\ ")
+
+      with {:ok, output} <- exec("7z", ["x", "-so", cbz_file_path, escaped_filename]) do
         [output |> :binary.bin_to_list()]
       end
     end)

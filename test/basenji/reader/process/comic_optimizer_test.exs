@@ -8,14 +8,6 @@ defmodule Basenji.Reader.Process.ComicOptimizerTest do
 
   doctest ComicOptimizer
 
-  test "scratch" do
-    file_path =
-      "/home/cam/Documents/comics_backup/done/Wynd Book 01 - The Flight of the Prince (2021) (DR & Quinch-Empire) (AI-HD juvecube).cbz"
-
-    ComicOptimizer.optimize(file_path, "/home/cam/tmp/wynd/", "/home/cam/tmp/done/") |> IO.inspect()
-    # Basenji.Reader.optimize_directory("/home/cam/tmp/wynd")
-  end
-
   test "optimize" do
     comics_dir = Basenji.Application.get_comics_directory()
 
