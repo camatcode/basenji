@@ -70,17 +70,24 @@ defmodule Basenji.Comics do
     end
   end
 
-  def delete_comic(nil), do: nil
+  def delete_comic(comic_ref, opts \\ [])
 
-  def delete_comic(comic_id) when is_binary(comic_id) do
+  def delete_comic(nil, _opts), do: nil
+
+  def delete_comic(comic_id, opts) when is_binary(comic_id) do
     case get_comic(comic_id) do
-      {:ok, comic} -> delete_comic(comic)
+      {:ok, comic} -> delete_comic(comic, opts)
       error -> error
     end
   end
 
-  def delete_comic(%Comic{id: _comic_id} = comic) do
-    Processor.process(comic, [:delete])
+  def delete_comic(%Comic{id: _comic_id} = comic, opts) do
+    opts = Keyword.merge([delete_resource: false], opts)
+
+    if opts[:delete_resource] == true do
+      Processor.process(comic, [:delete])
+    end
+
     Repo.delete(comic)
   end
 
@@ -88,8 +95,9 @@ defmodule Basenji.Comics do
 
   def stream_pages(nil, _opts), do: {:error, :not_found}
 
-  def stream_pages(%Comic{resource_location: loc}, opts) do
-    opts = Keyword.merge([optimize: true], opts)
+  def stream_pages(%Comic{resource_location: loc, optimized_id: optimized_id}, opts) do
+    should_optimize? = optimized_id == nil
+    opts = Keyword.merge([optimize: should_optimize?], opts)
     Reader.stream_pages(loc, opts)
   end
 
@@ -107,8 +115,9 @@ defmodule Basenji.Comics do
       when page_count != -1 and (page_num < 0 or page_num > page_count),
       do: {:error, :not_found}
 
-  def get_page(%Comic{resource_location: loc} = _comic, page_num, opts) do
-    opts = Keyword.merge([optimize: true], opts)
+  def get_page(%Comic{resource_location: loc, optimized_id: optimized_id} = _comic, page_num, opts) do
+    should_optimize? = optimized_id == nil
+    opts = Keyword.merge([optimize: should_optimize?], opts)
 
     with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do
       entry = Enum.at(entries, page_num - 1)
@@ -150,6 +159,69 @@ defmodule Basenji.Comics do
 
   def attrs, do: Comic.attrs()
 
+  def create_optimized_comic(original_comic, optimized_attrs) do
+    # Ensure we have the original comic with collections preloaded
+    {:ok, original_with_collections} = get_comic(original_comic.id, preload: [:member_collections])
+
+    # Clone attributes from original comic
+    attrs = Comic.clone_attrs(original_comic, optimized_attrs)
+
+    with {:ok, optimized_comic} <- create_comic(attrs) do
+      # Copy collection relationships from original to optimized
+      Enum.each(original_with_collections.member_collections, fn collection ->
+        Basenji.Collections.add_to_collection(collection.id, optimized_comic.id)
+      end)
+
+      # Update original to point to optimized version
+      case update_comic(original_comic, %{optimized_id: optimized_comic.id}) do
+        {:ok, _updated_original} -> {:ok, optimized_comic}
+        error -> error
+      end
+    end
+  end
+
+  def get_preferred_comic(comic_id, opts \\ []) do
+    opts = Keyword.merge([prefer_optimized: true], opts)
+
+    with {:ok, comic} <- get_comic(comic_id, preload: [:optimized_comic]) do
+      if opts[:prefer_optimized] && comic.optimized_comic do
+        {:ok, comic.optimized_comic}
+      else
+        {:ok, comic}
+      end
+    end
+  end
+
+  def revert_optimization(comic_id) do
+    with {:ok, comic} <- get_comic(comic_id, preload: [:original_comic]) do
+      cond do
+        comic.original_id ->
+          case update_comic(comic.original_comic, %{optimized_id: nil}) do
+            {:ok, original} ->
+              delete_comic(comic)
+              {:ok, original}
+
+            error ->
+              error
+          end
+
+        not is_nil(Map.get(comic, :optimized_id)) ->
+          optimized_id = Map.get(comic, :optimized_id)
+
+          {1, nil} =
+            Repo.update_all(
+              from(c in Comic, where: c.id == ^optimized_id),
+              set: [original_id: nil]
+            )
+
+          update_comic(comic, %{optimized_id: nil})
+
+        true ->
+          {:error, "Comic has no optimization to revert"}
+      end
+    end
+  end
+
   defp handle_insert_side_effects({:ok, comic}) do
     Processor.process(comic, [:insert])
     {:ok, comic}
@@ -186,6 +258,9 @@ defmodule Basenji.Comics do
 
       {_any, nil}, query ->
         query
+
+      {:prefer_optimized, true}, query ->
+        where(query, [c], is_nil(c.optimized_id))
 
       {:search, search}, query ->
         search_term = "%#{search}%"

@@ -25,7 +25,12 @@ defmodule Basenji.Reader.CBTReader do
   end
 
   def get_entry_stream!(cbz_file_path, entry) do
-    file_name = ~c"#{entry[:file_name]}"
+    escaped_filename =
+      String.replace(entry[:file_name], "[", "\\[")
+      |> String.replace("]", "\\]")
+      |> String.replace(" ", "\\ ")
+
+    file_name = ~c"#{escaped_filename}"
 
     create_resource(fn ->
       with {:ok, [{^file_name, data}]} <-

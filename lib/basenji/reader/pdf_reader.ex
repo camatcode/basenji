@@ -13,7 +13,7 @@ defmodule Basenji.Reader.PDFReader do
 
   def get_entries(pdf_file_path, _opts \\ []) do
     with {:ok, %{pages: pages}} <- get_metadata(pdf_file_path) do
-      padding = String.length("#{pages}") - 1
+      padding = String.length("#{pages}")
 
       file_entries =
         1..pages

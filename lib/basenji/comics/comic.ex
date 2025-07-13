@@ -5,6 +5,7 @@ defmodule Basenji.Comic do
   import Ecto.Changeset
 
   alias Basenji.Collection
+  alias Basenji.Comic
 
   @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3, pdf: 4]
 
@@ -17,15 +18,21 @@ defmodule Basenji.Comic do
     :released_year,
     :page_count,
     :format,
-    :byte_size
+    :byte_size,
+    :original_id,
+    :optimized_id
   ]
+
+  @cloneable_attrs [:title, :author, :description, :released_year, :page_count, :format, :image_preview]
 
   @derive {
     JSONAPIPlug.Resource,
     type: "comic",
     attributes: (@attrs -- [:image_preview]) ++ [:updated_at, :inserted_at],
     relationships: [
-      member_collections: [many: true, resource: Basenji.Collection]
+      member_collections: [many: true, resource: Basenji.Collection],
+      original_comic: [resource: Comic],
+      optimized_comic: [resource: Comic]
     ]
   }
 
@@ -40,6 +47,10 @@ defmodule Basenji.Comic do
     field(:format, Ecto.Enum, values: @formats)
     field(:image_preview, :binary)
     field(:byte_size, :integer, default: -1)
+    field(:optimized_id, :binary_id)
+
+    belongs_to(:original_comic, Comic, foreign_key: :original_id, type: :binary_id)
+    has_one(:optimized_comic, Comic, foreign_key: :original_id)
 
     many_to_many(:member_collections, Collection,
       join_through: "collection_comics",
@@ -70,6 +81,18 @@ defmodule Basenji.Comic do
     |> validate_number(:released_year, greater_than: 0)
     |> validate_number(:page_count, greater_than: 0)
     |> unique_constraint([:resource_location])
+    |> maybe_validate_optimization()
+  end
+
+  defp maybe_validate_optimization(changeset) do
+    # Only run optimization validations if optimization fields are being changed
+    if get_change(changeset, :original_id) || get_change(changeset, :optimized_id) do
+      changeset
+      |> validate_no_optimization_chain()
+      |> validate_no_double_optimization()
+    else
+      changeset
+    end
   end
 
   defp validate_resource_location(changeset) do
@@ -96,4 +119,45 @@ defmodule Basenji.Comic do
   def formats, do: @formats |> Keyword.keys()
 
   def attrs, do: @attrs
+
+  def cloneable_attrs, do: @cloneable_attrs
+
+  def clone_attrs(original_comic, overrides \\ %{}) do
+    original_comic
+    |> Map.from_struct()
+    |> Map.take(@cloneable_attrs)
+    |> Map.merge(overrides)
+    |> Map.put(:original_id, original_comic.id)
+  end
+
+  defp validate_no_optimization_chain(changeset) do
+    original_id = get_field(changeset, :original_id)
+
+    case fetch_field(changeset, :optimized_id) do
+      {_, optimized_id} when not is_nil(original_id) and not is_nil(optimized_id) ->
+        add_error(changeset, :original_id, "Comic cannot be both original and optimized")
+
+      _ ->
+        changeset
+    end
+  end
+
+  defp validate_no_double_optimization(changeset) do
+    case get_field(changeset, :original_id) do
+      nil ->
+        changeset
+
+      original_id ->
+        case Basenji.Repo.get(Comic, original_id) do
+          nil ->
+            add_error(changeset, :original_id, "Original comic not found")
+
+          %Comic{optimized_id: nil} ->
+            changeset
+
+          %Comic{optimized_id: _existing} ->
+            add_error(changeset, :original_id, "Original comic already has an optimized version")
+        end
+    end
+  end
 end

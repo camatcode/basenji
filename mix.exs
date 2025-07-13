@@ -110,6 +110,7 @@ defmodule Basenji.MixProject do
       {:proper_case, "~> 1.3"},
       {:date_time_parser, "~> 1.2"},
       {:xxh3, "~> 0.3"},
+      {:zarex, "~> 1.0"},
       # phx deps
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},

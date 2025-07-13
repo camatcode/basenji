@@ -33,12 +33,12 @@ defmodule Basenji.Worker.ComicWorkerTest do
 
     %{resource_location: loc} = build(:comic)
     basename = Path.basename(loc)
-    cp_to = Path.join(System.tmp_dir!(), basename)
+    cp_to = Path.join(TestHelper.get_tmp_dir(), basename)
     :ok = File.cp(loc, cp_to)
     on_exit(fn -> File.rm(cp_to) end)
 
     {:ok, comic} = Comics.from_resource(cp_to, %{})
-    {:ok, _} = Comics.delete_comic(comic)
+    {:ok, _} = Comics.delete_comic(comic, delete_resource: true)
 
     TestHelper.drain_queue(:comic)
     Application.put_env(:basenji, :allow_delete_resources, allow_delete)

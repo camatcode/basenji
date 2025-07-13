@@ -6,72 +6,55 @@ defmodule Basenji.Reader.CBZReader do
 
   def file_extensions, do: ["cbz"]
 
+  def close(_any), do: :ok
+
   def get_magic_numbers, do: [%{offset: 0, magic: [0x50, 0x4B, 0x03, 0x04]}]
 
-  # opts[:close] - will close the stream after reading
-  def get_entries(cbz_file_path, opts \\ []) when is_bitstring(cbz_file_path) do
-    with {:ok, unzip} <- open(cbz_file_path) do
+  def get_entries(cbz_file_path, _opts \\ []) do
+    # zipinfo -1 /home/cam/Documents/comics/Great_Lakes_Avengers/Great_Lakes_Avengers_04.cbz
+    with {:ok, output} <- exec("zipinfo", ["-1", cbz_file_path]) do
+      file_names = output |> String.split("\n")
+
       file_entries =
-        Unzip.list_entries(unzip)
+        file_names
+        |> Enum.map(&%{file_name: &1})
         |> sort_file_names()
         |> reject_macos_preview()
         |> reject_directories()
         |> reject_non_image()
 
-      if opts[:close] do
-        close(unzip)
-        {:ok, %{entries: file_entries, file: nil}}
-      else
-        {:ok, %{entries: file_entries, file: unzip}}
+      {:ok, %{entries: file_entries}}
+    end
+  end
+
+  def get_entry_stream!(cbz_file_path, entry) do
+    create_resource(fn ->
+      escaped_filename =
+        String.replace(entry[:file_name], "[", "\\[")
+        |> String.replace("]", "\\]")
+        |> String.replace(" ", "\\ ")
+
+      cbz_file_path =
+        String.replace(cbz_file_path, "[", "\\[")
+        |> String.replace("]", "\\]")
+        |> String.replace(" ", "\\ ")
+
+      with {:ok, output} <- exec("unzip", ["-p", cbz_file_path, escaped_filename]) do
+        [output |> :binary.bin_to_list()]
       end
-    end
+    end)
   end
 
-  def get_entry_stream!(%Unzip{} = unzip, %Unzip.Entry{file_name: file_name}) do
-    get_entry_stream!(unzip, file_name, [])
-  end
-
-  def get_entry_stream!(%Unzip{} = unzip, file_name) do
-    get_entry_stream!(unzip, file_name, [])
-  end
-
-  # opts[:chunk_size] - Chunks are read from the source of the size specified by chunk_size.
-  # 	This is not the size of the chunk returned by file_stream! since the chunk size varies after decompressing
-  # 	the stream. Useful when reading from the source is expensive and you want optimize by increasing the chunk size.
-  # 	 Defaults to 65_000
-  def get_entry_stream!(%Unzip{} = unzip, %Unzip.Entry{file_name: file_name}, opts) do
-    get_entry_stream!(unzip, file_name, opts)
-  end
-
-  def get_entry_stream!(%Unzip{} = unzip, file_name, opts) when is_bitstring(file_name) do
-    create_resource(fn -> Unzip.file_stream!(unzip, file_name, opts) end)
-  end
-
-  def open(cbz_file_path) when is_bitstring(cbz_file_path) do
-    with true <- File.exists?(cbz_file_path) || {:error, "Doesn't exist, #{cbz_file_path}"},
-         %Unzip.LocalFile{} = zip_file <- Unzip.LocalFile.open(cbz_file_path) do
-      Unzip.new(zip_file)
-    end
-  end
-
-  def read(cbz_file_path, opts \\ []) do
-    with {:ok, %{entries: file_entries, file: unzip}} <- get_entries(cbz_file_path, opts) do
+  def read(cbz_file_path, _opts \\ []) do
+    with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
       file_entries =
         file_entries
         |> Enum.map(fn entry ->
           entry
-          |> Map.put(:stream_fun, fn -> get_entry_stream!(unzip, entry, opts) end)
+          |> Map.put(:stream_fun, fn -> get_entry_stream!(cbz_file_path, entry) end)
         end)
 
-      {:ok, %{entries: file_entries, file: unzip}}
+      {:ok, %{entries: file_entries}}
     end
-  end
-
-  def close(%Unzip{zip: %Unzip.LocalFile{} = zip_file}) do
-    close(zip_file)
-  end
-
-  def close(%Unzip.LocalFile{} = zip_file) do
-    Unzip.LocalFile.close(zip_file)
   end
 end

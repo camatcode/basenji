@@ -24,7 +24,7 @@ defmodule Basenji.Reader.CBRReaderTest do
   end
 
   test "read" do
-    tmp_dir = System.tmp_dir!() |> Path.join("cbr_read_test")
+    tmp_dir = TestHelper.get_tmp_dir() |> Path.join("cbr_read_test")
 
     cbr_dir = Basenji.Application.get_comics_directory()
 

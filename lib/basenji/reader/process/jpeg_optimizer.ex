@@ -24,7 +24,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
     opts = Keyword.merge([target_size_kb: min(byte_size(bytes) / 1000, 1000)], opts)
     cmd = "jpegoptim"
 
-    tmp_dir = System.tmp_dir!() |> Path.join("jpeg_optimize")
+    tmp_dir = System.tmp_dir!() |> Path.join("basenji") |> Path.join("jpeg_optimize")
     :ok = File.mkdir_p!(tmp_dir)
     path = Path.join(tmp_dir, "#{System.monotonic_time(:nanosecond)}.jpg")
 

@@ -50,7 +50,6 @@ defmodule Basenji.Reader do
         {:ok, response} = reader.read(location, opts)
         %{entries: entries} = response
         reader.close(response[:file])
-
         %{format: reader.format(), resource_location: location, title: title, page_count: Enum.count(entries)}
       else
         {:error, :unreadable}
@@ -99,7 +98,7 @@ defmodule Basenji.Reader do
   end
 
   def read(file_path, opts \\ []) do
-    opts = Keyword.merge([optimize: false], opts)
+    opts = Keyword.merge([optimize: true], opts)
 
     reader = find_reader(file_path)
 
@@ -124,7 +123,7 @@ defmodule Basenji.Reader do
   end
 
   def stream_pages(file_path, opts \\ []) do
-    opts = Keyword.merge([start_page: 1], opts)
+    opts = Keyword.merge([start_page: 1, optimize: true], opts)
 
     with {:ok, %{entries: entries}} <- read(file_path, opts) do
       stream =

@@ -18,7 +18,13 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     field :format, :comic_format
     field :image_preview, :string
     field :byte_size, :integer
+    field :original_id, :id
+    field :optimized_id, :id
+    field :is_optimized, :boolean
+    field :has_optimization, :boolean
     field :member_collections, list_of(:collection)
+    field :original_comic, :comic
+    field :optimized_comic, :comic
   end
 
   object :comics_queries do
@@ -26,6 +32,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     field :comics, list_of(:comic) do
       list_args()
       arg(:order_by, :comic_order_by, description: "Key to order results")
+      arg(:prefer_optimized, :boolean, default_value: true, description: "Hide originals that have optimized versions")
 
       arg(:title, :string)
       arg(:author, :string)
