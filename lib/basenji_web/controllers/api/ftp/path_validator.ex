@@ -57,11 +57,11 @@ defmodule BasenjiWeb.FTP.PathValidator do
            ] ->
         :valid
 
-      ["comics", "by-id", id | _rest] when id != "" ->
-        :valid
+      ["comics", "by-id", id | rest] when id != "" ->
+        validate_comic_subpaths(rest)
 
-      ["comics", "by-title", title | _rest] when title != "" ->
-        :valid
+      ["comics", "by-title", title | rest] when title != "" ->
+        validate_comic_subpaths(rest)
 
       ["collections", "by-title", title | rest] when title != "" ->
         validate_collection_subpath(rest)
@@ -87,10 +87,29 @@ defmodule BasenjiWeb.FTP.PathValidator do
   defp validate_comics_path([]), do: :valid
   defp validate_comics_path(["by-id"]), do: :valid
   defp validate_comics_path(["by-title"]), do: :valid
-  defp validate_comics_path(["by-id", _id | _rest]), do: :valid
-  defp validate_comics_path(["by-title", _title | _rest]), do: :valid
+
+  defp validate_comics_path(["by-id", id | rest]) when id != "" do
+    validate_comic_subpaths(rest)
+  end
+
+  defp validate_comics_path(["by-title", title | rest]) when title != "" do
+    validate_comic_subpaths(rest)
+  end
+
   defp validate_comics_path([invalid | _]) when invalid not in ["by-id", "by-title"], do: :invalid
   defp validate_comics_path(_), do: :valid
+
+  defp validate_comic_subpaths([]), do: :valid
+  defp validate_comic_subpaths(["pages"]), do: :valid
+  defp validate_comic_subpaths(["preview"]), do: :valid
+  # 3+ segments = too deep
+  defp validate_comic_subpaths(["pages", _, _ | _]), do: :invalid
+  # 3+ segments = too deep
+  defp validate_comic_subpaths(["preview", _, _ | _]), do: :invalid
+  defp validate_comic_subpaths(["pages", _page_file]), do: :valid
+  defp validate_comic_subpaths(["preview", _preview_file]), do: :valid
+  defp validate_comic_subpaths([_comic_file]), do: :valid
+  defp validate_comic_subpaths(_), do: :invalid
 
   defp extract_refs(result, segments) do
     extract_refs_recursive(result, segments, 0)

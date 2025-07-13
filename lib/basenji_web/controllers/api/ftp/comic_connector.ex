@@ -70,17 +70,56 @@ defmodule BasenjiWeb.FTP.ComicConnector do
     end
   end
 
-  defp get_content(%{comic_id: comic_id}) do
+  # Page files
+  defp get_content(%{comic_id: comic_id, subpath: "pages/" <> page_file}) do
     with {:ok, comic} <- Comics.get_comic(comic_id) do
-      {:ok, File.stream!(comic.resource_location)}
+      idx = Path.rootname(page_file) |> String.to_integer()
+      {:ok, bytes, _mime} = Comics.get_page(comic, idx)
+      {:ok, bytes}
     end
   end
 
-  defp get_content(%{comic_title: comic_title}) do
-    Comics.list_comics(title: comic_title, prefer_optimized: true)
-    |> case do
-      [] -> {:error, :not_found}
-      list -> {:ok, File.stream!(hd(list).resource_location)}
+  defp get_content(%{comic_title: comic_title, subpath: "pages/" <> page_file}) do
+    with {:ok, comic} <- get_comic_from_title(comic_title) do
+      idx = Path.rootname(page_file) |> String.to_integer()
+      {:ok, bytes, _mime} = Comics.get_page(comic, idx)
+      {:ok, bytes}
+    end
+  end
+
+  defp get_content(%{comic_id: comic_id, subpath: "preview/" <> _preview_file}) do
+    with {:ok, comic} <- Comics.get_comic(comic_id) do
+      if comic.image_preview do
+        {:ok, comic.image_preview}
+      else
+        {:error, :not_found}
+      end
+    end
+  end
+
+  defp get_content(%{comic_title: comic_title, subpath: "preview/" <> _preview_file}) do
+    with {:ok, comic} <- get_comic_from_title(comic_title) do
+      if comic.image_preview do
+        {:ok, comic.image_preview}
+      else
+        {:error, :not_found}
+      end
+    end
+  end
+
+  defp get_content(%{comic_id: comic_id, subpath: subpath}) do
+    if String.starts_with?(subpath, comic_id) do
+      with {:ok, comic} <- Comics.get_comic(comic_id) do
+        {:ok, File.stream!(comic.resource_location)}
+      end
+    end
+  end
+
+  defp get_content(%{comic_title: comic_title, subpath: subpath}) do
+    if String.starts_with?(subpath, comic_title) do
+      with {:ok, comic} <- get_comic_from_title(comic_title) do
+        {:ok, File.stream!(comic.resource_location)}
+      end
     end
   end
 
@@ -165,15 +204,87 @@ defmodule BasenjiWeb.FTP.ComicConnector do
     |> Enum.map(&to_content_info(&1, :directory))
   end
 
+  defp build_directory_contents(%{comic_id: comic_id, subpath: nil}) do
+    with {:ok, comic} <- Comics.get_comic(comic_id) do
+      format = comic.format || "unknown"
+
+      comic_file = %{
+        file_name: "#{comic_id}.#{format}",
+        type: :file,
+        size: comic.byte_size,
+        access: :read,
+        modified_datetime: comic.updated_at
+      }
+
+      dirs = ["pages", "preview"] |> Enum.map(&to_content_info(&1, :directory))
+      [comic_file | dirs]
+    end
+  end
+
+  defp build_directory_contents(%{comic_title: comic_title, subpath: nil}) do
+    with {:ok, comic} <- get_comic_from_title(comic_title) do
+      format = comic.format || "unknown"
+
+      comic_file = %{
+        file_name: "#{comic_title}.#{format}",
+        type: :file,
+        size: comic.byte_size,
+        access: :read,
+        modified_datetime: comic.updated_at
+      }
+
+      dirs = ["pages", "preview"] |> Enum.map(&to_content_info(&1, :directory))
+      [comic_file | dirs]
+    end
+  end
+
+  defp build_directory_contents(%{comic_id: comic_id, subpath: "pages"}) do
+    with {:ok, comic} <- Comics.get_comic(comic_id) do
+      padding = String.length("#{comic.page_count}")
+
+      1..comic.page_count
+      |> Enum.map(&to_image_content_info(String.pad_leading("#{&1}", padding, "0"), "jpg"))
+    end
+  end
+
+  defp build_directory_contents(%{comic_title: comic_title, subpath: "pages"}) do
+    with {:ok, comic} <- get_comic_from_title(comic_title) do
+      padding = String.length("#{comic.page_count}")
+
+      1..comic.page_count
+      |> Enum.map(&to_image_content_info(String.pad_leading("#{&1}", padding, "0"), "jpg"))
+    end
+  end
+
+  defp build_directory_contents(%{comic_id: comic_id, subpath: "preview"}) do
+    with {:ok, comic} <- Comics.get_comic(comic_id) do
+      if comic.image_preview do
+        [to_image_content_info("preview", "jpg")]
+      else
+        []
+      end
+    end
+  end
+
+  defp build_directory_contents(%{comic_title: comic_title, subpath: "preview"}) do
+    with {:ok, comic} <- get_comic_from_title(comic_title) do
+      if comic.image_preview do
+        [to_image_content_info("preview", "jpg")]
+      else
+        []
+      end
+    end
+  end
+
   defp build_directory_contents(%{path: "/comics/by-id", subpath: nil}) do
     Comics.list_comics(prefer_optimized: true)
-    |> Enum.map(&comic_to_content_info/1)
+    |> Enum.map(&comic_id_to_directory_info/1)
   end
 
   defp build_directory_contents(%{path: "/comics/by-title", subpath: nil}) do
     Comics.list_comics(prefer_optimized: true, order_by: :title)
     |> Enum.filter(& &1.title)
-    |> Enum.map(&comic_to_content_info(&1, true))
+    |> Enum.map(&comic_title_to_directory_info/1)
   end
 
   defp build_directory_contents(%{path: "/collections/by-title", subpath: nil}) do
@@ -238,11 +349,49 @@ defmodule BasenjiWeb.FTP.ComicConnector do
     }
   end
 
+  defp to_image_content_info(idx, ext) do
+    %{
+      file_name: "#{idx}.#{ext}",
+      type: :file,
+      size: 1,
+      access: :read,
+      modified_datetime: DateTime.from_unix!(0)
+    }
+  end
+
   defp get_collection_by_title(collection_title) do
     Collections.list_collections(title: collection_title, preload: [:comics])
     |> case do
       [found] -> {:ok, found}
       _ -> {:error, :not_found}
     end
+  end
+
+  defp get_comic_from_title(comic_title) when not is_nil(comic_title) do
+    Comics.list_comics(title: comic_title)
+    |> case do
+      [found] -> {:ok, found}
+      _ -> {:error, :not_found}
+    end
+  end
+
+  defp comic_id_to_directory_info(comic) do
+    %{
+      file_name: "#{comic.id}/",
+      type: :directory,
+      size: 4096,
+      access: :read,
+      modified_datetime: comic.updated_at
+    }
+  end
+
+  defp comic_title_to_directory_info(comic) do
+    %{
+      file_name: "#{comic.title}/",
+      type: :directory,
+      size: 4096,
+      access: :read,
+      modified_datetime: comic.updated_at
+    }
   end
 end

@@ -58,7 +58,7 @@ config :esbuild,
 config :ex_ftp,
   server_name: :basenji,
   min_passive_port: "MIN_PASSIVE_PORT" |> System.get_env("41002") |> String.to_integer(),
-  max_passive_port: "MAX_PASSIVE_PORT" |> System.get_env("49000") |> String.to_integer(),
+  max_passive_port: "MAX_PASSIVE_PORT" |> System.get_env("42000") |> String.to_integer(),
   authenticator: NoAuth,
   authenticator_config: %{},
   storage_connector: ComicConnector
