@@ -14,6 +14,8 @@ import Config
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
+alias BasenjiWeb.FTP.ComicConnector
+alias ExFTP.Auth.NoAuth
 alias Swoosh.Adapters.Local
 
 config :basenji, Basenji.Mailer, adapter: Local
@@ -51,6 +53,15 @@ config :esbuild,
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
   ]
+
+# Configure FTP interface
+config :ex_ftp,
+  server_name: :basenji,
+  min_passive_port: "MIN_PASSIVE_PORT" |> System.get_env("41002") |> String.to_integer(),
+  max_passive_port: "MAX_PASSIVE_PORT" |> System.get_env("49000") |> String.to_integer(),
+  authenticator: NoAuth,
+  authenticator_config: %{},
+  storage_connector: ComicConnector
 
 # Configures Elixir's Logger
 config :logger, :console,

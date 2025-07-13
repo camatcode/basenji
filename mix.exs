@@ -103,6 +103,7 @@ defmodule Basenji.MixProject do
       {:jsonapi_plug, "~> 2.0"},
       {:absinthe, "~> 1.7"},
       {:absinthe_plug, "~> 1.5"},
+      {:ex_ftp, github: "camatcode/ex_ftp"},
       # basenji deps
       {:oban, "~> 2.19"},
       {:oban_web, "~> 2.11"},
