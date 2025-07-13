@@ -80,7 +80,7 @@ defmodule BasenjiWeb.FTP.ComicConnector do
     Comics.list_comics(title: comic_title, prefer_optimized: true)
     |> case do
       [] -> {:error, :not_found}
-      list -> {:ok, File.read!(hd(list).resource_location)}
+      list -> {:ok, File.stream!(hd(list).resource_location)}
     end
   end
 
