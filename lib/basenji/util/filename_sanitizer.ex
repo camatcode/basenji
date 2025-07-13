@@ -155,16 +155,19 @@ defmodule Basenji.FilenameSanitizer do
           truncated
 
         [_after_last, before_last] ->
-          index = String.length(before_last)
-          # At least 70% or 15 chars
-          min_length = max(div(max_length * 7, 10), 15)
-
-          if index >= min_length do
-            String.slice(filename, 0, index)
-          else
-            truncated
-          end
+          truncate_at_position(filename, truncated, String.length(before_last), max_length)
       end
+    end
+  end
+
+  defp truncate_at_position(filename, truncated, index, max_length) do
+    # At least 70% or 15 chars
+    min_length = max(div(max_length * 7, 10), 15)
+
+    if index >= min_length do
+      String.slice(filename, 0, index)
+    else
+      truncated
     end
   end
 

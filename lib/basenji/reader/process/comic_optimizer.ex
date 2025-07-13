@@ -28,16 +28,7 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
 
         1..page_count
         |> Task.async_stream(
-          fn page_idx ->
-            %{file_name: file_name, stream_fun: stream_func} = Enum.at(entries, page_idx - 1)
-            ext = Path.extname(file_name)
-            clean_name = "#{String.pad_leading("#{page_idx + 1}", padding, "0")}#{ext}"
-            file_path = Path.join(images_dir, clean_name)
-
-            File.open!(file_path, [:write, :binary], fn file ->
-              stream_func.() |> Enum.each(&IO.binwrite(file, &1))
-            end)
-          end,
+          &extract_page(&1, entries, padding, images_dir),
           max_concurrency: 8,
           timeout: max(300_000, page_count * 2_000)
         )
@@ -48,6 +39,17 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
         zip(tmp_dir, image_dir_name, optimized_name, result_directory)
       end
     end
+  end
+
+  defp extract_page(page_idx, entries, padding, images_dir) do
+    %{file_name: file_name, stream_fun: stream_func} = Enum.at(entries, page_idx - 1)
+    ext = Path.extname(file_name)
+    clean_name = "#{String.pad_leading("#{page_idx + 1}", padding, "0")}#{ext}"
+    file_path = Path.join(images_dir, clean_name)
+
+    File.open!(file_path, [:write, :binary], fn file ->
+      stream_func.() |> Enum.each(&IO.binwrite(file, &1))
+    end)
   end
 
   def basenji_comment?(comic_file_path) do
