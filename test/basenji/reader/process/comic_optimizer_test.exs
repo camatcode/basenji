@@ -15,8 +15,8 @@ defmodule Basenji.Reader.Process.ComicOptimizerTest do
 
     Enum.each(comics, fn file_path ->
       {:ok, original_info} = Reader.info(file_path)
-      {:ok, optimized} = ComicOptimizer.optimize(file_path, TestHelper.get_tmp_dir(), TestHelper.get_tmp_dir())
-
+      other = Path.join(TestHelper.get_tmp_dir(), "bar")
+      {:ok, optimized} = ComicOptimizer.optimize(file_path, TestHelper.get_tmp_dir(), other)
       assert ComicOptimizer.basenji_comment?(optimized)
 
       on_exit(fn ->
