@@ -13,9 +13,7 @@ defmodule BasenjiWeb.HomeLive do
 
   def mount(_params, _session, socket) do
     socket
-    |> assign(:search_query, "")
-    |> assign(:search_results, [])
-    |> assign(:search_active, false)
+    |> assign_search()
     |> assign_stats()
     |> then(&{:ok, &1})
   end
@@ -24,17 +22,13 @@ defmodule BasenjiWeb.HomeLive do
     socket =
       if String.trim(query) == "" do
         socket
-        |> assign(:search_query, "")
-        |> assign(:search_results, [])
-        |> assign(:search_active, false)
+        |> assign_search()
       else
-        comics = Comics.list_comics(search: query, limit: 20)
-        collections = Collections.list_collections(search: query, limit: 10)
+        comics = Comics.list_comics(search: query)
+        collections = Collections.list_collections(search: query)
 
         socket
-        |> assign(:search_query, query)
-        |> assign(:search_results, %{comics: comics, collections: collections})
-        |> assign(:search_active, true)
+        |> assign_search(query, %{comics: comics, collections: collections}, true)
       end
 
     {:noreply, socket}
@@ -43,11 +37,14 @@ defmodule BasenjiWeb.HomeLive do
   def handle_event("clear_search", _params, socket) do
     socket =
       socket
-      |> assign(:search_query, "")
-      |> assign(:search_results, [])
-      |> assign(:search_active, false)
+      |> assign_search()
 
     {:noreply, socket}
+  end
+
+  def assign_search(socket, query \\ "", results \\ [], active? \\ false) do
+    socket
+    |> assign(:search, %{query: query, results: results, active?: active?})
   end
 
   defp assign_stats(socket) do
@@ -62,27 +59,20 @@ defmodule BasenjiWeb.HomeLive do
     |> assign(:totals, %{comics: total_comics, collections: total_collections})
   end
 
-  attr :totals, :map
-  attr :recent, :map
-  attr :search_query, :string, default: ""
-  attr :search_active, :boolean, default: false
+  attr :totals, :map, required: true
+  attr :recent, :map, required: true
+  attr :search, :map, required: true
 
   def render(assigns) do
     ~H"""
     <div class="max-w-7xl mx-auto">
-      <.comics_header totals={@totals} search_query={@search_query} />
-
-      <.search_results
-        search_active={@search_active}
-        search_query={@search_query}
-        search_results={@search_results}
-        recent={@recent}
-      />
+      <.comics_header totals={@totals} search_query={@search.query} />
+      <.search_results search={@search} recent={@recent} />
     </div>
     """
   end
 
-  attr :totals, :map
+  attr :totals, :map, required: true
   attr :search_query, :string, default: ""
 
   def comics_header(assigns) do
@@ -105,7 +95,6 @@ defmodule BasenjiWeb.HomeLive do
   attr :search_query, :string, default: ""
 
   def search_bar(assigns) do
-    # TODO hook up
     ~H"""
     <div class="lg:w-96">
       <.form for={%{}} phx-submit="search" phx-change="search" class="relative">
@@ -133,22 +122,20 @@ defmodule BasenjiWeb.HomeLive do
     """
   end
 
-  attr :search_active, :boolean, default: false
-  attr :search_query, :string, default: ""
-  attr :search_results, :map, default: %{}
-  attr :recent, :map
+  attr :search, :map, required: true
+  attr :recent, :map, required: true
 
   def search_results(assigns) do
     ~H"""
-    <%= if @search_active do %>
+    <%= if @search.active? do %>
       <div class="mb-8">
-        <.search_results_header search_query={@search_query} />
-        <.comics_search_results comics={@search_results[:comics] || []} />
-        <.collections_search_results collections={@search_results[:collections] || []} />
+        <.search_results_header search_query={@search.query} />
+        <.collections_search_results collections={@search.results[:collections] || []} />
+        <.comics_search_results comics={@search.results[:comics] || []} />
         <.no_search_results_found
-          search_query={@search_query}
-          comics={@search_results[:comics] || []}
-          collections={@search_results[:collections] || []}
+          search_query={@search.query}
+          comics={@search.results[:comics] || []}
+          collections={@search.results[:collections] || []}
         />
       </div>
     <% else %>
