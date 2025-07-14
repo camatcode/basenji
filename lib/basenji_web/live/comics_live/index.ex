@@ -130,17 +130,8 @@ defmodule BasenjiWeb.ComicsLive.Index do
   def render(assigns) do
     ~H"""
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">Comics Library</h1>
-          <p class="text-gray-600 mt-1">
-            {@total_comics} comics total
-          </p>
-        </div>
-      </div>
-      
-    <!-- Search and Filters -->
+      <.comics_library_header total_comics={@total_comics} />
+
       <.search_filter_bar
         search_query={@search_query}
         search_placeholder="Search comics by title, author, or description..."
@@ -163,48 +154,98 @@ defmodule BasenjiWeb.ComicsLive.Index do
         ]}
         show_clear={@search_query != "" || @format_filter != ""}
       />
-      
-    <!-- Comics Grid -->
-      <%= if length(@comics) > 0 do %>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          <%= for comic <- @comics do %>
-            <.comic_card comic={comic} />
-          <% end %>
-        </div>
-        
-    <!-- Pagination -->
-        <.pagination
-          current_page={@current_page}
-          total_pages={@total_pages}
-          path_function={&comics_path/1}
-          params={
-            %{
-              search: @search_query,
-              format: @format_filter,
-              sort: @sort_by
-            }
+
+      <.comics_content
+        comics={@comics}
+        current_page={@current_page}
+        total_pages={@total_pages}
+        path_function={&comics_path/1}
+        params={
+          %{
+            search: @search_query,
+            format: @format_filter,
+            sort: @sort_by
           }
-        />
-      <% else %>
-        <!-- Empty State -->
-        <%= if @search_query != "" or @format_filter != "" do %>
-          <.empty_state
-            icon="hero-book-open"
-            title="No comics found"
-            description="Try adjusting your search terms or filters."
-            show_action={true}
-            action_text="Clear filters"
-            action_event="clear_filters"
-          />
-        <% else %>
-          <.empty_state
-            icon="hero-book-open"
-            title="No comics yet"
-            description="Start building your library by adding some comic books."
-          />
-        <% end %>
+        }
+        search_query={@search_query}
+        format_filter={@format_filter}
+      />
+    </div>
+    """
+  end
+
+  attr :total_comics, :integer, required: true
+
+  def comics_library_header(assigns) do
+    ~H"""
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Comics Library</h1>
+        <p class="text-gray-600 mt-1">
+          {@total_comics} comics total
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  attr :comics, :list, required: true
+  attr :current_page, :integer, required: true
+  attr :total_pages, :integer, required: true
+  attr :path_function, :any, required: true
+  attr :params, :map, required: true
+  attr :search_query, :string, required: true
+  attr :format_filter, :string, required: true
+
+  def comics_content(assigns) do
+    ~H"""
+    <%= if length(@comics) > 0 do %>
+      <.comics_grid comics={@comics} />
+      <.pagination
+        current_page={@current_page}
+        total_pages={@total_pages}
+        path_function={@path_function}
+        params={@params}
+      />
+    <% else %>
+      <.comics_empty_state search_query={@search_query} format_filter={@format_filter} />
+    <% end %>
+    """
+  end
+
+  attr :comics, :list, required: true
+
+  def comics_grid(assigns) do
+    ~H"""
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <%= for comic <- @comics do %>
+        <.comic_card comic={comic} />
       <% end %>
     </div>
+    """
+  end
+
+  attr :search_query, :string, required: true
+  attr :format_filter, :string, required: true
+
+  def comics_empty_state(assigns) do
+    ~H"""
+    <%= if @search_query != "" or @format_filter != "" do %>
+      <.empty_state
+        icon="hero-book-open"
+        title="No comics found"
+        description="Try adjusting your search terms or filters."
+        show_action={true}
+        action_text="Clear filters"
+        action_event="clear_filters"
+      />
+    <% else %>
+      <.empty_state
+        icon="hero-book-open"
+        title="No comics yet"
+        description="Start building your library by adding some comic books."
+      />
+    <% end %>
     """
   end
 end
