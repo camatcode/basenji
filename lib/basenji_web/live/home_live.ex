@@ -16,7 +16,7 @@ defmodule BasenjiWeb.HomeLive do
     |> assign(:search_query, "")
     |> assign(:search_results, [])
     |> assign(:search_active, false)
-    |> load_content()
+    |> assign_stats()
     |> then(&{:ok, &1})
   end
 
@@ -50,7 +50,7 @@ defmodule BasenjiWeb.HomeLive do
     {:noreply, socket}
   end
 
-  defp load_content(socket) do
+  defp assign_stats(socket) do
     recent_comics = Comics.list_comics(limit: 12, order_by: :inserted_at)
     recent_collections = Collections.list_collections(limit: 8, order_by: :inserted_at)
 
@@ -58,41 +58,31 @@ defmodule BasenjiWeb.HomeLive do
     total_collections = Collections.count_collections()
 
     socket
-    |> assign(:recent_comics, recent_comics)
-    |> assign(:recent_collections, recent_collections)
-    |> assign(:total_comics, total_comics)
-    |> assign(:total_collections, total_collections)
+    |> assign(:recent, %{comics: recent_comics, collections: recent_collections})
+    |> assign(:totals, %{comics: total_comics, collections: total_collections})
   end
 
-  attr :total_comics, :integer, default: 0
-  attr :total_collections, :integer, default: 0
+  attr :totals, :map
+  attr :recent, :map
   attr :search_query, :string, default: ""
   attr :search_active, :boolean, default: false
-  attr :recent_comics, :list
-  attr :recent_collections, :list
 
   def render(assigns) do
     ~H"""
     <div class="max-w-7xl mx-auto">
-      <.comics_header
-        total_comics={@total_comics}
-        total_collections={@total_collections}
-        search_query={@search_query}
-      />
+      <.comics_header totals={@totals} search_query={@search_query} />
 
       <.search_results
         search_active={@search_active}
         search_query={@search_query}
         search_results={@search_results}
-        recent_comics={@recent_comics}
-        recent_collections={@recent_collections}
+        recent={@recent}
       />
     </div>
     """
   end
 
-  attr :total_comics, :integer, default: 0
-  attr :total_collections, :integer, default: 0
+  attr :totals, :map
   attr :search_query, :string, default: ""
 
   def comics_header(assigns) do
@@ -102,7 +92,7 @@ defmodule BasenjiWeb.HomeLive do
         <div>
           <h1 class={page_classes(:title)}>Home</h1>
           <p class="text-gray-600 mt-1">
-            {@total_comics} comics • {@total_collections} collections
+            {@totals.comics} comics • {@totals.collections} collections
           </p>
         </div>
 
@@ -111,6 +101,8 @@ defmodule BasenjiWeb.HomeLive do
     </div>
     """
   end
+
+  attr :search_query, :string, default: ""
 
   def search_bar(assigns) do
     # TODO hook up
@@ -144,8 +136,7 @@ defmodule BasenjiWeb.HomeLive do
   attr :search_active, :boolean, default: false
   attr :search_query, :string, default: ""
   attr :search_results, :map, default: %{}
-  attr :recent_comics, :list
-  attr :recent_collections, :list
+  attr :recent, :map
 
   def search_results(assigns) do
     ~H"""
@@ -161,8 +152,8 @@ defmodule BasenjiWeb.HomeLive do
         />
       </div>
     <% else %>
-      <.recent_comics_section comics={@recent_comics} />
-      <.recent_collections_section collections={@recent_collections} />
+      <.recent_comics_section comics={@recent.comics} />
+      <.recent_collections_section collections={@recent.collections} />
     <% end %>
     """
   end
