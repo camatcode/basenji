@@ -21,7 +21,7 @@ defmodule Basenji.Comics.Classifier do
          {:ok, sample_pages} <- get_sample_pages(comic),
          {:ok, scores} <- analyze_pages(comic, sample_pages) do
       avg_score = Enum.sum(scores) / length(scores)
-      classification = if avg_score > 0.6, do: :ebook, else: :comic
+      classification = if avg_score > 0.7, do: :ebook, else: :comic
 
       Logger.debug("Comic #{comic_id}: scores=#{inspect(scores)}, avg=#{avg_score}, result=#{classification}")
 
@@ -75,21 +75,25 @@ defmodule Basenji.Comics.Classifier do
   defp get_sample_pages(comic) do
     page_count = comic.page_count || 0
 
-    if page_count < 3 do
+    if page_count < 5 do
       {:error, :no_pages}
     else
-      # Sample content pages, avoiding covers
-      # Skip first page (likely cover) and last page (likely back cover/blank)
-      # Sample from the middle content pages
+      # Sample more pages, avoiding covers and preferring later content pages
+      # Skip first 2 pages (covers/title) and last page (back cover/blank)
+      # Sample from content pages throughout the book
       sample_indices =
         case page_count do
-          # Just pages 2-3 for very short comics
-          n when n <= 5 -> [2, 3]
-          # Beginning, middle, near-end
-          n when n <= 10 -> [2, div(n, 2), n - 1]
-          # Three content pages from different sections
-          n -> [2, div(n, 3), div(n * 2, 3)]
+          # Sample 4 pages for shorter comics
+          n when n <= 15 -> [3, div(n, 3) + 1, div(n * 2, 3), n - 2]
+          # Sample 5 pages for medium comics  
+          n when n <= 50 -> [3, div(n, 4) + 2, div(n, 2), div(n * 3, 4), n - 2]
+          # Sample 6 pages for longer comics
+          n -> [3, div(n, 5) + 2, div(n * 2, 5), div(n * 3, 5), div(n * 4, 5), n - 2]
         end
+        # Ensure valid page numbers
+        |> Enum.filter(&(&1 >= 3 and &1 <= page_count))
+        # Remove duplicates
+        |> Enum.uniq()
 
       {:ok, sample_indices}
     end
@@ -150,13 +154,126 @@ defmodule Basenji.Comics.Classifier do
       saturation_score = analyze_saturation(image)
       bimodal_score = analyze_histogram_bimodal(image)
       edge_score = analyze_edge_density(image)
+      comic_features = detect_comic_features(image)
 
       # Weighted combination - tune these weights based on testing
       # Saturation is very reliable for ebooks, histogram is good, edge detection needs work
-      final_score = saturation_score * 0.4 + bimodal_score * 0.5 + edge_score * 0.1
+      base_score = saturation_score * 0.4 + bimodal_score * 0.5 + edge_score * 0.1
+
+      # Apply comic feature penalty - reduce score if comic features detected
+      final_score = base_score * (1.0 - comic_features * 0.3)
 
       {:ok, final_score}
     end
+  end
+
+  # Detect comic-specific features to help distinguish from text
+  defp detect_comic_features(image) do
+    panel_borders = detect_panel_borders(image)
+    aspect_ratio = analyze_aspect_ratio(image)
+
+    # Combine features into a confidence score (0.0 = no comic features, 1.0 = strong comic features)
+    panel_borders * 0.7 + aspect_ratio * 0.3
+  end
+
+  # Detect panel borders by looking for strong horizontal/vertical lines
+  defp detect_panel_borders(image) do
+    {:ok, gray} = Image.to_colorspace(image, :bw)
+
+    # Use Sobel edge detection to find strong edges
+    {:ok, edges} = Operation.sobel(gray)
+
+    # Get image dimensions
+    {width, height, _bands} = Image.shape(edges)
+
+    # Sample edge strength at regular intervals
+    # Check for strong horizontal and vertical lines (panel borders)
+    horizontal_strength = check_horizontal_lines(edges, width, height)
+    vertical_strength = check_vertical_lines(edges, width, height)
+
+    # Panel borders tend to have both horizontal and vertical structure
+    max(horizontal_strength, vertical_strength)
+  rescue
+    _ -> 0.0
+  end
+
+  # Check for horizontal line patterns (panel borders)
+  defp check_horizontal_lines(edges, width, height) do
+    # Sample a few horizontal lines across the image
+    sample_rows = [div(height, 4), div(height, 2), div(height * 3, 4)]
+
+    row_strengths =
+      for row <- sample_rows do
+        # Sample points across this row
+        sample_points = for x <- 0..min(width - 1, 10)//1, do: x * div(width, 11)
+
+        # Get edge values at these points
+        edge_values =
+          for x <- sample_points do
+            case Operation.getpoint(edges, x, row) do
+              {:ok, [value]} -> value
+              _ -> 0.0
+            end
+          end
+
+        # Strong horizontal lines should have consistent high values
+        avg_strength = Enum.sum(edge_values) / length(edge_values)
+        avg_strength / 255.0
+      end
+
+    Enum.max(row_strengths)
+  rescue
+    _ -> 0.0
+  end
+
+  # Check for vertical line patterns (panel borders)
+  defp check_vertical_lines(edges, width, height) do
+    # Sample a few vertical lines across the image
+    sample_cols = [div(width, 4), div(width, 2), div(width * 3, 4)]
+
+    col_strengths =
+      for col <- sample_cols do
+        # Sample points down this column
+        sample_points = for y <- 0..min(height - 1, 10)//1, do: y * div(height, 11)
+
+        # Get edge values at these points
+        edge_values =
+          for y <- sample_points do
+            case Operation.getpoint(edges, col, y) do
+              {:ok, [value]} -> value
+              _ -> 0.0
+            end
+          end
+
+        # Strong vertical lines should have consistent high values
+        avg_strength = Enum.sum(edge_values) / length(edge_values)
+        avg_strength / 255.0
+      end
+
+    Enum.max(col_strengths)
+  rescue
+    _ -> 0.0
+  end
+
+  # Analyze aspect ratio - comics tend to have certain ratios
+  defp analyze_aspect_ratio(image) do
+    {width, height, _bands} = Image.shape(image)
+
+    aspect_ratio = width / height
+
+    # Comic pages often have ratios around 0.65-0.75 (taller than wide)
+    # Ebook pages tend to be closer to 0.7-0.8 but can vary widely
+    # This is a weak signal but can help in borderline cases
+    cond do
+      # Mild comic indicator
+      aspect_ratio > 0.6 and aspect_ratio < 0.8 -> 0.3
+      # Wide format often indicates comic spreads
+      aspect_ratio > 1.2 -> 0.5
+      # Neutral
+      true -> 0.0
+    end
+  rescue
+    _ -> 0.0
   end
 
   # Convert to HSV and check saturation channel
@@ -266,8 +383,8 @@ defmodule Basenji.Comics.Classifier do
 
     criteria_met = Enum.count(text_criteria, & &1)
 
-    # Need to meet at least 5 out of 6 criteria for text-like classification
-    if criteria_met >= 5 do
+    # Need to meet all 6 criteria for text-like classification (stricter)
+    if criteria_met >= 6 do
       # Score based on how many criteria are met and strength of bimodal distribution
       # 0.67 to 1.0
       base_score = criteria_met / 6.0
