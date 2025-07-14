@@ -1,4 +1,7 @@
 defmodule BasenjiWeb.Style.SharedStyle do
+  # Register @privdoc as a valid module attribute to suppress warnings
+  Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
+
   @privdoc """
    **active**: highlights the current page number (e.g page 3 of 10)
 

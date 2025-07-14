@@ -1,4 +1,7 @@
 defmodule BasenjiWeb.Live.Style.HomeStyle do
+  # Register @privdoc as a valid module attribute to suppress warnings
+  Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
+
   @privdoc """
   **page_container**: Main container for home page with max width constraint
 

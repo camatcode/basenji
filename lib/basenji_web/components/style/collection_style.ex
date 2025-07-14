@@ -1,4 +1,7 @@
 defmodule BasenjiWeb.Style.CollectionStyle do
+  # Register @privdoc as a valid module attribute to suppress warnings
+  Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
+
   @privdoc """
   **collection_card_container**: Outer wrapper for collection cards
 

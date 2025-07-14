@@ -1,4 +1,7 @@
 defmodule BasenjiWeb.Live.Style.ComicsStyle do
+  # Register @privdoc as a valid module attribute to suppress warnings
+  Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
+
   @privdoc """
   **page_container**: Main container for comics live view pages
 
