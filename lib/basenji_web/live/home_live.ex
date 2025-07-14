@@ -4,6 +4,7 @@ defmodule BasenjiWeb.HomeLive do
 
   import BasenjiWeb.CollectionComponents
   import BasenjiWeb.ComicComponents
+  import BasenjiWeb.Live.Style.HomeStyle
   import BasenjiWeb.SharedComponents
 
   alias Basenji.Collections
@@ -234,16 +235,16 @@ defmodule BasenjiWeb.HomeLive do
 
   def recent_comics_section(assigns) do
     ~H"""
-    <div class="mb-8">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-gray-900">Recent Comics</h2>
-        <.link navigate="/comics" class="text-blue-600 hover:text-blue-700 font-medium">
+    <div class={home_live_classes(:content_section)}>
+      <div class={home_live_classes(:section_header)}>
+        <h2 class={home_live_classes(:section_title)}>Recent Comics</h2>
+        <.link navigate="/comics" class={home_live_classes(:section_view_all_link)}>
           View all →
         </.link>
       </div>
 
       <%= if length(@comics) > 0 do %>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6">
+        <div class={home_live_classes(:recent_comics_grid)}>
           <%= for comic <- @comics do %>
             <.comic_card comic={comic} />
           <% end %>
@@ -254,8 +255,8 @@ defmodule BasenjiWeb.HomeLive do
           title="No comics yet"
           description="Add some comics to get started!"
           style={:dashed}
-          icon_size="h-12 w-12"
-          class="py-8"
+          icon_size={home_live_classes(:empty_state_icon)}
+          class={home_live_classes(:empty_state_override)}
         />
       <% end %>
     </div>
@@ -266,16 +267,16 @@ defmodule BasenjiWeb.HomeLive do
 
   def recent_collections_section(assigns) do
     ~H"""
-    <div class="mb-8">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-gray-900">Collections</h2>
-        <.link navigate="/collections" class="text-blue-600 hover:text-blue-700 font-medium">
+    <div class={home_live_classes(:content_section)}>
+      <div class={home_live_classes(:section_header)}>
+        <h2 class={home_live_classes(:section_title)}>Collections</h2>
+        <.link navigate="/collections" class={home_live_classes(:section_view_all_link)}>
           View all →
         </.link>
       </div>
 
       <%= if length(@collections) > 0 do %>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class={home_live_classes(:recent_collections_grid)}>
           <%= for collection <- @collections do %>
             <.collection_card collection={collection} />
           <% end %>
@@ -286,8 +287,8 @@ defmodule BasenjiWeb.HomeLive do
           title="No collections yet"
           description="Create collections to organize your comics!"
           style={:dashed}
-          icon_size="h-12 w-12"
-          class="py-8"
+          icon_size={home_live_classes(:empty_state_icon)}
+          class={home_live_classes(:empty_state_override)}
         />
       <% end %>
     </div>
