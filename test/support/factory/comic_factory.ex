@@ -37,7 +37,9 @@ defmodule Basenji.Factory.ComicFactory do
         files = Path.wildcard("#{resource_dir}/**/*.#{format}")
         random_file = Enum.random(files)
 
-        tmp = Path.join(Path.join(System.tmp_dir!(), "basenji"), Path.dirname(random_file) <> "#{System.monotonic_time()}")
+        tmp =
+          Path.join(Path.join(System.tmp_dir!(), "basenji"), Path.dirname(random_file) <> "#{System.monotonic_time()}")
+
         File.mkdir_p!(tmp)
         rec_loc = Path.join(tmp, Path.basename(random_file))
         File.cp!(random_file, rec_loc)

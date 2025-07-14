@@ -73,7 +73,8 @@ defmodule BasenjiWeb.CollectionsLive.Show do
     case Collections.remove_from_collection(socket.assigns.collection.id, comic_id) do
       {:ok, _} ->
         # Reload collection to get updated comics
-        {:ok, updated_collection} = Collections.get_collection(socket.assigns.collection.id, preload: [:comics, :parent])
+        {:ok, updated_collection} =
+          Collections.get_collection(socket.assigns.collection.id, preload: [:comics, :parent])
 
         socket =
           socket

@@ -11,15 +11,21 @@ defmodule TestHelper do
   def drain_queue(:comic, start_opts, drain_opts) do
     start_opts = Keyword.merge([limit: 10], start_opts) |> Keyword.put(:queue, :comic)
     drain_opts = Keyword.merge([with_scheduled: true], drain_opts) |> Keyword.put(:queue, :comic)
-    %{discard: dis_1, cancelled: can_1, success: suc_1, failure: fail_1, snoozed: snoozed_1} = drain(start_opts, drain_opts)
+
+    %{discard: dis_1, cancelled: can_1, success: suc_1, failure: fail_1, snoozed: snoozed_1} =
+      drain(start_opts, drain_opts)
 
     start_opts = Keyword.merge([limit: 10], start_opts) |> Keyword.put(:queue, :comic_med)
     drain_opts = Keyword.merge([with_scheduled: true], drain_opts) |> Keyword.put(:queue, :comic_med)
-    %{discard: dis_2, cancelled: can_2, success: suc_2, failure: fail_2, snoozed: snoozed_2} = drain(start_opts, drain_opts)
+
+    %{discard: dis_2, cancelled: can_2, success: suc_2, failure: fail_2, snoozed: snoozed_2} =
+      drain(start_opts, drain_opts)
 
     start_opts = Keyword.merge([limit: 10], start_opts) |> Keyword.put(:queue, :comic_low)
     drain_opts = Keyword.merge([with_scheduled: true], drain_opts) |> Keyword.put(:queue, :comic_low)
-    %{discard: dis_3, cancelled: can_3, success: suc_3, failure: fail_3, snoozed: snoozed_3} = drain(start_opts, drain_opts)
+
+    %{discard: dis_3, cancelled: can_3, success: suc_3, failure: fail_3, snoozed: snoozed_3} =
+      drain(start_opts, drain_opts)
 
     %{
       discard: dis_1 + dis_2 + dis_3,

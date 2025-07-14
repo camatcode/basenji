@@ -1,12 +1,12 @@
 <header class="bg-white shadow-sm border-b border-gray-200">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <div class="flex items-center gap-4">
         <.link
           navigate="/"
           class="flex items-center gap-2 text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
         >
-          <img src={~p"/images/logo.svg"} width="32" height="32" alt="Basenji" /> Basenji
+          <img src={~p"/images/logo.svg"} width="64" height="64" alt="Basenji" />
         </.link>
       </div>
 
@@ -31,7 +31,7 @@
         </.link>
       </nav>
       
-<!-- Mobile menu button -->
+        <!-- Mobile menu button -->
       <div class="md:hidden">
         <button type="button" class="text-gray-700 hover:text-blue-600">
           <svg
@@ -54,7 +54,7 @@
 </header>
 
 <main class="min-h-screen bg-gray-50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <.flash_group flash={@flash} />
     {@inner_content}
   </div>

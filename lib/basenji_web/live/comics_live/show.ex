@@ -102,7 +102,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def render(assigns) do
     ~H"""
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-8xl mx-auto space-y-6">
       <!-- Back Button -->
       <div>
         <.link

@@ -2,6 +2,8 @@ defmodule BasenjiWeb.ComicsLive.Index do
   @moduledoc false
   use BasenjiWeb, :live_view
 
+  import BasenjiWeb.ComicComponents
+
   alias Basenji.Comics
 
   @per_page 24
@@ -128,7 +130,7 @@ defmodule BasenjiWeb.ComicsLive.Index do
     ~H"""
     <div class="space-y-6">
       <!-- Header -->
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 class="text-3xl font-bold text-gray-900">Comics Library</h1>
           <p class="text-gray-600 mt-1">
@@ -139,7 +141,7 @@ defmodule BasenjiWeb.ComicsLive.Index do
       
     <!-- Search and Filters -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex flex-col lg:flex-row gap-4">
+        <div class="flex flex-col lg:flex-row gap-6">
           <!-- Search -->
           <div class="flex-1">
             <.form for={%{}} phx-submit="search" class="relative">
@@ -204,7 +206,7 @@ defmodule BasenjiWeb.ComicsLive.Index do
       
     <!-- Comics Grid -->
       <%= if length(@comics) > 0 do %>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           <%= for comic <- @comics do %>
             <.comic_card comic={comic} />
           <% end %>
@@ -297,47 +299,6 @@ defmodule BasenjiWeb.ComicsLive.Index do
           </div>
         </div>
       <% end %>
-    </div>
-    """
-  end
-
-  # Comic card component
-  defp comic_card(assigns) do
-    ~H"""
-    <div class="group cursor-pointer">
-      <.link navigate={~p"/comics/#{@comic.id}"} class="block">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-          <!-- Comic Thumbnail -->
-          <div class="aspect-[3/4] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
-            <%= if @comic.image_preview do %>
-              <img
-                src={~p"/api/comics/#{@comic.id}/preview"}
-                alt={@comic.title}
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-            <% else %>
-              <.icon name="hero-book-open" class="h-8 w-8 text-blue-400" />
-            <% end %>
-          </div>
-          
-    <!-- Comic Info -->
-          <div class="p-3">
-            <h3 class="font-medium text-gray-900 text-sm line-clamp-2 group-hover:text-blue-600 transition-colors">
-              {@comic.title || "Untitled"}
-            </h3>
-            <%= if @comic.author do %>
-              <p class="text-xs text-gray-500 mt-1 truncate">{@comic.author}</p>
-            <% end %>
-            <div class="flex items-center justify-between mt-2">
-              <span class="text-xs text-gray-400 uppercase">{@comic.format}</span>
-              <%= if @comic.page_count && @comic.page_count > 0 do %>
-                <span class="text-xs text-gray-400">{@comic.page_count} pages</span>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      </.link>
     </div>
     """
   end

@@ -184,13 +184,17 @@ defmodule Basenji.CollectionsTest do
       :timer.sleep(1000)
 
       {:ok, %{id: updated_id}} =
-        Collections.update_collection(collection, %{title: Faker.Lorem.sentence(), description: Faker.Lorem.paragraph(2)})
+        Collections.update_collection(collection, %{
+          title: Faker.Lorem.sentence(),
+          description: Faker.Lorem.paragraph(2)
+        })
 
       [%{id: ^updated_id}] = Collections.list_collections(updated_after: updated_dt)
     end
 
     test "generic search" do
-      %{id: a} = insert(:collection, title: "Baz and Peace", description: "Thrilling murder mystery comics", parent: nil)
+      %{id: a} =
+        insert(:collection, title: "Baz and Peace", description: "Thrilling murder mystery comics", parent: nil)
 
       %{id: b} =
         insert(:collection, title: "Of foo and bar, or On The 25-fold Path", description: "Romance novels", parent: nil)

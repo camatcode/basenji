@@ -140,7 +140,8 @@ defmodule Basenji.Collections do
     add_to_collection(collection_id, comic_id, attrs, opts)
   end
 
-  def add_to_collection(collection_id, comic_id, attrs, opts) when is_bitstring(collection_id) and is_bitstring(comic_id) do
+  def add_to_collection(collection_id, comic_id, attrs, opts)
+      when is_bitstring(collection_id) and is_bitstring(comic_id) do
     opts = Keyword.merge([repo_opts: [on_conflict: :nothing]], opts)
 
     %CollectionComic{collection_id: collection_id, comic_id: comic_id}

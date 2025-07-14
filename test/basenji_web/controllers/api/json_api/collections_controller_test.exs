@@ -357,7 +357,8 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
     end
 
     test "POST with missing required attributes", %{conn: conn} do
-      body = TestHelper.JSONAPI.build_request_body("collection", nil, %{"description" => "Has description but no title"})
+      body =
+        TestHelper.JSONAPI.build_request_body("collection", nil, %{"description" => "Has description but no title"})
 
       conn =
         conn
