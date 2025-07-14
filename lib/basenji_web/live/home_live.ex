@@ -2,7 +2,9 @@ defmodule BasenjiWeb.HomeLive do
   @moduledoc false
   use BasenjiWeb, :live_view
 
+  import BasenjiWeb.CollectionComponents
   import BasenjiWeb.ComicComponents
+  import BasenjiWeb.SharedComponents
 
   alias Basenji.Collections
   alias Basenji.Comics
@@ -204,10 +206,14 @@ defmodule BasenjiWeb.HomeLive do
             <% end %>
           </div>
         <% else %>
-          <div class="text-center text-gray-500 py-8 border-2 border-dashed border-gray-300 rounded-lg">
-            <.icon name="hero-book-open" class="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>No comics yet. Add some comics to get started!</p>
-          </div>
+          <.empty_state
+            icon="hero-book-open"
+            title="No comics yet"
+            description="Add some comics to get started!"
+            style={:dashed}
+            icon_size="h-12 w-12"
+            class="py-8"
+          />
         <% end %>
       </div>
       
@@ -227,46 +233,17 @@ defmodule BasenjiWeb.HomeLive do
             <% end %>
           </div>
         <% else %>
-          <div class="text-center text-gray-500 py-8 border-2 border-dashed border-gray-300 rounded-lg">
-            <.icon name="hero-folder" class="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>No collections yet. Create collections to organize your comics!</p>
-          </div>
+          <.empty_state
+            icon="hero-folder"
+            title="No collections yet"
+            description="Create collections to organize your comics!"
+            style={:dashed}
+            icon_size="h-12 w-12"
+            class="py-8"
+          />
         <% end %>
       </div>
     <% end %>
-    """
-  end
-
-  attr :collection, :any
-  # Collection card component
-  defp collection_card(assigns) do
-    ~H"""
-    <div class="group cursor-pointer">
-      <.link navigate={"/collections/#{@collection.id}"} class="block">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-          <div class="flex items-start gap-3">
-            <div class="flex-shrink-0">
-              <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <.icon name="hero-folder" class="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                {@collection.title}
-              </h3>
-              <%= if @collection.description do %>
-                <p class="text-sm text-gray-500 mt-1 line-clamp-2">
-                  {@collection.description}
-                </p>
-              <% end %>
-              <p class="text-xs text-gray-400 mt-2">
-                Collection • {DateTime.to_date(@collection.inserted_at)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </.link>
-    </div>
     """
   end
 end

@@ -2,6 +2,9 @@ defmodule BasenjiWeb.CollectionsLive.Show do
   @moduledoc false
   use BasenjiWeb, :live_view
 
+  import BasenjiWeb.ComicComponents
+  import BasenjiWeb.SharedComponents
+
   alias Basenji.Collections
 
   @per_page 24
@@ -198,53 +201,19 @@ defmodule BasenjiWeb.CollectionsLive.Show do
       </div>
       
     <!-- Search and Sort Controls -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex flex-col lg:flex-row gap-4">
-          <!-- Search -->
-          <div class="flex-1">
-            <.form for={%{}} phx-submit="search" class="relative">
-              <input
-                type="text"
-                name="search"
-                value={@search_query}
-                placeholder="Search comics in this collection..."
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <.icon name="hero-magnifying-glass" class="h-5 w-5 text-gray-400" />
-              </div>
-            </.form>
-          </div>
-          
-    <!-- Sort -->
-          <div class="lg:w-48">
-            <select
-              phx-change="sort"
-              name="sort"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="title" selected={@sort_by == "title"}>Sort by Title</option>
-              <option value="author" selected={@sort_by == "author"}>Sort by Author</option>
-              <option value="inserted_at" selected={@sort_by == "inserted_at"}>
-                Sort by Date Added
-              </option>
-              <option value="released_year" selected={@sort_by == "released_year"}>
-                Sort by Release Year
-              </option>
-            </select>
-          </div>
-          
-    <!-- Clear Search -->
-          <%= if @search_query != "" do %>
-            <button
-              phx-click="clear_search"
-              class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Clear
-            </button>
-          <% end %>
-        </div>
-      </div>
+      <.search_filter_bar
+        search_query={@search_query}
+        search_placeholder="Search comics in this collection..."
+        sort_options={[
+          {"title", "Sort by Title"},
+          {"author", "Sort by Author"},
+          {"inserted_at", "Sort by Date Added"},
+          {"released_year", "Sort by Release Year"}
+        ]}
+        sort_value={@sort_by}
+        show_clear={@search_query != ""}
+        clear_event="clear_search"
+      />
       
     <!-- Comics Grid -->
       <%= if length(@comics) > 0 do %>
@@ -255,162 +224,37 @@ defmodule BasenjiWeb.CollectionsLive.Show do
         </div>
         
     <!-- Pagination -->
-        <%= if @total_pages > 1 do %>
-          <div class="flex items-center justify-center gap-2">
-            <%= if @current_page > 1 do %>
-              <.link
-                patch={
-                  collection_path(@collection.id, %{
-                    search: @search_query,
-                    sort: @sort_by,
-                    page: @current_page - 1
-                  })
-                }
-                class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Previous
-              </.link>
-            <% end %>
-
-            <%= for page_num <- pagination_range(@current_page, @total_pages) do %>
-              <%= if page_num == :ellipsis do %>
-                <span class="px-3 py-2 text-gray-400">...</span>
-              <% else %>
-                <.link
-                  patch={
-                    collection_path(@collection.id, %{
-                      search: @search_query,
-                      sort: @sort_by,
-                      page: page_num
-                    })
-                  }
-                  class={[
-                    "px-3 py-2 border rounded-md",
-                    if(page_num == @current_page,
-                      do: "bg-blue-600 text-white border-blue-600",
-                      else: "text-gray-500 hover:text-gray-700 border-gray-300 hover:bg-gray-50"
-                    )
-                  ]}
-                >
-                  {page_num}
-                </.link>
-              <% end %>
-            <% end %>
-
-            <%= if @current_page < @total_pages do %>
-              <.link
-                patch={
-                  collection_path(@collection.id, %{
-                    search: @search_query,
-                    sort: @sort_by,
-                    page: @current_page + 1
-                  })
-                }
-                class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Next
-              </.link>
-            <% end %>
-          </div>
-        <% end %>
+        <.pagination
+          current_page={@current_page}
+          total_pages={@total_pages}
+          path_function={fn params -> collection_path(@collection.id, params) end}
+          params={
+            %{
+              search: @search_query,
+              sort: @sort_by
+            }
+          }
+        />
       <% else %>
         <!-- Empty State -->
-        <div class="text-center py-12">
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <.icon name="hero-book-open" class="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <%= if @search_query != "" do %>
-              <h3 class="text-lg font-medium text-gray-900 mb-2">No comics found</h3>
-              <p class="text-gray-500 mb-4">
-                No comics in this collection match your search.
-              </p>
-              <button
-                phx-click="clear_search"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Clear search
-              </button>
-            <% else %>
-              <h3 class="text-lg font-medium text-gray-900 mb-2">Empty collection</h3>
-              <p class="text-gray-500">
-                This collection doesn't have any comics yet. Add some comics to get started!
-              </p>
-            <% end %>
-          </div>
-        </div>
+        <%= if @search_query != "" do %>
+          <.empty_state
+            icon="hero-book-open"
+            title="No comics found"
+            description="No comics in this collection match your search."
+            show_action={true}
+            action_text="Clear search"
+            action_event="clear_search"
+          />
+        <% else %>
+          <.empty_state
+            icon="hero-book-open"
+            title="Empty collection"
+            description="This collection doesn't have any comics yet. Add some comics to get started!"
+          />
+        <% end %>
       <% end %>
     </div>
     """
-  end
-
-  # Comic card component with remove option
-  defp comic_card(assigns) do
-    ~H"""
-    <div class="group cursor-pointer relative">
-      <.link navigate={~p"/comics/#{@comic.id}"} class="block">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-          <!-- Comic Thumbnail -->
-          <div class="aspect-[3/4] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
-            <%= if @comic.image_preview do %>
-              <img
-                src={~p"/api/comics/#{@comic.id}/preview"}
-                alt={@comic.title}
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-            <% else %>
-              <.icon name="hero-book-open" class="h-8 w-8 text-blue-400" />
-            <% end %>
-          </div>
-          
-    <!-- Comic Info -->
-          <div class="p-3">
-            <h3 class="font-medium text-gray-900 text-sm line-clamp-2 group-hover:text-blue-600 transition-colors">
-              {@comic.title || "Untitled"}
-            </h3>
-            <%= if @comic.author do %>
-              <p class="text-xs text-gray-500 mt-1 truncate">{@comic.author}</p>
-            <% end %>
-            <div class="flex items-center justify-between mt-2">
-              <span class="text-xs text-gray-400 uppercase">{@comic.format}</span>
-              <%= if @comic.page_count && @comic.page_count > 0 do %>
-                <span class="text-xs text-gray-400">{@comic.page_count} pages</span>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      </.link>
-      
-    <!-- Remove Button -->
-      <%= if @show_remove do %>
-        <button
-          phx-click="remove_comic"
-          phx-value-comic_id={@comic.id}
-          onclick="event.stopPropagation()"
-          class="absolute top-2 right-2 w-6 h-6 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-700 transition-all flex items-center justify-center"
-          title="Remove from collection"
-        >
-          <.icon name="hero-x-mark" class="h-4 w-4" />
-        </button>
-      <% end %>
-    </div>
-    """
-  end
-
-  # Pagination helper
-  defp pagination_range(current_page, total_pages) when total_pages <= 7 do
-    1..total_pages |> Enum.to_list()
-  end
-
-  defp pagination_range(current_page, total_pages) do
-    cond do
-      current_page <= 4 ->
-        [1, 2, 3, 4, 5, :ellipsis, total_pages]
-
-      current_page >= total_pages - 3 ->
-        [1, :ellipsis, total_pages - 4, total_pages - 3, total_pages - 2, total_pages - 1, total_pages]
-
-      true ->
-        [1, :ellipsis, current_page - 1, current_page, current_page + 1, :ellipsis, total_pages]
-    end
   end
 end
