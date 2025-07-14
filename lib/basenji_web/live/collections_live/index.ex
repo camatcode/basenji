@@ -3,6 +3,7 @@ defmodule BasenjiWeb.CollectionsLive.Index do
   use BasenjiWeb, :live_view
 
   import BasenjiWeb.CollectionComponents
+  import BasenjiWeb.Live.Style.CollectionsStyle
   import BasenjiWeb.SharedComponents
 
   alias Basenji.Collections
@@ -104,7 +105,7 @@ defmodule BasenjiWeb.CollectionsLive.Index do
 
   def render(assigns) do
     ~H"""
-    <div class="space-y-6">
+    <div class={collections_live_classes(:page_container)}>
       <.collections_header total_collections={@total_collections} />
 
       <.search_filter_bar
@@ -140,10 +141,10 @@ defmodule BasenjiWeb.CollectionsLive.Index do
 
   def collections_header(assigns) do
     ~H"""
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class={collections_live_classes(:header_layout)}>
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">Collections</h1>
-        <p class="text-gray-600 mt-1">
+        <h1 class={collections_live_classes(:page_title)}>Collections</h1>
+        <p class={collections_live_classes(:page_subtitle)}>
           {@total_collections} collections total
         </p>
       </div>
@@ -178,7 +179,7 @@ defmodule BasenjiWeb.CollectionsLive.Index do
 
   def collections_grid(assigns) do
     ~H"""
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div class={collections_live_classes(:collections_grid)}>
       <%= for collection <- @collections do %>
         <.collection_card collection={collection} show_comic_count={true} />
       <% end %>

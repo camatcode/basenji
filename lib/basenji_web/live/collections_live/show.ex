@@ -3,6 +3,7 @@ defmodule BasenjiWeb.CollectionsLive.Show do
   use BasenjiWeb, :live_view
 
   import BasenjiWeb.ComicComponents
+  import BasenjiWeb.Live.Style.CollectionsStyle
   import BasenjiWeb.SharedComponents
 
   alias Basenji.Collections
@@ -271,7 +272,7 @@ defmodule BasenjiWeb.CollectionsLive.Show do
 
   def collection_comics_grid(assigns) do
     ~H"""
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+    <div class={collections_live_classes(:comics_grid)}>
       <%= for comic <- @comics do %>
         <.comic_card comic={comic} show_remove={true} />
       <% end %>
