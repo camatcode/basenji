@@ -1,13 +1,7 @@
 defmodule BasenjiWeb.Live.Style.ComicsStyle do
-  # Register @privdoc as a valid module attribute to suppress warnings
+  import BasenjiWeb.Style.SharedStyle
+
   Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
-
-  @privdoc """
-  **page_container**: Main container for comics live view pages
-
-  * `space-y-6`: consistent vertical spacing (24px) between major page sections
-  """
-  def comics_live_classes(:page_container), do: "space-y-6"
 
   @privdoc """
   **header_layout**: Layout for page headers (used in index page)
@@ -17,20 +11,6 @@ defmodule BasenjiWeb.Live.Style.ComicsStyle do
   * `gap-6`: slightly larger gap (24px) than collections since this might have action buttons
   """
   def comics_live_classes(:header_layout), do: "flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
-
-  @privdoc """
-  **page_title**: Main page title styling
-
-  * `text-3xl font-bold text-gray-900`: large, bold, dark text for primary headings
-  """
-  def comics_live_classes(:page_title), do: "text-3xl font-bold text-gray-900"
-
-  @privdoc """
-  **page_subtitle**: Subtitle with count information
-
-  * `text-gray-600 mt-1`: medium gray with tight coupling to title
-  """
-  def comics_live_classes(:page_subtitle), do: "text-gray-600 mt-1"
 
   @privdoc """
   **comics_grid**: Grid layout for comic cards on index page
@@ -54,21 +34,6 @@ defmodule BasenjiWeb.Live.Style.ComicsStyle do
   * `space-y-6`: consistent vertical spacing
   """
   def comics_live_classes(:show_page_container), do: "max-w-8xl mx-auto space-y-6"
-
-  @privdoc """
-  **back_link**: Styling for "Back to Comics" navigation link
-
-  * `inline-flex items-center`: allows icon and text to align properly
-  * `text-gray-600 hover:text-gray-900`: medium gray with darker hover
-  """
-  def comics_live_classes(:back_link), do: "inline-flex items-center text-gray-600 hover:text-gray-900"
-
-  @privdoc """
-  **back_icon**: Icon styling for back navigation
-
-  * `h-5 w-5 mr-2`: medium icon with right margin
-  """
-  def comics_live_classes(:back_icon), do: "h-5 w-5 mr-2"
 
   @privdoc """
   **details_grid**: Main layout grid for comic show page (non-reader view)

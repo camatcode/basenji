@@ -1,6 +1,15 @@
 defmodule BasenjiWeb.Live.Style.HomeStyle do
-  # Register @privdoc as a valid module attribute to suppress warnings
+  import BasenjiWeb.Style.SharedStyle
+
   Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
+
+  @privdoc """
+  **page_container**: Main container for home page with max width constraint
+
+  * `max-w-7xl`: generous max width (1280px) for dashboard-style layout
+  * `mx-auto`: centers the container on larger screens
+  """
+  def home_live_classes(:page_container), do: "max-w-7xl mx-auto"
 
   @privdoc """
   **page_container**: Main container for home page with max width constraint

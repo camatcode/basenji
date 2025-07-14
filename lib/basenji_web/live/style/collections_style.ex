@@ -1,53 +1,7 @@
 defmodule BasenjiWeb.Live.Style.CollectionsStyle do
-  # Register @privdoc as a valid module attribute to suppress warnings
+  import BasenjiWeb.Style.SharedStyle
+
   Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
-
-  @privdoc """
-  **page_container**: Main container for all collections live view pages
-
-  * `space-y-6`: consistent vertical spacing (24px) between major page sections
-  """
-  def collections_live_classes(:page_container), do: "space-y-6"
-
-  @privdoc """
-  **header_layout**: Layout for page headers with title and optional actions
-
-  * `flex flex-col lg:flex-row`: stacks vertically on mobile, horizontal on large screens
-  * `lg:items-center lg:justify-between`: on large screens, centers vertically and spreads apart
-  * `gap-4`: consistent spacing (16px) between header elements
-  """
-  def collections_live_classes(:header_layout), do: "flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
-
-  @privdoc """
-  **page_title**: Main page title styling
-
-  * `text-3xl`: large text (30px) for primary page headings
-  * `font-bold`: heavy weight to establish hierarchy
-  * `text-gray-900`: darkest gray for maximum readability
-  """
-  def collections_live_classes(:page_title), do: "text-3xl font-bold text-gray-900"
-
-  @privdoc """
-  **page_subtitle**: Subtitle with count or additional info
-
-  * `text-gray-600`: medium gray (less prominent than title)
-  * `mt-1`: small top margin (4px) for tight coupling with title
-  """
-  def collections_live_classes(:page_subtitle), do: "text-gray-600 mt-1"
-
-  @privdoc """
-  **collections_grid**: Grid layout for collection cards on index page
-
-  * `grid`: CSS grid layout
-  * `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`: responsive columns
-    - 1 column on mobile (stacked)
-    - 2 columns on medium screens (tablets)
-    - 3 columns on large screens (small desktops)
-    - 4 columns on extra large screens (large desktops)
-  * `gap-6`: consistent spacing (24px) between cards
-  """
-  def collections_live_classes(:collections_grid),
-    do: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
 
   @privdoc """
   **comics_grid**: Grid layout for comics within a collection (denser layout)
@@ -60,23 +14,6 @@ defmodule BasenjiWeb.Live.Style.CollectionsStyle do
   """
   def collections_live_classes(:comics_grid),
     do: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4"
-
-  @privdoc """
-  **back_link**: Styling for "Back to Collections" navigation link
-
-  * `inline-flex items-center`: allows icon and text to align properly
-  * `text-gray-600`: medium gray for secondary navigation
-  * `hover:text-gray-900`: darker on hover to show interactivity
-  """
-  def collections_live_classes(:back_link), do: "inline-flex items-center text-gray-600 hover:text-gray-900"
-
-  @privdoc """
-  **back_icon**: Icon styling for back navigation
-
-  * `h-5 w-5`: medium icon size (20px)
-  * `mr-2`: right margin (8px) for spacing from text
-  """
-  def collections_live_classes(:back_icon), do: "h-5 w-5 mr-2"
 
   @privdoc """
   **collection_detail_header**: Card container for collection information on show page
