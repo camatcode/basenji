@@ -103,43 +103,48 @@ defmodule BasenjiWeb.CollectionsLive.Show do
       current_page: page
     } = socket.assigns
 
-    # Get all comics in collection
-    all_comics = collection.comics
+    comics =
+      collection.comics
+      |> filter_comics_by_search(search)
+      |> sort_comics_by(sort)
 
-    # Apply search filter if provided
-    filtered_comics =
-      if search == "" do
-        all_comics
-      else
-        search_term = String.downcase(search)
-
-        Enum.filter(all_comics, fn comic ->
-          String.contains?(String.downcase(comic.title || ""), search_term) or
-            String.contains?(String.downcase(comic.author || ""), search_term) or
-            String.contains?(String.downcase(comic.description || ""), search_term)
-        end)
-      end
-
-    # Apply sorting
-    sorted_comics =
-      case sort do
-        "title" -> Enum.sort_by(filtered_comics, & &1.title)
-        "author" -> Enum.sort_by(filtered_comics, & &1.author)
-        "inserted_at" -> Enum.sort_by(filtered_comics, & &1.inserted_at, {:desc, DateTime})
-        "released_year" -> Enum.sort_by(filtered_comics, & &1.released_year)
-        _ -> filtered_comics
-      end
-
-    # Apply pagination
-    total_comics = length(sorted_comics)
-    total_pages = ceil(total_comics / @per_page)
-    start_index = (page - 1) * @per_page
-    comics = Enum.slice(sorted_comics, start_index, @per_page)
+    {paginated_comics, total_comics, total_pages} = paginate_comics(comics, page)
 
     socket
-    |> assign(:comics, comics)
+    |> assign(:comics, paginated_comics)
     |> assign(:total_comics, total_comics)
     |> assign(:total_pages, total_pages)
+  end
+
+  defp filter_comics_by_search(comics, ""), do: comics
+
+  defp filter_comics_by_search(comics, search) do
+    search_term = String.downcase(search)
+
+    Enum.filter(comics, fn comic ->
+      String.contains?(String.downcase(comic.title || ""), search_term) or
+        String.contains?(String.downcase(comic.author || ""), search_term) or
+        String.contains?(String.downcase(comic.description || ""), search_term)
+    end)
+  end
+
+  defp sort_comics_by(comics, sort) do
+    case sort do
+      "title" -> Enum.sort_by(comics, & &1.title)
+      "author" -> Enum.sort_by(comics, & &1.author)
+      "inserted_at" -> Enum.sort_by(comics, & &1.inserted_at, {:desc, DateTime})
+      "released_year" -> Enum.sort_by(comics, & &1.released_year)
+      _ -> comics
+    end
+  end
+
+  defp paginate_comics(comics, page) do
+    total_comics = length(comics)
+    total_pages = ceil(total_comics / @per_page)
+    start_index = (page - 1) * @per_page
+    paginated_comics = Enum.slice(comics, start_index, @per_page)
+
+    {paginated_comics, total_comics, total_pages}
   end
 
   defp collection_path(collection_id, params) do

@@ -167,7 +167,6 @@ defmodule BasenjiWeb.ComicsLive.Index do
         search_query={@page_info.search_query}
         search_placeholder={@search_options_info.placeholder}
         sort_options={@search_options_info.sort_options}
-        }
         sort_value={@page_info.sort_by}
         filter_options={[
           {@search_options_info.filter_info.type, @search_options_info.filter_info.default,

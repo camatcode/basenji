@@ -11,7 +11,6 @@ defmodule BasenjiWeb.ComicComponents do
   attr :lazy_loading, :boolean, default: true, doc: "Whether to use lazy loading for images"
 
   def comic_card(assigns) do
-    # TODO: load preview on the fly if unavailable
     ~H"""
     <div class={[comic_card_classes(:container), @class]}>
       <.link navigate={~p"/comics/#{@comic.id}"} class="block">
