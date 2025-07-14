@@ -3,6 +3,7 @@ defmodule BasenjiWeb.CollectionComponents do
   use BasenjiWeb, :live_component
 
   import BasenjiWeb.CoreComponents
+  import BasenjiWeb.Style.CollectionStyle
 
   attr :collection, :any, required: true, doc: "The collection struct to display"
   attr :class, :string, default: "", doc: "Additional CSS classes for the card container"
@@ -10,26 +11,26 @@ defmodule BasenjiWeb.CollectionComponents do
 
   def collection_card(assigns) do
     ~H"""
-    <div class={["group cursor-pointer", @class]}>
+    <div class={[collection_card_classes(:container), @class]}>
       <.link navigate={~p"/collections/#{@collection.id}"} class="block">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full">
-          <div class="flex items-start gap-4">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <.icon name="hero-folder" class="h-7 w-7 text-yellow-600" />
+        <div class={collection_card_classes(:inner)}>
+          <div class={collection_card_classes(:content_layout)}>
+            <div class={collection_card_classes(:icon_container)}>
+              <div class={collection_card_classes(:icon_background)}>
+                <.icon name="hero-folder" class={collection_card_classes(:folder_icon)} />
               </div>
             </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
+            <div class={collection_card_classes(:text_container)}>
+              <h3 class={collection_card_classes(:title)}>
                 {@collection.title}
               </h3>
               <%= if @collection.description do %>
-                <p class="text-sm text-gray-600 mb-3 line-clamp-3">
+                <p class={collection_card_classes(:description)}>
                   {@collection.description}
                 </p>
               <% end %>
 
-              <div class="flex items-center justify-between text-xs text-gray-500">
+              <div class={collection_card_classes(:metadata_row)}>
                 <%= if @show_comic_count and @collection.comics do %>
                   <span>{length(@collection.comics)} comics</span>
                 <% else %>
