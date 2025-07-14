@@ -9,18 +9,15 @@ defmodule BasenjiWeb.ComicsLive.Index do
   alias Basenji.Comics
 
   @per_page 24
+  @page_title "Comics Library"
 
   def mount(_params, _session, socket) do
-    socket =
-      socket
-      |> assign(:page_title, "Comics Library")
-      |> assign(:search_query, "")
-      |> assign(:current_page, 1)
-      |> assign(:format_filter, "")
-      |> assign(:sort_by, "title")
-      |> load_comics()
-
-    {:ok, socket}
+    socket
+    |> assign(:page_title, @page_title)
+    |> assign_search_options()
+    |> assign_page()
+    |> assign_comics()
+    |> then(&{:ok, &1})
   end
 
   def handle_params(params, _url, socket) do
@@ -29,15 +26,10 @@ defmodule BasenjiWeb.ComicsLive.Index do
     format = params["format"] || ""
     sort = params["sort"] || "title"
 
-    socket =
-      socket
-      |> assign(:current_page, page)
-      |> assign(:search_query, search)
-      |> assign(:format_filter, format)
-      |> assign(:sort_by, sort)
-      |> load_comics()
-
-    {:noreply, socket}
+    socket
+    |> assign_page(page, search, format, sort)
+    |> assign_comics()
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("search", %{"search" => search}, socket) do
@@ -80,7 +72,41 @@ defmodule BasenjiWeb.ComicsLive.Index do
     {:noreply, socket}
   end
 
-  defp load_comics(socket) do
+  defp assign_search_options(socket) do
+    formats = Comics.formats()
+    str_formats = formats |> Enum.map(&String.upcase("#{&1}"))
+    filter_options = Enum.zip(formats, str_formats)
+
+    info = %{
+      sort_options: [
+        {"title", "Sort by Title"},
+        {"author", "Sort by Author"},
+        {"inserted_at", "Sort by Date Added"},
+        {"released_year", "Sort by Release Year"}
+      ],
+      placeholder: "Search comics by title, author, or description...",
+      filter_info: %{type: "filter_format", default: "All Formats", options: filter_options}
+    }
+
+    socket
+    |> assign(:search_options_info, info)
+  end
+
+  defp assign_page(socket, current_page \\ 1, search_query \\ "", format_filter \\ "", sort_by \\ "title") do
+    socket
+    |> assign(:page_info, %{
+      current_page: current_page,
+      search_query: search_query,
+      format_filter: format_filter,
+      sort_by: sort_by
+    })
+    |> assign(:current_page, current_page)
+    |> assign(:search_query, search_query)
+    |> assign(:format_filter, format_filter)
+    |> assign(:sort_by, sort_by)
+  end
+
+  defp assign_comics(socket) do
     %{
       search_query: search,
       format_filter: format,
@@ -128,48 +154,33 @@ defmodule BasenjiWeb.ComicsLive.Index do
     end
   end
 
+  attr :total_comics, :integer, required: true
+  attr :page_info, :map, required: true
+  attr :search_options_info, :map
+
   def render(assigns) do
     ~H"""
     <div class={page_classes(:container)}>
       <.comics_library_header total_comics={@total_comics} />
 
       <.search_filter_bar
-        search_query={@search_query}
-        search_placeholder="Search comics by title, author, or description..."
-        sort_options={[
-          {"title", "Sort by Title"},
-          {"author", "Sort by Author"},
-          {"inserted_at", "Sort by Date Added"},
-          {"released_year", "Sort by Release Year"}
-        ]}
-        sort_value={@sort_by}
+        search_query={@page_info.search_query}
+        search_placeholder={@search_options_info.placeholder}
+        sort_options={@search_options_info.sort_options}
+        }
+        sort_value={@page_info.sort_by}
         filter_options={[
-          {"filter_format", "All Formats",
-           [
-             {:cbz, "CBZ"},
-             {:cbt, "CBT"},
-             {:cb7, "CB7"},
-             {:cbr, "CBR"},
-             {:pdf, "PDF"}
-           ], @format_filter}
+          {@search_options_info.filter_info.type, @search_options_info.filter_info.default,
+           @search_options_info.filter_info.options, @page_info.format_filter}
         ]}
-        show_clear={@search_query != "" || @format_filter != ""}
+        show_clear={@page_info.search_query != "" || @page_info.format_filter != ""}
       />
 
       <.comics_content
+        page_info={@page_info}
         comics={@comics}
-        current_page={@current_page}
         total_pages={@total_pages}
         path_function={&comics_path/1}
-        params={
-          %{
-            search: @search_query,
-            format: @format_filter,
-            sort: @sort_by
-          }
-        }
-        search_query={@search_query}
-        format_filter={@format_filter}
       />
     </div>
     """
@@ -191,25 +202,28 @@ defmodule BasenjiWeb.ComicsLive.Index do
   end
 
   attr :comics, :list, required: true
-  attr :current_page, :integer, required: true
   attr :total_pages, :integer, required: true
   attr :path_function, :any, required: true
-  attr :params, :map, required: true
-  attr :search_query, :string, required: true
-  attr :format_filter, :string, required: true
+  attr :page_info, :map
 
   def comics_content(assigns) do
     ~H"""
     <%= if length(@comics) > 0 do %>
       <.comics_grid comics={@comics} />
       <.pagination
-        current_page={@current_page}
+        current_page={@page_info.current_page}
         total_pages={@total_pages}
         path_function={@path_function}
-        params={@params}
+        params={
+          %{
+            search: @page_info.search_query,
+            format: @page_info.format_filter,
+            sort: @page_info.sort_by
+          }
+        }
       />
     <% else %>
-      <.comics_empty_state search_query={@search_query} format_filter={@format_filter} />
+      <.comics_empty_state page_info={@page_info} />
     <% end %>
     """
   end
@@ -226,12 +240,11 @@ defmodule BasenjiWeb.ComicsLive.Index do
     """
   end
 
-  attr :search_query, :string, required: true
-  attr :format_filter, :string, required: true
+  attr :page_info, :map
 
   def comics_empty_state(assigns) do
     ~H"""
-    <%= if @search_query != "" or @format_filter != "" do %>
+    <%= if @page_info.search_query != "" or @page_info.format_filter != "" do %>
       <.empty_state
         icon="hero-book-open"
         title="No comics found"

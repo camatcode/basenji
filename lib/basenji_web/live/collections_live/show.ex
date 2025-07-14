@@ -3,8 +3,8 @@ defmodule BasenjiWeb.CollectionsLive.Show do
   use BasenjiWeb, :live_view
 
   import BasenjiWeb.ComicComponents
-  import BasenjiWeb.Live.Style.CollectionsStyle
   import BasenjiWeb.SharedComponents
+  import BasenjiWeb.Style.CollectionsLiveStyle
   import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Collections

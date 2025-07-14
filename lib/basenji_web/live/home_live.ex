@@ -4,8 +4,8 @@ defmodule BasenjiWeb.HomeLive do
 
   import BasenjiWeb.CollectionComponents
   import BasenjiWeb.ComicComponents
-  import BasenjiWeb.Live.Style.HomeStyle
   import BasenjiWeb.SharedComponents
+  import BasenjiWeb.Style.HomeLiveStyle
   import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Collections

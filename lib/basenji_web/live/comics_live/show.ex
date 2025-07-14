@@ -2,7 +2,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
   @moduledoc false
   use BasenjiWeb, :live_view
 
-  import BasenjiWeb.Live.Style.ComicsStyle
+  import BasenjiWeb.Style.ComicsLiveStyle
   import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Collections

@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.Live.Style.CollectionsStyle do
+defmodule BasenjiWeb.Style.CollectionsLiveStyle do
   @moduledoc false
   Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
 
