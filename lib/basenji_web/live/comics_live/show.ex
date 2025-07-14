@@ -3,6 +3,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
   use BasenjiWeb, :live_view
 
   import BasenjiWeb.Live.Style.ComicsStyle
+  import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Collections
   alias Basenji.Comics
@@ -119,8 +120,8 @@ defmodule BasenjiWeb.ComicsLive.Show do
   def back_to_comics_navigation(assigns) do
     ~H"""
     <div>
-      <.link navigate={~p"/comics"} class="inline-flex items-center text-gray-600 hover:text-gray-900">
-        <.icon name="hero-arrow-left" class="h-5 w-5 mr-2" /> Back to Comics
+      <.link navigate={~p"/comics"} class={navigation_classes(:back_link)}>
+        <.icon name="hero-arrow-left" class={navigation_classes(:back_icon)} /> Back to Comics
       </.link>
     </div>
     """

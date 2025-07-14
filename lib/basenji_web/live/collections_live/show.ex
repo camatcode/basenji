@@ -5,6 +5,7 @@ defmodule BasenjiWeb.CollectionsLive.Show do
   import BasenjiWeb.ComicComponents
   import BasenjiWeb.Live.Style.CollectionsStyle
   import BasenjiWeb.SharedComponents
+  import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Collections
 
@@ -195,11 +196,8 @@ defmodule BasenjiWeb.CollectionsLive.Show do
   def back_to_collections(assigns) do
     ~H"""
     <div>
-      <.link
-        navigate={~p"/collections"}
-        class="inline-flex items-center text-gray-600 hover:text-gray-900"
-      >
-        <.icon name="hero-arrow-left" class="h-5 w-5 mr-2" /> Back to Collections
+      <.link navigate={~p"/collections"} class={navigation_classes(:back_link)}>
+        <.icon name="hero-arrow-left" class={navigation_classes(:back_icon)} /> Back to Collections
       </.link>
     </div>
     """

@@ -1,6 +1,4 @@
 defmodule BasenjiWeb.Live.Style.ComicsStyle do
-  import BasenjiWeb.Style.SharedStyle
-
   Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
 
   @privdoc """
