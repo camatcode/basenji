@@ -1,5 +1,5 @@
 defmodule BasenjiWeb.Style.CollectionStyle do
-  # Register @privdoc as a valid module attribute to suppress warnings
+  @moduledoc false
   Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
 
   @privdoc """

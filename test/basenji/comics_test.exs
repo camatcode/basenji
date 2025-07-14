@@ -219,6 +219,11 @@ defmodule Basenji.ComicsTest do
     end
   end
 
+  test "count" do
+    insert_list(10, :comic)
+    assert 10 == Comics.count_comics()
+  end
+
   test "get_page" do
     comic = insert(:comic)
 

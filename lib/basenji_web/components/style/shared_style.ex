@@ -1,4 +1,5 @@
 defmodule BasenjiWeb.Style.SharedStyle do
+  @moduledoc false
   Module.register_attribute(__MODULE__, :privdoc, accumulate: true)
 
   @privdoc """

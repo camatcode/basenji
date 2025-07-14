@@ -318,6 +318,11 @@ defmodule Basenji.CollectionsTest do
     end
   end
 
+  test "count" do
+    insert_list(10, :collection, parent: nil)
+    assert 10 == Collections.count_collections()
+  end
+
   defp valid_collection?(collection) do
     assert collection.id
     assert collection.title

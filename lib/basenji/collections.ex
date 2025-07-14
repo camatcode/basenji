@@ -185,6 +185,12 @@ defmodule Basenji.Collections do
     end
   end
 
+  def count_collections do
+    Repo.aggregate(Collection, :count, :id)
+  end
+
+  def attrs, do: Collection.attrs()
+
   # Helper functions for comics operations in multi transactions
   defp add_comics_to_multi(multi, _collection_id, nil), do: multi
   defp add_comics_to_multi(multi, _collection_id, []), do: multi
@@ -222,8 +228,6 @@ defmodule Basenji.Collections do
       )
     )
   end
-
-  def attrs, do: Collection.attrs()
 
   defp insert_collection(attrs, opts) do
     with {:ok, collection} <-

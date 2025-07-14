@@ -54,8 +54,8 @@ defmodule BasenjiWeb.HomeLive do
     recent_comics = Comics.list_comics(limit: 12, order_by: :inserted_at)
     recent_collections = Collections.list_collections(limit: 8, order_by: :inserted_at)
 
-    total_comics = Comics.list_comics() |> length()
-    total_collections = Collections.list_collections() |> length()
+    total_comics = Comics.count_comics()
+    total_collections = Collections.count_collections()
 
     socket
     |> assign(:recent_comics, recent_comics)
