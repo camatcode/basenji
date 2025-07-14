@@ -157,7 +157,7 @@ defmodule Basenji.Comics do
 
   def formats, do: Comic.formats()
 
-  def attrs, do: Comic.attrs()
+  def comic_attrs, do: Comic.attrs()
 
   def create_optimized_comic(original_comic, optimized_attrs) do
     # Ensure we have the original comic with collections preloaded

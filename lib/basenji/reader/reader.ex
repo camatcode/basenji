@@ -41,12 +41,22 @@ defmodule Basenji.Reader do
     "tif"
   ]
 
+  def title_from_location(location) do
+    location
+    |> Path.basename()
+    |> Path.rootname()
+    |> ProperCase.snake_case()
+    |> String.split("_")
+    |> Enum.map_join(" ", &String.capitalize(&1))
+  end
+
   def info(location, opts \\ []) do
     reader = find_reader(location)
 
     info =
       if reader do
-        title = location |> Path.basename() |> Path.rootname()
+        title = title_from_location(location)
+
         {:ok, response} = reader.read(location, opts)
         %{entries: entries} = response
         reader.close(response[:file])

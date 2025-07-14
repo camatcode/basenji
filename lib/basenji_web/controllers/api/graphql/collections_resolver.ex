@@ -46,7 +46,7 @@ defmodule BasenjiWeb.GraphQL.CollectionsResolver do
     end
   end
 
-  def order_by_attrs, do: Collections.attrs()
+  def order_by_attrs, do: Collections.collection_attrs()
 
   defp maybe_preload_collection(collection, info) do
     preload_opts = GraphQLUtils.extract_preloads(info, @preload_mapping)

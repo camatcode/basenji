@@ -222,7 +222,7 @@ defmodule Basenji.Collections do
     )
   end
 
-  def attrs, do: Collection.attrs()
+  def collection_attrs, do: Collection.attrs()
 
   defp insert_collection(attrs, opts) do
     with {:ok, collection} <-
