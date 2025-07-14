@@ -156,51 +156,10 @@ defmodule BasenjiWeb.CollectionsLive.Show do
   def render(assigns) do
     ~H"""
     <div class="space-y-6">
-      <!-- Back Button -->
-      <div>
-        <.link
-          navigate={~p"/collections"}
-          class="inline-flex items-center text-gray-600 hover:text-gray-900"
-        >
-          <.icon name="hero-arrow-left" class="h-5 w-5 mr-2" /> Back to Collections
-        </.link>
-      </div>
-      
-    <!-- Collection Header -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-start gap-4">
-          <div class="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <.icon name="hero-folder" class="h-10 w-10 text-yellow-600" />
-          </div>
-          <div class="flex-1">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">
-              {@collection.title}
-            </h1>
-            <%= if @collection.description do %>
-              <p class="text-gray-600 mb-4 leading-relaxed">
-                {@collection.description}
-              </p>
-            <% end %>
-            <div class="flex items-center gap-4 text-sm text-gray-500">
-              <span>{@total_comics} comics</span>
-              <span>Created {DateTime.to_date(@collection.inserted_at)}</span>
-              <%= if @collection.parent do %>
-                <span>
-                  Parent:
-                  <.link
-                    navigate={~p"/collections/#{@collection.parent.id}"}
-                    class="text-blue-600 hover:text-blue-700"
-                  >
-                    {@collection.parent.title}
-                  </.link>
-                </span>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-    <!-- Search and Sort Controls -->
+      <.back_to_collections />
+
+      <.collection_header collection={@collection} total_comics={@total_comics} />
+
       <.search_filter_bar
         search_query={@search_query}
         search_placeholder="Search comics in this collection..."
@@ -214,47 +173,132 @@ defmodule BasenjiWeb.CollectionsLive.Show do
         show_clear={@search_query != ""}
         clear_event="clear_search"
       />
-      
-    <!-- Comics Grid -->
-      <%= if length(@comics) > 0 do %>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-          <%= for comic <- @comics do %>
-            <.comic_card comic={comic} show_remove={true} />
-          <% end %>
-        </div>
-        
-    <!-- Pagination -->
-        <.pagination
-          current_page={@current_page}
-          total_pages={@total_pages}
-          path_function={fn params -> collection_path(@collection.id, params) end}
-          params={
-            %{
-              search: @search_query,
-              sort: @sort_by
-            }
+
+      <.collection_comics_content
+        comics={@comics}
+        current_page={@current_page}
+        total_pages={@total_pages}
+        path_function={fn params -> collection_path(@collection.id, params) end}
+        params={
+          %{
+            search: @search_query,
+            sort: @sort_by
           }
-        />
-      <% else %>
-        <!-- Empty State -->
-        <%= if @search_query != "" do %>
-          <.empty_state
-            icon="hero-book-open"
-            title="No comics found"
-            description="No comics in this collection match your search."
-            show_action={true}
-            action_text="Clear search"
-            action_event="clear_search"
-          />
-        <% else %>
-          <.empty_state
-            icon="hero-book-open"
-            title="Empty collection"
-            description="This collection doesn't have any comics yet. Add some comics to get started!"
-          />
-        <% end %>
+        }
+        search_query={@search_query}
+      />
+    </div>
+    """
+  end
+
+  def back_to_collections(assigns) do
+    ~H"""
+    <div>
+      <.link
+        navigate={~p"/collections"}
+        class="inline-flex items-center text-gray-600 hover:text-gray-900"
+      >
+        <.icon name="hero-arrow-left" class="h-5 w-5 mr-2" /> Back to Collections
+      </.link>
+    </div>
+    """
+  end
+
+  attr :collection, :map, required: true
+  attr :total_comics, :integer, required: true
+
+  def collection_header(assigns) do
+    ~H"""
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-start gap-4">
+        <div class="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <.icon name="hero-folder" class="h-10 w-10 text-yellow-600" />
+        </div>
+        <div class="flex-1">
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            {@collection.title}
+          </h1>
+          <%= if @collection.description do %>
+            <p class="text-gray-600 mb-4 leading-relaxed">
+              {@collection.description}
+            </p>
+          <% end %>
+          <div class="flex items-center gap-4 text-sm text-gray-500">
+            <span>{@total_comics} comics</span>
+            <span>Created {DateTime.to_date(@collection.inserted_at)}</span>
+            <%= if @collection.parent do %>
+              <span>
+                Parent:
+                <.link
+                  navigate={~p"/collections/#{@collection.parent.id}"}
+                  class="text-blue-600 hover:text-blue-700"
+                >
+                  {@collection.parent.title}
+                </.link>
+              </span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :comics, :list, required: true
+  attr :current_page, :integer, required: true
+  attr :total_pages, :integer, required: true
+  attr :path_function, :any, required: true
+  attr :params, :map, required: true
+  attr :search_query, :string, required: true
+
+  def collection_comics_content(assigns) do
+    ~H"""
+    <%= if length(@comics) > 0 do %>
+      <.collection_comics_grid comics={@comics} />
+      <.pagination
+        current_page={@current_page}
+        total_pages={@total_pages}
+        path_function={@path_function}
+        params={@params}
+      />
+    <% else %>
+      <.collection_empty_state search_query={@search_query} />
+    <% end %>
+    """
+  end
+
+  attr :comics, :list, required: true
+
+  def collection_comics_grid(assigns) do
+    ~H"""
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+      <%= for comic <- @comics do %>
+        <.comic_card comic={comic} show_remove={true} />
       <% end %>
     </div>
+    """
+  end
+
+  attr :search_query, :string, required: true
+
+  def collection_empty_state(assigns) do
+    ~H"""
+    <%= if @search_query != "" do %>
+      <.empty_state
+        icon="hero-book-open"
+        title="No comics found"
+        description="No comics in this collection match your search."
+        show_action={true}
+        action_text="Clear search"
+        action_event="clear_search"
+      />
+    <% else %>
+      <.empty_state
+        icon="hero-book-open"
+        title="Empty collection"
+        description="This collection doesn't have any comics yet. Add some comics to get started!"
+      />
+    <% end %>
     """
   end
 end

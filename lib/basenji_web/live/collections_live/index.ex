@@ -105,17 +105,8 @@ defmodule BasenjiWeb.CollectionsLive.Index do
   def render(assigns) do
     ~H"""
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">Collections</h1>
-          <p class="text-gray-600 mt-1">
-            {@total_collections} collections total
-          </p>
-        </div>
-      </div>
-      
-    <!-- Search and Filters -->
+      <.collections_header total_collections={@total_collections} />
+
       <.search_filter_bar
         search_query={@search_query}
         search_placeholder="Search collections by title or description..."
@@ -127,46 +118,94 @@ defmodule BasenjiWeb.CollectionsLive.Index do
         sort_value={@sort_by}
         show_clear={@search_query != ""}
       />
-      
-    <!-- Collections Grid -->
-      <%= if length(@collections) > 0 do %>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <%= for collection <- @collections do %>
-            <.collection_card collection={collection} show_comic_count={true} />
-          <% end %>
-        </div>
-        <!-- Pagination -->
-        <.pagination
-          current_page={@current_page}
-          total_pages={@total_pages}
-          path_function={&collections_path/1}
-          params={
-            %{
-              search: @search_query,
-              sort: @sort_by
-            }
+
+      <.collections_content
+        collections={@collections}
+        current_page={@current_page}
+        total_pages={@total_pages}
+        path_function={&collections_path/1}
+        params={
+          %{
+            search: @search_query,
+            sort: @sort_by
           }
-        />
-      <% else %>
-        <!-- Empty State -->
-        <%= if @search_query != "" do %>
-          <.empty_state
-            icon="hero-folder"
-            title="No collections found"
-            description="Try adjusting your search terms."
-            show_action={true}
-            action_text="Clear search"
-            action_event="clear_filters"
-          />
-        <% else %>
-          <.empty_state
-            icon="hero-folder"
-            title="No collections yet"
-            description="Create collections to organize your comics by series, genre, or any way you like."
-          />
-        <% end %>
+        }
+        search_query={@search_query}
+      />
+    </div>
+    """
+  end
+
+  attr :total_collections, :integer, required: true
+
+  def collections_header(assigns) do
+    ~H"""
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Collections</h1>
+        <p class="text-gray-600 mt-1">
+          {@total_collections} collections total
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  attr :collections, :list, required: true
+  attr :current_page, :integer, required: true
+  attr :total_pages, :integer, required: true
+  attr :path_function, :any, required: true
+  attr :params, :map, required: true
+  attr :search_query, :string, required: true
+
+  def collections_content(assigns) do
+    ~H"""
+    <%= if length(@collections) > 0 do %>
+      <.collections_grid collections={@collections} />
+      <.pagination
+        current_page={@current_page}
+        total_pages={@total_pages}
+        path_function={@path_function}
+        params={@params}
+      />
+    <% else %>
+      <.collections_empty_state search_query={@search_query} />
+    <% end %>
+    """
+  end
+
+  attr :collections, :list, required: true
+
+  def collections_grid(assigns) do
+    ~H"""
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <%= for collection <- @collections do %>
+        <.collection_card collection={collection} show_comic_count={true} />
       <% end %>
     </div>
+    """
+  end
+
+  attr :search_query, :string, required: true
+
+  def collections_empty_state(assigns) do
+    ~H"""
+    <%= if @search_query != "" do %>
+      <.empty_state
+        icon="hero-folder"
+        title="No collections found"
+        description="Try adjusting your search terms."
+        show_action={true}
+        action_text="Clear search"
+        action_event="clear_filters"
+      />
+    <% else %>
+      <.empty_state
+        icon="hero-folder"
+        title="No collections yet"
+        description="Create collections to organize your comics by series, genre, or any way you like."
+      />
+    <% end %>
     """
   end
 end
