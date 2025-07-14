@@ -155,6 +155,10 @@ defmodule Basenji.Comics do
     end
   end
 
+  def count_comics do
+    Repo.aggregate(Comic, :count, :id)
+  end
+
   def formats, do: Comic.formats()
 
   def comic_attrs, do: Comic.attrs()

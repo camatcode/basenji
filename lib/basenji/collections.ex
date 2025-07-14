@@ -140,7 +140,8 @@ defmodule Basenji.Collections do
     add_to_collection(collection_id, comic_id, attrs, opts)
   end
 
-  def add_to_collection(collection_id, comic_id, attrs, opts) when is_bitstring(collection_id) and is_bitstring(comic_id) do
+  def add_to_collection(collection_id, comic_id, attrs, opts)
+      when is_bitstring(collection_id) and is_bitstring(comic_id) do
     opts = Keyword.merge([repo_opts: [on_conflict: :nothing]], opts)
 
     %CollectionComic{collection_id: collection_id, comic_id: comic_id}
@@ -184,6 +185,12 @@ defmodule Basenji.Collections do
     end
   end
 
+  def count_collections do
+    Repo.aggregate(Collection, :count, :id)
+  end
+
+  def collection_attrs, do: Collection.attrs()
+
   # Helper functions for comics operations in multi transactions
   defp add_comics_to_multi(multi, _collection_id, nil), do: multi
   defp add_comics_to_multi(multi, _collection_id, []), do: multi
@@ -221,8 +228,6 @@ defmodule Basenji.Collections do
       )
     )
   end
-
-  def collection_attrs, do: Collection.attrs()
 
   defp insert_collection(attrs, opts) do
     with {:ok, collection} <-
