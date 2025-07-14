@@ -16,7 +16,7 @@ defmodule BasenjiWeb.SharedComponents do
         <%= if @current_page > 1 do %>
           <.link
             patch={@path_function.(Map.put(@params, :page, @current_page - 1))}
-            class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            class={pagination_button_classes(:inactive)}
           >
             Previous
           </.link>
@@ -24,17 +24,16 @@ defmodule BasenjiWeb.SharedComponents do
 
         <%= for page_num <- pagination_range(@current_page, @total_pages) do %>
           <%= if page_num == :ellipsis do %>
-            <span class="px-3 py-2 text-gray-400">...</span>
+            <span class={pagination_button_classes(:ellipsis)}>...</span>
           <% else %>
             <.link
               patch={@path_function.(Map.put(@params, :page, page_num))}
-              class={[
-                "px-3 py-2 border rounded-md",
+              class={
                 if(page_num == @current_page,
-                  do: "bg-blue-600 text-white border-blue-600",
-                  else: "text-gray-500 hover:text-gray-700 border-gray-300 hover:bg-gray-50"
+                  do: pagination_button_classes(:active),
+                  else: pagination_button_classes(:inactive)
                 )
-              ]}
+              }
             >
               {page_num}
             </.link>
@@ -44,7 +43,7 @@ defmodule BasenjiWeb.SharedComponents do
         <%= if @current_page < @total_pages do %>
           <.link
             patch={@path_function.(Map.put(@params, :page, @current_page + 1))}
-            class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            class={pagination_button_classes(:inactive)}
           >
             Next
           </.link>
@@ -177,6 +176,14 @@ defmodule BasenjiWeb.SharedComponents do
     </div>
     """
   end
+
+  # CSS Helper functions
+  defp pagination_button_classes(:active), do: "px-3 py-2 border rounded-md bg-blue-600 text-white border-blue-600"
+
+  defp pagination_button_classes(:inactive),
+    do: "px-3 py-2 border rounded-md text-gray-500 hover:text-gray-700 border-gray-300 hover:bg-gray-50"
+
+  defp pagination_button_classes(:ellipsis), do: "px-3 py-2 text-gray-400"
 
   # Pagination range helper - same logic used across all pages
   defp pagination_range(_current_page, total_pages) when total_pages <= 7 do
