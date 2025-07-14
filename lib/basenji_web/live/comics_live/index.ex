@@ -3,6 +3,7 @@ defmodule BasenjiWeb.ComicsLive.Index do
   use BasenjiWeb, :live_view
 
   import BasenjiWeb.ComicComponents
+  import BasenjiWeb.Live.Style.ComicsStyle
   import BasenjiWeb.SharedComponents
 
   alias Basenji.Comics
@@ -129,7 +130,7 @@ defmodule BasenjiWeb.ComicsLive.Index do
 
   def render(assigns) do
     ~H"""
-    <div class="space-y-6">
+    <div class={comics_live_classes(:page_container)}>
       <.comics_library_header total_comics={@total_comics} />
 
       <.search_filter_bar
@@ -178,10 +179,10 @@ defmodule BasenjiWeb.ComicsLive.Index do
 
   def comics_library_header(assigns) do
     ~H"""
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+    <div class={comics_live_classes(:header_layout)}>
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">Comics Library</h1>
-        <p class="text-gray-600 mt-1">
+        <h1 class={comics_live_classes(:page_title)}>Comics Library</h1>
+        <p class={comics_live_classes(:page_subtitle)}>
           {@total_comics} comics total
         </p>
       </div>
@@ -217,7 +218,7 @@ defmodule BasenjiWeb.ComicsLive.Index do
 
   def comics_grid(assigns) do
     ~H"""
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+    <div class={comics_live_classes(:comics_grid)}>
       <%= for comic <- @comics do %>
         <.comic_card comic={comic} />
       <% end %>

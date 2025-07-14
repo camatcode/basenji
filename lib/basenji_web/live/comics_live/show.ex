@@ -2,6 +2,8 @@ defmodule BasenjiWeb.ComicsLive.Show do
   @moduledoc false
   use BasenjiWeb, :live_view
 
+  import BasenjiWeb.Live.Style.ComicsStyle
+
   alias Basenji.Collections
   alias Basenji.Comics
 
@@ -159,16 +161,16 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def reader_navigation(assigns) do
     ~H"""
-    <div class="flex items-center gap-4 text-white text-sm">
+    <div class={comics_live_classes(:reader_navigation)}>
       <button
         phx-click="prev_page"
-        class="hover:text-gray-300 disabled:opacity-50"
+        class={comics_live_classes(:reader_nav_button)}
         disabled={@current_page == 1}
       >
-        <.icon name="hero-chevron-left" class="h-5 w-5" />
+        <.icon name="hero-chevron-left" class={comics_live_classes(:reader_nav_icon)} />
       </button>
 
-      <div class="flex items-center gap-2">
+      <div class={comics_live_classes(:reader_page_input_container)}>
         <input
           type="number"
           value={@current_page}
@@ -176,17 +178,17 @@ defmodule BasenjiWeb.ComicsLive.Show do
           max={@page_count}
           phx-change="change_page"
           name="page"
-          class="w-16 px-2 py-1 text-black rounded text-center"
+          class={comics_live_classes(:reader_page_input)}
         />
         <span>/ {@page_count}</span>
       </div>
 
       <button
         phx-click="next_page"
-        class="hover:text-gray-300 disabled:opacity-50"
+        class={comics_live_classes(:reader_nav_button)}
         disabled={@current_page == @page_count}
       >
-        <.icon name="hero-chevron-right" class="h-5 w-5" />
+        <.icon name="hero-chevron-right" class={comics_live_classes(:reader_nav_icon)} />
       </button>
     </div>
     """
@@ -197,11 +199,11 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def reader_page_display(assigns) do
     ~H"""
-    <div class="flex justify-center items-center min-h-[80vh] p-4">
+    <div class={comics_live_classes(:reader_page_display)}>
       <img
         src={~p"/api/comics/#{@comic.id}/page/#{@current_page}"}
         alt={"Page #{@current_page}"}
-        class="max-w-full max-h-full object-contain"
+        class={comics_live_classes(:reader_page_image)}
       />
     </div>
     """
@@ -212,7 +214,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_details_view(assigns) do
     ~H"""
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class={comics_live_classes(:details_grid)}>
       <.comic_cover_and_actions comic={@comic} />
       <.comic_details_and_collections comic={@comic} collections={@collections} />
     </div>
@@ -223,7 +225,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_cover_and_actions(assigns) do
     ~H"""
-    <div class="space-y-4">
+    <div class={comics_live_classes(:cover_section)}>
       <.comic_cover comic={@comic} />
       <.comic_action_buttons comic={@comic} />
     </div>
@@ -234,16 +236,16 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_cover(assigns) do
     ~H"""
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div class="aspect-[3/4] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+    <div class={comics_live_classes(:cover_card)}>
+      <div class={comics_live_classes(:cover_image_container)}>
         <%= if @comic.image_preview do %>
           <img
             src={~p"/api/comics/#{@comic.id}/preview"}
             alt={@comic.title}
-            class="w-full h-full object-cover"
+            class={comics_live_classes(:cover_image)}
           />
         <% else %>
-          <.icon name="hero-book-open" class="h-16 w-16 text-blue-400" />
+          <.icon name="hero-book-open" class={comics_live_classes(:cover_fallback_icon)} />
         <% end %>
       </div>
     </div>
@@ -254,29 +256,28 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_action_buttons(assigns) do
     ~H"""
-    <div class="space-y-2">
-      <button
-        phx-click="toggle_reader"
-        class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-      >
-        <.icon name="hero-book-open" class="h-5 w-5 inline mr-2" /> Read Comic
+    <div class={comics_live_classes(:action_buttons_container)}>
+      <button phx-click="toggle_reader" class={comics_live_classes(:primary_action_button)}>
+        <.icon name="hero-book-open" class={comics_live_classes(:action_button_icon)} /> Read Comic
       </button>
 
       <%= if @comic.optimized_comic do %>
         <.link
           navigate={~p"/comics/#{@comic.optimized_comic.id}"}
-          class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium text-center block"
+          class={comics_live_classes(:secondary_action_button_green)}
         >
-          <.icon name="hero-bolt" class="h-5 w-5 inline mr-2" /> View Optimized Version
+          <.icon name="hero-bolt" class={comics_live_classes(:action_button_icon)} />
+          View Optimized Version
         </.link>
       <% end %>
 
       <%= if @comic.original_comic do %>
         <.link
           navigate={~p"/comics/#{@comic.original_comic.id}"}
-          class="w-full bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium text-center block"
+          class={comics_live_classes(:secondary_action_button_gray)}
         >
-          <.icon name="hero-document" class="h-5 w-5 inline mr-2" /> View Original Version
+          <.icon name="hero-document" class={comics_live_classes(:action_button_icon)} />
+          View Original Version
         </.link>
       <% end %>
     </div>
@@ -288,7 +289,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_details_and_collections(assigns) do
     ~H"""
-    <div class="lg:col-span-2 space-y-6">
+    <div class={comics_live_classes(:details_section)}>
       <.comic_metadata comic={@comic} />
       <.comic_collections_management comic={@comic} collections={@collections} />
     </div>
@@ -299,17 +300,17 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_metadata(assigns) do
     ~H"""
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h1 class="text-3xl font-bold text-gray-900 mb-4">
+    <div class={comics_live_classes(:metadata_card)}>
+      <h1 class={comics_live_classes(:comic_title)}>
         {@comic.title || "Untitled Comic"}
       </h1>
 
       <.comic_metadata_grid comic={@comic} />
 
       <%= if @comic.description do %>
-        <div class="mt-6">
-          <h3 class="font-medium text-gray-900 mb-2">Description</h3>
-          <p class="text-gray-700 leading-relaxed">{@comic.description}</p>
+        <div class={comics_live_classes(:description_section)}>
+          <h3 class={comics_live_classes(:description_heading)}>Description</h3>
+          <p class={comics_live_classes(:description_text)}>{@comic.description}</p>
         </div>
       <% end %>
     </div>
@@ -320,43 +321,43 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_metadata_grid(assigns) do
     ~H"""
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+    <div class={comics_live_classes(:metadata_grid)}>
       <%= if @comic.author do %>
         <div>
-          <dt class="font-medium text-gray-500">Author</dt>
-          <dd class="text-gray-900">{@comic.author}</dd>
+          <dt class={comics_live_classes(:metadata_label)}>Author</dt>
+          <dd class={comics_live_classes(:metadata_value)}>{@comic.author}</dd>
         </div>
       <% end %>
 
       <%= if @comic.released_year && @comic.released_year > 0 do %>
         <div>
-          <dt class="font-medium text-gray-500">Released</dt>
-          <dd class="text-gray-900">{@comic.released_year}</dd>
+          <dt class={comics_live_classes(:metadata_label)}>Released</dt>
+          <dd class={comics_live_classes(:metadata_value)}>{@comic.released_year}</dd>
         </div>
       <% end %>
 
       <div>
-        <dt class="font-medium text-gray-500">Format</dt>
-        <dd class="text-gray-900 uppercase">{@comic.format}</dd>
+        <dt class={comics_live_classes(:metadata_label)}>Format</dt>
+        <dd class={comics_live_classes(:metadata_value_uppercase)}>{@comic.format}</dd>
       </div>
 
       <%= if @comic.page_count && @comic.page_count > 0 do %>
         <div>
-          <dt class="font-medium text-gray-500">Pages</dt>
-          <dd class="text-gray-900">{@comic.page_count}</dd>
+          <dt class={comics_live_classes(:metadata_label)}>Pages</dt>
+          <dd class={comics_live_classes(:metadata_value)}>{@comic.page_count}</dd>
         </div>
       <% end %>
 
       <%= if @comic.byte_size && @comic.byte_size > 0 do %>
         <div>
-          <dt class="font-medium text-gray-500">File Size</dt>
-          <dd class="text-gray-900">{format_bytes(@comic.byte_size)}</dd>
+          <dt class={comics_live_classes(:metadata_label)}>File Size</dt>
+          <dd class={comics_live_classes(:metadata_value)}>{format_bytes(@comic.byte_size)}</dd>
         </div>
       <% end %>
 
       <div>
-        <dt class="font-medium text-gray-500">Added</dt>
-        <dd class="text-gray-900">{DateTime.to_date(@comic.inserted_at)}</dd>
+        <dt class={comics_live_classes(:metadata_label)}>Added</dt>
+        <dd class={comics_live_classes(:metadata_value)}>{DateTime.to_date(@comic.inserted_at)}</dd>
       </div>
     </div>
     """
@@ -367,8 +368,8 @@ defmodule BasenjiWeb.ComicsLive.Show do
 
   def comic_collections_management(assigns) do
     ~H"""
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 class="font-medium text-gray-900 mb-4">Collections</h3>
+    <div class={comics_live_classes(:metadata_card)}>
+      <h3 class={comics_live_classes(:collections_section_heading)}>Collections</h3>
 
       <.current_collections comic={@comic} />
       <.add_to_collection_form comic={@comic} collections={@collections} />
@@ -381,18 +382,21 @@ defmodule BasenjiWeb.ComicsLive.Show do
   def current_collections(assigns) do
     ~H"""
     <%= if length(@comic.member_collections) > 0 do %>
-      <div class="flex flex-wrap gap-2 mb-4">
+      <div class={comics_live_classes(:collection_tags_container)}>
         <%= for collection <- @comic.member_collections do %>
-          <div class="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-            <.link navigate={~p"/collections/#{collection.id}"} class="hover:underline">
+          <div class={comics_live_classes(:collection_tag)}>
+            <.link
+              navigate={~p"/collections/#{collection.id}"}
+              class={comics_live_classes(:collection_tag_link)}
+            >
               {collection.title}
             </.link>
             <button
               phx-click="remove_from_collection"
               phx-value-collection_id={collection.id}
-              class="text-blue-600 hover:text-blue-800"
+              class={comics_live_classes(:collection_tag_remove)}
             >
-              <.icon name="hero-x-mark" class="h-4 w-4" />
+              <.icon name="hero-x-mark" class={comics_live_classes(:collection_tag_icon)} />
             </button>
           </div>
         <% end %>
@@ -407,11 +411,8 @@ defmodule BasenjiWeb.ComicsLive.Show do
   def add_to_collection_form(assigns) do
     ~H"""
     <%= if length(@collections) > 0 do %>
-      <div class="flex gap-2">
-        <select
-          id="collection-select"
-          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
+      <div class={comics_live_classes(:add_collection_form)}>
+        <select id="collection-select" class={comics_live_classes(:add_collection_select)}>
           <option value="">Select a collection...</option>
           <%= for collection <- @collections do %>
             <%= unless Enum.any?(@comic.member_collections, &(&1.id == collection.id)) do %>
@@ -423,13 +424,13 @@ defmodule BasenjiWeb.ComicsLive.Show do
           phx-click="add_to_collection"
           phx-value-collection_id=""
           onclick="this.setAttribute('phx-value-collection_id', document.getElementById('collection-select').value)"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          class={comics_live_classes(:add_collection_button)}
         >
           Add
         </button>
       </div>
     <% else %>
-      <p class="text-gray-500 text-sm">
+      <p class={comics_live_classes(:no_collections_message)}>
         No collections available. Create some collections first.
       </p>
     <% end %>
