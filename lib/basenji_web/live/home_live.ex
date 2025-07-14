@@ -80,6 +80,8 @@ defmodule BasenjiWeb.HomeLive do
 
       <.search_results
         search_active={@search_active}
+        search_query={@search_query}
+        search_results={@search_results}
         recent_comics={@recent_comics}
         recent_collections={@recent_collections}
       />
@@ -138,112 +140,157 @@ defmodule BasenjiWeb.HomeLive do
   end
 
   attr :search_active, :boolean, default: false
+  attr :search_query, :string, default: ""
+  attr :search_results, :map, default: %{}
   attr :recent_comics, :list
   attr :recent_collections, :list
 
   def search_results(assigns) do
-    # TODO clean up
     ~H"""
     <%= if @search_active do %>
       <div class="mb-8">
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h2 class="text-lg font-semibold text-blue-900 mb-2">
-            Search Results for "{@search_query}"
-          </h2>
-        </div>
-        
-    <!-- Comics Results -->
-        <%= if length(@search_results.comics) > 0 do %>
-          <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-              Comics ({length(@search_results.comics)})
-            </h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  lg:grid-cols-4 gap-6">
-              <%= for comic <- @search_results.comics do %>
-                <.comic_card comic={comic} />
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-        
-    <!-- Collections Results -->
-        <%= if length(@search_results.collections) > 0 do %>
-          <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-              Collections ({length(@search_results.collections)})
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <%= for collection <- @search_results.collections do %>
-                <.collection_card collection={collection} />
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-
-        <%= if length(@search_results.comics) == 0 and length(@search_results.collections) == 0 do %>
-          <div class="text-center text-gray-500 py-8">
-            <.icon name="hero-magnifying-glass" class="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>No results found for "{@search_query}"</p>
-          </div>
-        <% end %>
+        <.search_results_header search_query={@search_query} />
+        <.comics_search_results comics={@search_results[:comics] || []} />
+        <.collections_search_results collections={@search_results[:collections] || []} />
+        <.no_search_results_found
+          search_query={@search_query}
+          comics={@search_results[:comics] || []}
+          collections={@search_results[:collections] || []}
+        />
       </div>
     <% else %>
-      <!-- Recent Content when not searching -->
-        
-        <!-- Recent Comics -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold text-gray-900">Recent Comics</h2>
-          <.link navigate="/comics" class="text-blue-600 hover:text-blue-700 font-medium">
-            View all →
-          </.link>
-        </div>
+      <.recent_comics_section comics={@recent_comics} />
+      <.recent_collections_section collections={@recent_collections} />
+    <% end %>
+    """
+  end
 
-        <%= if length(@recent_comics) > 0 do %>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  lg:grid-cols-4 gap-6">
-            <%= for comic <- @recent_comics do %>
-              <.comic_card comic={comic} />
-            <% end %>
-          </div>
-        <% else %>
-          <.empty_state
-            icon="hero-book-open"
-            title="No comics yet"
-            description="Add some comics to get started!"
-            style={:dashed}
-            icon_size="h-12 w-12"
-            class="py-8"
-          />
-        <% end %>
-      </div>
-      
-    <!-- Recent Collections -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold text-gray-900">Collections</h2>
-          <.link navigate="/collections" class="text-blue-600 hover:text-blue-700 font-medium">
-            View all →
-          </.link>
-        </div>
+  attr :search_query, :string, required: true
 
-        <%= if length(@recent_collections) > 0 do %>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <%= for collection <- @recent_collections do %>
-              <.collection_card collection={collection} />
-            <% end %>
-          </div>
-        <% else %>
-          <.empty_state
-            icon="hero-folder"
-            title="No collections yet"
-            description="Create collections to organize your comics!"
-            style={:dashed}
-            icon_size="h-12 w-12"
-            class="py-8"
-          />
-        <% end %>
+  def search_results_header(assigns) do
+    ~H"""
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <h2 class="text-lg font-semibold text-blue-900 mb-2">
+        Search Results for "{@search_query}"
+      </h2>
+    </div>
+    """
+  end
+
+  attr :comics, :list, required: true
+
+  def comics_search_results(assigns) do
+    ~H"""
+    <%= if length(@comics) > 0 do %>
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Comics ({length(@comics)})
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6">
+          <%= for comic <- @comics do %>
+            <.comic_card comic={comic} />
+          <% end %>
+        </div>
       </div>
     <% end %>
+    """
+  end
+
+  attr :collections, :list, required: true
+
+  def collections_search_results(assigns) do
+    ~H"""
+    <%= if length(@collections) > 0 do %>
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Collections ({length(@collections)})
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <%= for collection <- @collections do %>
+            <.collection_card collection={collection} />
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    """
+  end
+
+  attr :search_query, :string, required: true
+  attr :comics, :list, required: true
+  attr :collections, :list, required: true
+
+  def no_search_results_found(assigns) do
+    ~H"""
+    <%= if length(@comics) == 0 and length(@collections) == 0 do %>
+      <div class="text-center text-gray-500 py-8">
+        <.icon name="hero-magnifying-glass" class="h-12 w-12 mx-auto mb-4 text-gray-300" />
+        <p>No results found for "{@search_query}"</p>
+      </div>
+    <% end %>
+    """
+  end
+
+  attr :comics, :list, required: true
+
+  def recent_comics_section(assigns) do
+    ~H"""
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-900">Recent Comics</h2>
+        <.link navigate="/comics" class="text-blue-600 hover:text-blue-700 font-medium">
+          View all →
+        </.link>
+      </div>
+
+      <%= if length(@comics) > 0 do %>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6">
+          <%= for comic <- @comics do %>
+            <.comic_card comic={comic} />
+          <% end %>
+        </div>
+      <% else %>
+        <.empty_state
+          icon="hero-book-open"
+          title="No comics yet"
+          description="Add some comics to get started!"
+          style={:dashed}
+          icon_size="h-12 w-12"
+          class="py-8"
+        />
+      <% end %>
+    </div>
+    """
+  end
+
+  attr :collections, :list, required: true
+
+  def recent_collections_section(assigns) do
+    ~H"""
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-900">Collections</h2>
+        <.link navigate="/collections" class="text-blue-600 hover:text-blue-700 font-medium">
+          View all →
+        </.link>
+      </div>
+
+      <%= if length(@collections) > 0 do %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <%= for collection <- @collections do %>
+            <.collection_card collection={collection} />
+          <% end %>
+        </div>
+      <% else %>
+        <.empty_state
+          icon="hero-folder"
+          title="No collections yet"
+          description="Create collections to organize your comics!"
+          style={:dashed}
+          icon_size="h-12 w-12"
+          class="py-8"
+        />
+      <% end %>
+    </div>
     """
   end
 end
