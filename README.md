@@ -39,7 +39,8 @@
 
 ## Table of Contents
 
-- [Features](#features)
+- [Features / Running Roadmap](#features--running-roadmap)
+- [Deep Backlog](#deep-backlog)
 - [Attributions](#attributions)
 
 
@@ -62,10 +63,10 @@
   *  🚧 In Progress: Make it more ergonomic 
 * 🚧 Rest is in development
 
-### Deep Backlog
+### ⏸️ Deep Backlog
 
-* [Ebook Detection using visual analysis and fallback OCR](https://github.com/camatcode/basenji/pull/44)
-  * ⏸️ Paused work - This strategy is very good about *confirming* a comic is a comic; but is only about 60% accurate at *confirming* a file is a text-heavy ebook
+* ⏸️ [Ebook Detection using visual analysis and fallback OCR](https://github.com/camatcode/basenji/pull/44)
+  * This strategy is very good about *confirming* a comic is a comic; but is only about 60% accurate at *confirming* a file is a text-heavy ebook
   * Edge cases include - poetry, poorly scanned pages, interview formats, magazines
 
 ### Attributions
