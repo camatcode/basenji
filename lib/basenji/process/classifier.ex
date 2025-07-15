@@ -26,7 +26,7 @@ defmodule Basenji.ComicClassifier do
   @saturation_weight 0.4
   @bimodal_weight 0.5
   @edge_weight 0.1
-  @max_concurrency 3
+  @max_concurrency 1
 
   @type classification :: :comic | :ebook
   @type details :: %{
@@ -386,7 +386,7 @@ defmodule Basenji.ComicClassifier do
       "tessedit_create_tsv=1"
     ]
 
-    case Porcelain.exec("tesseract", args, out: :string, err: :string) do
+    case Porcelain.exec("tesseract", args, out: :string, err: :string, env: %{"OMP_THREAD_LIMIT" => "1"}) do
       %{status: 0, out: output, err: _stderr} ->
         parse_tsv_output(output)
 
