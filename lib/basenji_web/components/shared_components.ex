@@ -67,7 +67,6 @@ defmodule BasenjiWeb.SharedComponents do
     ~H"""
     <div class={[container_classes(:search_bar), @class]}>
       <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Search -->
         <div class="flex-1">
           <.form for={%{}} phx-submit="search" class="relative">
             <input
@@ -82,8 +81,7 @@ defmodule BasenjiWeb.SharedComponents do
             </div>
           </.form>
         </div>
-        
-    <!-- Custom Filters -->
+
         <%= for {filter_type, filter_label, filter_options, current_value} <- @filter_options do %>
           <div class="lg:w-48">
             <select phx-change={filter_type} name={filter_type} class={form_input_classes()}>
@@ -99,8 +97,7 @@ defmodule BasenjiWeb.SharedComponents do
             </select>
           </div>
         <% end %>
-        
-    <!-- Sort -->
+
         <%= if length(@sort_options) > 0 do %>
           <div class="lg:w-48">
             <select phx-change="sort" name="sort" class={form_input_classes()}>
@@ -112,8 +109,7 @@ defmodule BasenjiWeb.SharedComponents do
             </select>
           </div>
         <% end %>
-        
-    <!-- Clear Filters -->
+
         <%= if @show_clear do %>
           <button phx-click={@clear_event} class={button_classes(:secondary)}>
             Clear

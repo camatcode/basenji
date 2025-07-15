@@ -20,7 +20,7 @@ defmodule BasenjiWeb.HomeLive do
     |> then(&{:ok, &1})
   end
 
-  def handle_event("search", %{"search" => search}, socket) do
+  def handle_event("search", %{"search" => search} = info, socket) do
     socket
     |> assign_page(1, search, socket.assigns.format_filter, socket.assigns.sort_by)
     |> assign_content()
