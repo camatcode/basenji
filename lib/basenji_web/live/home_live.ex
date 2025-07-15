@@ -15,107 +15,81 @@ defmodule BasenjiWeb.HomeLive do
 
   def mount(_params, _session, socket) do
     socket
-    |> assign_current_collection(nil)
+    |> assign_current_collection()
     |> assign_search_options()
     |> assign_page()
     |> assign_content()
     |> then(&{:ok, &1})
   end
 
-  def handle_params(_params, _url, socket) do
-    # We don't use URL-based navigation in the unified page
-    {:noreply, socket}
-  end
-
   def handle_event("navigate_to_collection", %{"collection_id" => collection_id}, socket) do
     socket =
       socket
       |> assign_current_collection(collection_id)
-      |> assign_content()
-
-    {:noreply, socket}
-  end
-
-  def handle_event("navigate_up", _params, socket) do
-    # Get parent of current collection, or go to root if current is at root level
-    parent_id =
-      case socket.assigns.current_collection do
-        nil -> nil
-        collection -> collection.parent_id
-      end
-
-    socket =
-      socket
-      |> assign_current_collection(parent_id)
-      |> assign_content()
-
-    {:noreply, socket}
-  end
-
-  def handle_event("search", %{"search" => search}, socket) do
-    socket =
-      socket
-      |> assign_page(1, search, socket.assigns.format_filter, socket.assigns.sort_by)
-      |> assign_content()
-
-    {:noreply, socket}
-  end
-
-  def handle_event("filter_format", %{"format" => format}, socket) do
-    socket =
-      socket
-      |> assign_page(1, socket.assigns.search_query, format, socket.assigns.sort_by)
-      |> assign_content()
-
-    {:noreply, socket}
-  end
-
-  def handle_event("sort", %{"sort" => sort}, socket) do
-    socket =
-      socket
-      |> assign_page(socket.assigns.current_page, socket.assigns.search_query, socket.assigns.format_filter, sort)
-      |> assign_content()
-
-    {:noreply, socket}
-  end
-
-  def handle_event("clear_filters", _params, socket) do
-    socket =
-      socket
+      # Reset search/pagination when navigating
       |> assign_page(1, "", "", "title")
       |> assign_content()
 
     {:noreply, socket}
   end
 
+  def handle_event("navigate_up", _params, socket) do
+    parent_id = if socket.assigns[:current_collection], do: socket.assigns[:current_collection].parent_id
+
+    socket
+    |> assign_current_collection(parent_id)
+    |> assign_page()
+    |> assign_content()
+    |> then(&{:noreply, &1})
+  end
+
+  def handle_event("search", %{"search" => search}, socket) do
+    socket
+    |> assign_page(1, search, socket.assigns.format_filter, socket.assigns.sort_by)
+    |> assign_content()
+    |> then(&{:noreply, &1})
+  end
+
+  def handle_event("filter_format", %{"format" => format}, socket) do
+    socket
+    |> assign_page(1, socket.assigns.search_query, format, socket.assigns.sort_by)
+    |> assign_content()
+    |> then(&{:noreply, &1})
+  end
+
+  def handle_event("sort", %{"sort" => sort}, socket) do
+    socket
+    |> assign_page(socket.assigns.current_page, socket.assigns.search_query, socket.assigns.format_filter, sort)
+    |> assign_content()
+    |> then(&{:noreply, &1})
+  end
+
+  def handle_event("clear_filters", _params, socket) do
+    socket
+    |> assign_page()
+    |> assign_content()
+    |> then(&{:noreply, &1})
+  end
+
   def handle_event("paginate", %{"page" => page}, socket) do
     {page_num, _} = Integer.parse(page)
 
-    socket =
-      socket
-      |> assign_page(page_num, socket.assigns.search_query, socket.assigns.format_filter, socket.assigns.sort_by)
-      |> assign_content()
-
-    {:noreply, socket}
-  end
-
-  defp assign_current_collection(socket, nil) do
     socket
-    |> assign(:current_collection, nil)
-    |> assign(:current_collection_id, nil)
+    |> assign_page(page_num, socket.assigns.search_query, socket.assigns.format_filter, socket.assigns.sort_by)
+    |> assign_content()
+    |> then(&{:noreply, &1})
   end
 
-  defp assign_current_collection(socket, collection_id) when is_binary(collection_id) do
-    case Collections.get_collection(collection_id) do
-      {:ok, collection} ->
-        socket
-        |> assign(:current_collection, collection)
-        |> assign(:current_collection_id, collection_id)
+  defp assign_current_collection(socket, collection_id \\ nil) do
+    {collection, collection_id} =
+      case Collections.get_collection(collection_id) do
+        {:ok, collection} -> {collection, collection.id}
+        _ -> {nil, nil}
+      end
 
-      {:error, :not_found} ->
-        # If collection not found, go back to root
-        assign_current_collection(socket, nil)
-    end
+    socket
+    |> assign(:current_collection, collection)
+    |> assign(:current_collection_id, collection_id)
   end
 
   defp assign_content(socket) do
@@ -128,12 +102,19 @@ defmodule BasenjiWeb.HomeLive do
       current_page: page
     } = socket.assigns
 
-    # Get collections in current context (not paginated, not searchable for now)
+    # Determine if we should hide collections (centralized logic)
+    should_hide_collections = has_active_filters?(search, format)
+
+    # Get collections in current context
     collections =
-      if current_collection_id do
-        Collections.list_collections(parent_id: current_collection_id, order_by: String.to_existing_atom(sort))
+      if should_hide_collections do
+        []
       else
-        Collections.list_collections(parent_id: :none, order_by: String.to_existing_atom(sort))
+        if current_collection_id do
+          Collections.list_collections(parent_id: current_collection_id, order_by: String.to_existing_atom(sort))
+        else
+          Collections.list_collections(parent_id: :none, order_by: String.to_existing_atom(sort))
+        end
       end
 
     # Get comics with search, pagination, etc
@@ -156,7 +137,7 @@ defmodule BasenjiWeb.HomeLive do
         Comics.list_comics(opts)
       end
 
-    # Calculate totals for pagination
+    # Calculate totals for pagination - only count items that are actually displayed
     total_comics =
       if current_collection_id do
         # Placeholder
@@ -170,13 +151,23 @@ defmodule BasenjiWeb.HomeLive do
         Comics.list_comics(total_opts) |> length()
       end
 
-    total_pages = ceil((length(collections) + total_comics) / @per_page)
+    # Collections only count toward pagination when they're visible
+    visible_collection_count = if should_hide_collections, do: 0, else: length(collections)
+    total_pages = ceil((visible_collection_count + total_comics) / @per_page)
 
     socket
     |> assign(:collections, collections)
     |> assign(:comics, comics)
     |> assign(:total_comics, total_comics)
     |> assign(:total_pages, total_pages)
+    |> assign(:should_hide_collections, should_hide_collections)
+  end
+
+  # Centralized logic for determining when to hide collections
+  defp has_active_filters?(search, format) do
+    search_active = search != nil and search != ""
+    format_active = format != nil and format != ""
+    search_active or format_active
   end
 
   defp assign_search_options(socket) do
@@ -198,17 +189,22 @@ defmodule BasenjiWeb.HomeLive do
   end
 
   defp assign_page(socket, current_page \\ 1, search_query \\ "", format_filter \\ "", sort_by \\ "title") do
+    # Ensure we never have nil values that could break our logic
+    safe_search = search_query || ""
+    safe_format = format_filter || ""
+    safe_sort = sort_by || "title"
+
     socket
     |> assign(:page_info, %{
       current_page: current_page,
-      search_query: search_query,
-      format_filter: format_filter,
-      sort_by: sort_by
+      search_query: safe_search,
+      format_filter: safe_format,
+      sort_by: safe_sort
     })
     |> assign(:current_page, current_page)
-    |> assign(:search_query, search_query)
-    |> assign(:format_filter, format_filter)
-    |> assign(:sort_by, sort_by)
+    |> assign(:search_query, safe_search)
+    |> assign(:format_filter, safe_format)
+    |> assign(:sort_by, safe_sort)
   end
 
   defp maybe_add_search(opts, ""), do: opts
@@ -219,7 +215,7 @@ defmodule BasenjiWeb.HomeLive do
 
   def render(assigns) do
     ~H"""
-    <div class={page_classes(:container)}>
+    <div class={page_classes(:container)} id="page-container">
       <.page_header
         current_collection={@current_collection}
         total_items={length(@collections) + @total_comics}
@@ -237,13 +233,16 @@ defmodule BasenjiWeb.HomeLive do
         show_clear={@page_info.search_query != "" || @page_info.format_filter != ""}
       />
 
+      <.pagination_section page_info={@page_info} total_pages={@total_pages} />
+
       <.content_section
         collections={@collections}
         comics={@comics}
         current_collection={@current_collection}
         page_info={@page_info}
-        total_pages={@total_pages}
       />
+
+      <.pagination_section page_info={@page_info} total_pages={@total_pages} />
     </div>
     """
   end
@@ -278,7 +277,6 @@ defmodule BasenjiWeb.HomeLive do
   attr :comics, :list, required: true
   attr :current_collection, :any, default: nil
   attr :page_info, :map, required: true
-  attr :total_pages, :integer, required: true
 
   def content_section(assigns) do
     ~H"""
@@ -288,7 +286,6 @@ defmodule BasenjiWeb.HomeLive do
         comics={@comics}
         current_collection={@current_collection}
       />
-      <.pagination_section page_info={@page_info} total_pages={@total_pages} />
     <% else %>
       <.empty_state_section page_info={@page_info} current_collection={@current_collection} />
     <% end %>
@@ -333,6 +330,7 @@ defmodule BasenjiWeb.HomeLive do
           <button
             phx-click="paginate"
             phx-value-page={@page_info.current_page - 1}
+            onclick="window.scrollTo(0,0)"
             class={pagination_button_classes(:inactive)}
           >
             Previous
@@ -346,6 +344,7 @@ defmodule BasenjiWeb.HomeLive do
             <button
               phx-click="paginate"
               phx-value-page={page_num}
+              onclick="window.scrollTo(0,0)"
               class={
                 if(page_num == @page_info.current_page,
                   do: pagination_button_classes(:active),
@@ -362,6 +361,7 @@ defmodule BasenjiWeb.HomeLive do
           <button
             phx-click="paginate"
             phx-value-page={@page_info.current_page + 1}
+            onclick="window.scrollTo(0,0)"
             class={pagination_button_classes(:inactive)}
           >
             Next
