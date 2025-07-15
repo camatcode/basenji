@@ -66,8 +66,8 @@
 ### ⏸️ Deep Backlog
 
 * ⏸️ [Ebook Detection using visual analysis and fallback OCR](https://github.com/camatcode/basenji/pull/44)
-  * This strategy is very good about *confirming* a comic is a comic; but is only about 60% accurate at *confirming* a file is a text-heavy ebook
-  * Edge cases include - poetry, poorly scanned pages, interview formats, magazines
+  * Under heavy stress testing, this strategy is very good at *confirming* that a comic is a comic; but is only about 60% accurate at *confirming* a file is a text-heavy ebook
+  * Edge cases include - poetry, poorly scanned pages, misaligned text blocks, interview formats, magazines
 
 ### Attributions
 
