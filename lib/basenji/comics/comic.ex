@@ -9,6 +9,8 @@ defmodule Basenji.Comic do
 
   @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3, pdf: 4]
 
+  @styles [comic: 0, ebook: 1]
+
   @attrs [
     :title,
     :author,
@@ -18,12 +20,13 @@ defmodule Basenji.Comic do
     :released_year,
     :page_count,
     :format,
+    :style,
     :byte_size,
     :original_id,
     :optimized_id
   ]
 
-  @cloneable_attrs [:title, :author, :description, :released_year, :page_count, :format, :image_preview]
+  @cloneable_attrs [:title, :author, :description, :released_year, :page_count, :format, :style, :image_preview]
 
   @derive {
     JSONAPIPlug.Resource,
@@ -45,6 +48,7 @@ defmodule Basenji.Comic do
     field(:released_year, :integer, default: -1)
     field(:page_count, :integer, default: -1)
     field(:format, Ecto.Enum, values: @formats)
+    field(:style, Ecto.Enum, values: @styles)
     field(:image_preview, :binary)
     field(:byte_size, :integer, default: -1)
     field(:optimized_id, :binary_id)

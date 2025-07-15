@@ -3,6 +3,7 @@ defmodule Basenji.Worker.ComicLowWorker do
 
   use Oban.Worker, queue: :comic_low, unique: [period: 3000], max_attempts: 3
 
+  alias Basenji.ComicClassifier
   alias Basenji.Comics
   alias Basenji.Reader.Process.ComicOptimizer
 
@@ -15,6 +16,7 @@ defmodule Basenji.Worker.ComicLowWorker do
       {:ok, comic} ->
         case action do
           "optimize" -> optimize(comic, args)
+          "determine_style" -> determine_style(comic, args)
           _ -> {:error, "Unknown action #{action}"}
         end
 
@@ -45,4 +47,11 @@ defmodule Basenji.Worker.ComicLowWorker do
   end
 
   defp optimize(_comic, _args), do: :ok
+
+  defp determine_style(%{style: nil} = comic, _args) do
+    {:ok, style} = ComicClassifier.classify(comic)
+    Comics.update_comic(comic, %{style: style})
+  end
+
+  defp determine_style(_, _), do: :ok
 end
