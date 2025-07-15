@@ -5,7 +5,7 @@ defmodule BasenjiWeb.HomeLive do
   import BasenjiWeb.CollectionComponents
   import BasenjiWeb.ComicComponents
   import BasenjiWeb.SharedComponents
-  import BasenjiWeb.Style.HomeLiveStyle
+  import BasenjiWeb.Style.ComicStyle
   import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Collections
@@ -13,264 +13,176 @@ defmodule BasenjiWeb.HomeLive do
 
   def mount(_params, _session, socket) do
     socket
-    |> assign_search()
-    |> assign_stats()
+    |> assign_current_collection(nil)
+    |> assign_content()
     |> then(&{:ok, &1})
   end
 
-  def handle_event("search", %{"search" => %{"query" => query}}, socket) do
-    socket =
-      if String.trim(query) == "" do
-        socket
-        |> assign_search()
-      else
-        comics = Comics.list_comics(search: query)
-        collections = Collections.list_collections(search: query)
-
-        socket
-        |> assign_search(query, %{comics: comics, collections: collections}, true)
-      end
-
-    {:noreply, socket}
-  end
-
-  def handle_event("clear_search", _params, socket) do
+  def handle_event("navigate_to_collection", %{"collection_id" => collection_id}, socket) do
     socket =
       socket
-      |> assign_search()
+      |> assign_current_collection(collection_id)
+      |> assign_content()
 
     {:noreply, socket}
   end
 
-  def assign_search(socket, query \\ "", results \\ [], active? \\ false) do
-    socket
-    |> assign(:search, %{query: query, results: results, active?: active?})
+  def handle_event("navigate_up", _params, socket) do
+    # Get parent of current collection, or go to root if current is at root level
+    parent_id =
+      case socket.assigns.current_collection do
+        nil -> nil
+        collection -> collection.parent_id
+      end
+
+    socket =
+      socket
+      |> assign_current_collection(parent_id)
+      |> assign_content()
+
+    {:noreply, socket}
   end
 
-  defp assign_stats(socket) do
-    recent_comics = Comics.list_comics(limit: 12, order_by: :inserted_at)
-    recent_collections = Collections.list_collections(limit: 8, order_by: :inserted_at)
-
-    total_comics = Comics.count_comics()
-    total_collections = Collections.count_collections()
-
+  defp assign_current_collection(socket, nil) do
     socket
-    |> assign(:recent, %{comics: recent_comics, collections: recent_collections})
-    |> assign(:totals, %{comics: total_comics, collections: total_collections})
+    |> assign(:current_collection, nil)
+    |> assign(:current_collection_id, nil)
   end
 
-  attr :totals, :map, required: true
-  attr :recent, :map, required: true
-  attr :search, :map, required: true
+  defp assign_current_collection(socket, collection_id) when is_binary(collection_id) do
+    case Collections.get_collection(collection_id) do
+      {:ok, collection} ->
+        socket
+        |> assign(:current_collection, collection)
+        |> assign(:current_collection_id, collection_id)
+
+      {:error, :not_found} ->
+        # If collection not found, go back to root
+        assign_current_collection(socket, nil)
+    end
+  end
+
+  defp assign_content(socket) do
+    current_collection_id = socket.assigns.current_collection_id
+
+    # Get collections in current context
+    collections =
+      if current_collection_id do
+        Collections.list_collections(parent_id: current_collection_id)
+      else
+        Collections.list_collections(parent_id: :none)
+      end
+
+    # Get comics in current context
+    comics =
+      if current_collection_id do
+        # Get comics in this collection - we'll need to implement this
+        get_comics_in_collection(current_collection_id)
+      else
+        # For now, show all comics at root level
+        Comics.list_comics()
+      end
+
+    socket
+    |> assign(:collections, collections)
+    |> assign(:comics, comics)
+  end
+
+  # Placeholder - we'll need to implement this properly
+  defp get_comics_in_collection(_collection_id) do
+    # This would need to query the collection_comics join table
+    # For now, return empty list
+    []
+  end
 
   def render(assigns) do
     ~H"""
-    <div class="max-w-7xl mx-auto">
-      <.comics_header totals={@totals} search_query={@search.query} />
-      <.search_results search={@search} recent={@recent} />
+    <div class="max-w-7xl mx-auto space-y-6">
+      <.page_header current_collection={@current_collection} />
+      <.content_grid
+        collections={@collections}
+        comics={@comics}
+        current_collection={@current_collection}
+      />
     </div>
     """
   end
 
-  attr :totals, :map, required: true
-  attr :search_query, :string, default: ""
+  attr :current_collection, :any, default: nil
 
-  def comics_header(assigns) do
+  def page_header(assigns) do
     ~H"""
-    <div class="mb-8">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div>
-          <h1 class={page_classes(:title)}>Home</h1>
-          <p class="text-gray-600 mt-1">
-            {@totals.comics} comics • {@totals.collections} collections
-          </p>
-        </div>
-
-        <.search_bar search_query={@search_query} />
-      </div>
-    </div>
-    """
-  end
-
-  attr :search_query, :string, default: ""
-
-  def search_bar(assigns) do
-    ~H"""
-    <div class="lg:w-96">
-      <.form for={%{}} phx-submit="search" phx-change="search" class="relative">
-        <input
-          type="text"
-          name="search[query]"
-          value={@search_query}
-          placeholder="Search comics and collections..."
-          class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <.icon name="hero-magnifying-glass" class="h-5 w-5 text-gray-400" />
-        </div>
-        <%= if @search_query != "" do %>
-          <button
-            type="button"
-            phx-click="clear_search"
-            class="absolute inset-y-0 right-0 pr-3 flex items-center"
-          >
-            <.icon name="hero-x-mark" class="h-5 w-5 text-gray-400 hover:text-gray-600" />
-          </button>
-        <% end %>
-      </.form>
-    </div>
-    """
-  end
-
-  attr :search, :map, required: true
-  attr :recent, :map, required: true
-
-  def search_results(assigns) do
-    ~H"""
-    <%= if @search.active? do %>
-      <div class="mb-8">
-        <.search_results_header search_query={@search.query} />
-        <.collections_search_results collections={@search.results[:collections] || []} />
-        <.comics_search_results comics={@search.results[:comics] || []} />
-        <.no_search_results_found
-          search_query={@search.query}
-          comics={@search.results[:comics] || []}
-          collections={@search.results[:collections] || []}
-        />
-      </div>
-    <% else %>
-      <.recent_comics_section comics={@recent.comics} />
-      <.recent_collections_section collections={@recent.collections} />
-    <% end %>
-    """
-  end
-
-  attr :search_query, :string, required: true
-
-  def search_results_header(assigns) do
-    ~H"""
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-      <h2 class="text-lg font-semibold text-blue-900 mb-2">
-        Search Results for "{@search_query}"
-      </h2>
-    </div>
-    """
-  end
-
-  attr :comics, :list, required: true
-
-  def comics_search_results(assigns) do
-    ~H"""
-    <%= if length(@comics) > 0 do %>
-      <div class="mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-          Comics ({length(@comics)})
-        </h3>
-        <div class={grid_classes(:comics_standard)}>
-          <%= for comic <- @comics do %>
-            <.comic_card comic={comic} />
+    <div class={page_classes(:header_layout)}>
+      <div>
+        <h1 class={page_classes(:title)}>
+          <%= if @current_collection do %>
+            {@current_collection.title}
+          <% else %>
+            Library
           <% end %>
-        </div>
+        </h1>
+        <p class={page_classes(:subtitle)}>
+          <%= if @current_collection do %>
+            Collection
+          <% else %>
+            Browse your collections and comics
+          <% end %>
+        </p>
       </div>
-    <% end %>
+    </div>
     """
   end
 
   attr :collections, :list, required: true
-
-  def collections_search_results(assigns) do
-    ~H"""
-    <%= if length(@collections) > 0 do %>
-      <div class="mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-          Collections ({length(@collections)})
-        </h3>
-        <div class={grid_classes(:collections_standard)}>
-          <%= for collection <- @collections do %>
-            <.collection_card collection={collection} />
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-    """
-  end
-
-  attr :search_query, :string, required: true
   attr :comics, :list, required: true
-  attr :collections, :list, required: true
+  attr :current_collection, :any, default: nil
 
-  def no_search_results_found(assigns) do
+  def content_grid(assigns) do
     ~H"""
-    <%= if length(@comics) == 0 and length(@collections) == 0 do %>
-      <div class="text-center text-gray-500 py-8">
-        <.icon name="hero-magnifying-glass" class="h-12 w-12 mx-auto mb-4 text-gray-300" />
-        <p>No results found for "{@search_query}"</p>
-      </div>
-    <% end %>
-    """
-  end
-
-  attr :comics, :list, required: true
-
-  def recent_comics_section(assigns) do
-    ~H"""
-    <div class={section_classes(:container)}>
-      <div class={section_classes(:header)}>
-        <h2 class={section_classes(:title)}>Recent Comics</h2>
-        <.link navigate="/comics" class={section_classes(:view_all_link)}>
-          View all →
-        </.link>
-      </div>
-
-      <%= if length(@comics) > 0 do %>
-        <div class={grid_classes(:comics_standard)}>
-          <%= for comic <- @comics do %>
-            <.comic_card comic={comic} />
-          <% end %>
+    <div class={grid_classes(:collections_standard)}>
+      <!-- Up navigation if not at root -->
+      <%= if @current_collection do %>
+        <.up_card />
+      <% end %>
+      
+    <!-- Collections first -->
+      <%= for collection <- @collections do %>
+        <div phx-click="navigate_to_collection" phx-value-collection_id={collection.id}>
+          <.collection_card collection={collection} />
         </div>
-      <% else %>
-        <.empty_state
-          icon="hero-book-open"
-          title="No comics yet"
-          description="Add some comics to get started!"
-          style={:dashed}
-          icon_size={home_live_classes(:empty_state_icon)}
-          class={home_live_classes(:empty_state_override)}
-        />
+      <% end %>
+      
+    <!-- Comics second -->
+      <%= for comic <- @comics do %>
+        <.comic_card comic={comic} />
       <% end %>
     </div>
     """
   end
 
-  attr :collections, :list, required: true
-
-  def recent_collections_section(assigns) do
+  def up_card(assigns) do
     ~H"""
-    <div class={section_classes(:container)}>
-      <div class={section_classes(:header)}>
-        <h2 class={section_classes(:title)}>Collections</h2>
-        <.link navigate="/collections" class={section_classes(:view_all_link)}>
-          View all →
-        </.link>
-      </div>
-
-      <%= if length(@collections) > 0 do %>
-        <div class={grid_classes(:collections_extended)}>
-          <%= for collection <- @collections do %>
-            <.collection_card collection={collection} />
-          <% end %>
+    <div class={[comic_card_classes(:container), "cursor-pointer"]} phx-click="navigate_up">
+      <div class="block">
+        <div class={comic_card_classes(:inner)}>
+          <div class={comic_card_classes(:cover_container)}>
+            <.icon name="hero-arrow-up" class={comic_card_classes(:fallback_icon)} />
+          </div>
+          <div class={comic_card_classes(:content_area)}>
+            <h3 class={comic_card_classes(:title)}>
+              ..
+            </h3>
+            <div class={comic_card_classes(:metadata_row)}>
+              <small class={comic_card_classes(:metadata_format)}>Up</small>
+              <small class={comic_card_classes(:metadata_pages)}></small>
+            </div>
+          </div>
         </div>
-      <% else %>
-        <.empty_state
-          icon="hero-folder"
-          title="No collections yet"
-          description="Create collections to organize your comics!"
-          style={:dashed}
-          icon_size={home_live_classes(:empty_state_icon)}
-          class={home_live_classes(:empty_state_override)}
-        />
-      <% end %>
+      </div>
     </div>
     """
   end
+
+  # Helper for pagination - since we're not using URL-based pagination
+  defp build_page_path(%{page: page}), do: "#page-#{page}"
 end
