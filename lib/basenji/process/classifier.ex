@@ -3,10 +3,10 @@ defmodule Basenji.ComicClassifier do
   Classifies comics vs ebooks using visual analysis and OCR validation.
 
   ## Classification Strategy
-  1. Sample 4-6 representative pages (avoiding covers, starting from page 3)
+  1. Sample 4-6 representative pages (avoiding covers, starting from page 5)
   2. Visual analysis: saturation (40%), histogram bimodal (50%), edge density (10%)
-  3. If overall visual score is uncertain (≥ 0.6) or invalid → OCR ALL pages
-  4. OCR average overrides visual analysis when triggered
+  3. If overall visual score is uncertain (≥ 0.6) or invalid → OCR sample pages
+  4. The OCR word-count average overrides visual analysis when triggered
 
   ## Usage
       {:ok, :ebook} = Classifier.classify(comic)
