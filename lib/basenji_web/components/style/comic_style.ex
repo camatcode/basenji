@@ -7,9 +7,8 @@ defmodule BasenjiWeb.Style.ComicStyle do
 
   * `group`: enables group-hover states for child elements
   * `cursor-pointer`: shows hand cursor indicating clickability
-  * `relative`: allows absolute positioning of remove button
   """
-  def comic_card_classes(:container), do: "group cursor-pointer relative"
+  def comic_card_classes(:container), do: "group cursor-pointer"
 
   @privdoc """
   **comic_card_inner**: Main card styling with hover effects
