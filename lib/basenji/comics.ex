@@ -95,9 +95,11 @@ defmodule Basenji.Comics do
 
   def stream_pages(nil, _opts), do: {:error, :not_found}
 
-  def stream_pages(%Comic{resource_location: loc, optimized_id: optimized_id}, opts) do
-    should_optimize? = optimized_id == nil
+  def stream_pages(%Comic{resource_location: loc, optimized_id: optimized_id, pre_optimized?: pre_optimized?}, opts) do
+    should_optimize? = optimized_id == nil && !pre_optimized?
+
     opts = Keyword.merge([optimize: should_optimize?], opts)
+
     Reader.stream_pages(loc, opts)
   end
 
@@ -115,8 +117,12 @@ defmodule Basenji.Comics do
       when page_count != -1 and (page_num < 0 or page_num > page_count),
       do: {:error, :not_found}
 
-  def get_page(%Comic{resource_location: loc, optimized_id: optimized_id} = _comic, page_num, opts) do
-    should_optimize? = optimized_id == nil
+  def get_page(
+        %Comic{resource_location: loc, optimized_id: optimized_id, pre_optimized?: pre_optimized?} = _comic,
+        page_num,
+        opts
+      ) do
+    should_optimize? = optimized_id == nil && !pre_optimized?
     opts = Keyword.merge([optimize: should_optimize?], opts)
 
     with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do

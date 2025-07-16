@@ -18,6 +18,7 @@ defmodule BasenjiWeb.ComicComponents do
           <div class={comic_card_classes(:cover_container)}>
             <%= if @comic.image_preview do %>
               <img
+                id={@comic.id <> "_preview"}
                 src={~p"/api/comics/#{@comic.id}/preview"}
                 alt={@comic.title}
                 class={comic_card_classes(:cover_image)}

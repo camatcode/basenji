@@ -3,6 +3,7 @@ defmodule BasenjiWeb.ComicsController do
   use BasenjiWeb, :controller
 
   alias Basenji.Comics
+  alias Basenji.ImageProcessor
   alias BasenjiWeb.API.Utils
 
   def get_page(conn, params) do
@@ -30,7 +31,7 @@ defmodule BasenjiWeb.ComicsController do
   def get_preview(conn, params) do
     id = params["id"]
 
-    Comics.get_image_preview(id)
+    get_comic_preview(id)
     |> case do
       {:ok, binary} ->
         length = byte_size(binary)
@@ -44,5 +45,22 @@ defmodule BasenjiWeb.ComicsController do
       error ->
         Utils.bad_request_handler(conn, error)
     end
+  end
+
+  defp get_comic_preview(id) do
+    with {:ok, comic} <- Comics.get_comic(id) do
+      if comic.image_preview do
+        {:ok, comic.image_preview}
+      else
+        make_preview(comic)
+      end
+    end
+  end
+
+  defp make_preview(comic) do
+    {:ok, bytes, _mime} = Utils.get_comic_page_from_cache(comic, 1)
+    {:ok, preview_bytes} = ImageProcessor.get_image_preview(bytes, 600, 600)
+    Comics.update_comic(comic, %{image_preview: preview_bytes})
+    {:ok, preview_bytes}
   end
 end

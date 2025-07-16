@@ -48,7 +48,7 @@ if config_env() == :prod do
   config :basenji, Basenji.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "15"),
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "25"),
     socket_options: maybe_ipv6
 
   config :basenji, BasenjiWeb.Endpoint,

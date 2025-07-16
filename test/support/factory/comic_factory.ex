@@ -14,6 +14,7 @@ defmodule Basenji.Factory.ComicFactory do
           title: Faker.Lorem.sentence(),
           author: Faker.Person.name(),
           description: Faker.Lorem.paragraph(2),
+          pre_optimized?: false,
           format: format,
           resource_location: resource_location,
           released_year: Faker.Date.date_of_birth(1..20).year,

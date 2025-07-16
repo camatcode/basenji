@@ -14,6 +14,8 @@ defmodule BasenjiWeb.API.Utils do
     |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
   end
 
+  def get_comic_page_from_cache(%{id: comic_id}, page_num), do: get_comic_page_from_cache(comic_id, page_num)
+
   def get_comic_page_from_cache(comic_id, page_num) do
     Cachex.fetch(
       :basenji_cache,
@@ -22,7 +24,7 @@ defmodule BasenjiWeb.API.Utils do
         Comics.get_page(comic_id, page_num)
         |> case do
           {:ok, page, mime} ->
-            {:commit, {page, mime}, [ttl: to_timeout(minute: 5)]}
+            {:commit, {page, mime}, [ttl: to_timeout(minute: 1)]}
 
           {_, resp} ->
             {:ignore, {:error, resp}}
