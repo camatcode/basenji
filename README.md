@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  A modern, performant, self-hostable comic book reader. 
+  A modern, self-hostable comic book reader with both the features you expect and a few that'll surprise you.
 </p>
 
 
