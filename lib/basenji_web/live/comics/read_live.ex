@@ -19,6 +19,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
     |> assign(:page_title, comic.title || "Comic")
     |> assign(:comic, comic)
     |> assign(:current_page, 1)
+    |> assign(:fullscreen, true)
     |> then(&{:ok, &1})
   end
 
@@ -35,6 +36,10 @@ defmodule BasenjiWeb.Comics.ReadLive do
     end
   end
 
+  def handle_event("toggle_fullscreen", _params, socket) do
+    {:noreply, assign(socket, :fullscreen, !socket.assigns.fullscreen)}
+  end
+
   def handle_event("change_page", %{"page" => page}, socket) do
     max_page = socket.assigns.comic.page_count
 
@@ -49,7 +54,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
   def render(assigns) do
     ~H"""
     <div class="max-w-8xl mx-auto space-y-6">
-      <.comic_reader comic={@comic} current_page={@current_page} />
+      <.comic_reader comic={@comic} current_page={@current_page} fullscreen={@fullscreen} />
     </div>
     """
   end
@@ -61,7 +66,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
     ~H"""
     <div class="bg-black rounded-lg overflow-hidden">
       <.reader_header comic={@comic} current_page={@current_page} />
-      <.reader_page_display comic={@comic} current_page={@current_page} />
+      <.reader_page_display comic={@comic} current_page={@current_page} fullscreen={@fullscreen} />
     </div>
     """
   end
@@ -92,6 +97,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
 
   attr :comic, :any, required: true
   attr :current_page, :integer, required: true
+  attr :fullscreen, :boolean, required: true
 
   def reader_page_display(assigns) do
     ~H"""
@@ -101,10 +107,68 @@ defmodule BasenjiWeb.Comics.ReadLive do
           src={~p"/api/comics/#{@comic.id}/page/#{@current_page}"}
           alt={"Page #{@current_page}"}
           class={comics_live_classes(:reader_page_image)}
+          phx-click="toggle_fullscreen"
         />
         <.previous_page_nav :if={@current_page > 1} current_page={@current_page} />
         <.next_page_nav :if={@current_page < @comic.page_count} current_page={@current_page} />
       </div>
+      
+    <!-- Fullscreen overlay with adaptive navigation -->
+      <%= if @fullscreen do %>
+        <div
+          class="fixed inset-0 z-50 bg-black flex justify-center items-center"
+          phx-click="toggle_fullscreen"
+        >
+          <!-- Left navigation zone - covers entire left half of screen -->
+          <%= if @current_page > 1 do %>
+            <div
+              class="absolute left-0 top-0 h-full w-1/2 cursor-pointer group"
+              phx-click="change_page"
+              phx-value-page={@current_page - 1}
+            >
+              <!-- Gradient at far left edge -->
+              <div class="absolute left-0 top-0 h-full w-32 bg-gradient-to-r from-black from-0% via-black via-30% to-transparent to-100% opacity-0 group-hover:opacity-15 transition-opacity duration-300">
+              </div>
+              
+    <!-- Chevron at far left edge -->
+              <div class="absolute left-4 top-0 h-full flex items-center">
+                <.icon
+                  name="hero-chevron-left"
+                  class="h-14 w-14 text-white bg-gray-800 bg-opacity-90 rounded-full p-3 opacity-0 group-hover:opacity-95 transition-all duration-300 shadow-2xl backdrop-blur-sm hover:scale-110 mix-blend-difference"
+                />
+              </div>
+            </div>
+          <% end %>
+          
+    <!-- Right navigation zone - covers entire right half of screen -->
+          <%= if @current_page < @comic.page_count do %>
+            <div
+              class="absolute right-0 top-0 h-full w-1/2 cursor-pointer group"
+              phx-click="change_page"
+              phx-value-page={@current_page + 1}
+            >
+              <!-- Gradient at far right edge -->
+              <div class="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-black from-0% via-black via-30% to-transparent to-100% opacity-0 group-hover:opacity-15 transition-opacity duration-300">
+              </div>
+              
+    <!-- Chevron at far right edge -->
+              <div class="absolute right-4 top-0 h-full flex items-center">
+                <.icon
+                  name="hero-chevron-right"
+                  class="h-14 w-14 text-white bg-gray-800 bg-opacity-90 rounded-full p-3 opacity-0 group-hover:opacity-95 transition-all duration-300 shadow-2xl backdrop-blur-sm hover:scale-110 mix-blend-difference"
+                />
+              </div>
+            </div>
+          <% end %>
+          
+    <!-- Comic image in center -->
+          <img
+            src={~p"/api/comics/#{@comic.id}/page/#{@current_page}"}
+            alt={"Page #{@current_page}"}
+            class="max-w-[100vw] max-h-[100vh] object-contain pointer-events-none"
+          />
+        </div>
+      <% end %>
     </div>
     """
   end
