@@ -10,6 +10,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
   def mount(%{"id" => id}, _session, socket) do
     socket
     |> assign_comic(id)
+    |> then(&{:ok, &1})
   end
 
   defp assign_comic(socket, %Comic{} = comic) do
@@ -18,7 +19,6 @@ defmodule BasenjiWeb.Comics.ReadLive do
     |> assign(:comic, comic)
     |> assign(:current_page, 1)
     |> assign(:fullscreen, true)
-    |> then(&{:ok, &1})
   end
 
   defp assign_comic(socket, comic_id) when is_bitstring(comic_id) do

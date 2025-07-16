@@ -2,7 +2,6 @@ defmodule BasenjiWeb.HomeLive do
   @moduledoc false
   use BasenjiWeb, :live_view
 
-  import BasenjiWeb.ComicComponents
   import BasenjiWeb.SharedComponents
   import BasenjiWeb.Style.SharedStyle
 
@@ -236,7 +235,11 @@ defmodule BasenjiWeb.HomeLive do
     <% else %>
       <div class={grid_classes(:comics_standard)}>
         <%= for comic <- @comics do %>
-          <.comic_card comic={comic} />
+          <.live_component
+            id={"comic_card_#{comic.id}"}
+            module={BasenjiWeb.ComicCardComponent}
+            comic={comic}
+          />
         <% end %>
       </div>
     <% end %>
