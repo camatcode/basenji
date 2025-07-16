@@ -155,8 +155,12 @@ defmodule Basenji.Comics do
     end
   end
 
-  def count_comics do
-    Repo.aggregate(Comic, :count, :id)
+  def count_comics(opts \\ []) do
+    opts = Keyword.merge([repo_opts: []], opts)
+
+    Comic
+    |> reduce_comic_opts(opts)
+    |> Repo.aggregate(:count, :id)
   end
 
   def formats, do: Comic.formats()

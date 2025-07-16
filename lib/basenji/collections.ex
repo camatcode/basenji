@@ -49,9 +49,11 @@ defmodule Basenji.Collections do
     |> Repo.all(opts[:repo_opts])
   end
 
+  def get_collection(id, opts \\ [])
+
   def get_collection(nil, _opts), do: {:error, :not_found}
 
-  def get_collection(id, opts \\ []) do
+  def get_collection(id, opts) do
     opts = Keyword.merge([repo_opts: []], opts)
 
     from(c in Collection, where: c.id == ^id)

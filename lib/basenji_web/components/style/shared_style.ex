@@ -44,13 +44,11 @@ defmodule BasenjiWeb.Style.SharedStyle do
   @privdoc """
   **search_input_classes**: Form input with extra space for magnifying glass icon
 
-  * `pl-10`: 40px left padding makes room for search icon
   * `pr-4`: normal right padding (16px)
   * Everything else same as regular form inputs
   """
   def search_input_classes,
-    do:
-      "w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    do: "w-full pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 
   @privdoc """
   **secondary**: Subtle button for less important actions (Cancel, Clear filters)
