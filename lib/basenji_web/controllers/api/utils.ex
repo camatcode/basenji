@@ -5,11 +5,40 @@ defmodule BasenjiWeb.API.Utils do
   import Phoenix.Controller
   import Plug.Conn
 
+  alias Basenji.Comics
+
   require Logger
 
   def atomize(m) when is_map(m) do
     m
     |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
+  end
+
+  def get_comic_page_from_cache(comic_id, page_num) do
+    Cachex.fetch(
+      :basenji_cache,
+      %{comic_id: comic_id, page_num: page_num, optimized: true},
+      fn _key ->
+        Comics.get_page(comic_id, page_num)
+        |> case do
+          {:ok, page, mime} ->
+            {:commit, {page, mime}, [ttl: to_timeout(minute: 5)]}
+
+          {_, resp} ->
+            {:ignore, {:error, resp}}
+        end
+      end
+    )
+    |> case do
+      {:ignore, {:error, error}} ->
+        {:error, error}
+
+      {_, {page, mime}} ->
+        {:ok, page, mime}
+
+      response ->
+        response
+    end
   end
 
   def validate_request_params(params, types, required_params) do

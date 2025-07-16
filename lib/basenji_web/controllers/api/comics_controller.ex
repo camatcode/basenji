@@ -10,7 +10,7 @@ defmodule BasenjiWeb.ComicsController do
     page = params["page"]
 
     with {:ok, page_num} <- Utils.safe_to_int(page) do
-      Comics.get_page(id, page_num)
+      Utils.get_comic_page_from_cache(id, page_num)
     end
     |> case do
       {:ok, binary, mime} ->
