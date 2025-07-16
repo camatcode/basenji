@@ -49,6 +49,7 @@
 * ✅ Supports CBZ, CBR, CBT, CB7, and PDF comic book formats
 * ✅ Optimizes pages to improve read times on-the-fly
 * ✅ Efficent CRUD, filtering, sorting
+  *  🚧 In Progress: Test that its faster than every other comic book reader, especially under load
 * ✅ APIs / Services
   * ✅ JSON:API
   * ✅ GraphQL
@@ -59,8 +60,9 @@
   * ✅ Stress tested with 49.9 GB of comics with 2700 items
   * ✅ Stores optimized versions to save you disk space
 * Front-End
-  *  ✅ Simple Stuff: List, Search, View
-  *  🚧 In Progress: Make it more ergonomic 
+  *  ✅ Search, List, Explore, Filter, Viewer
+  *  ✅ Smart full screen viewer
+  *  🚧 In Progress: Continue making  it more ergonomic 
 * 🚧 Rest is in development
 
 ### ⏸️ Deep Backlog
