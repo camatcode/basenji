@@ -3,9 +3,7 @@ defmodule BasenjiWeb.Comics.ShowLive do
   use BasenjiWeb, :live_view
 
   import BasenjiWeb.Style.ComicsLiveStyle
-  import BasenjiWeb.Style.SharedStyle
 
-  alias Basenji.Collections
   alias Basenji.Comic
   alias Basenji.Comics
 

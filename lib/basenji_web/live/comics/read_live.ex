@@ -3,9 +3,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
   use BasenjiWeb, :live_view
 
   import BasenjiWeb.Style.ComicsLiveStyle
-  import BasenjiWeb.Style.SharedStyle
 
-  alias Basenji.Collections
   alias Basenji.Comic
   alias Basenji.Comics
 
@@ -41,14 +39,42 @@ defmodule BasenjiWeb.Comics.ReadLive do
   end
 
   def handle_event("change_page", %{"page" => page}, socket) do
+    {:noreply, change_page(socket, page)}
+  end
+
+  def handle_event("handle_keydown", %{"key" => "Escape"}, socket) do
+    {:noreply, assign(socket, :fullscreen, !socket.assigns.fullscreen)}
+  end
+
+  def handle_event("handle_keydown", %{"key" => "ArrowLeft"}, socket) do
+    {:noreply, change_page(socket, socket.assigns.current_page - 1)}
+  end
+
+  def handle_event("handle_keydown", %{"key" => "ArrowRight"}, socket) do
+    {:noreply, change_page(socket, socket.assigns.current_page + 1)}
+  end
+
+  def handle_event("handle_keydown", %{"key" => " "}, socket) do
+    {:noreply, change_page(socket, socket.assigns.current_page + 1)}
+  end
+
+  def handle_event("handle_keydown", _params, socket) do
+    {:noreply, socket}
+  end
+
+  defp change_page(socket, page) when is_bitstring(page) do
+    change_page(socket, String.to_integer(page))
+  end
+
+  defp change_page(socket, page) when is_number(page) do
     max_page = socket.assigns.comic.page_count
 
     page_num =
-      String.to_integer(page)
+      page
       |> min(max_page)
       |> max(1)
 
-    {:noreply, assign(socket, :current_page, page_num)}
+    assign(socket, :current_page, page_num)
   end
 
   def render(assigns) do
@@ -61,6 +87,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
 
   attr :comic, :any, required: true
   attr :current_page, :integer, required: true
+  attr :fullscreen, :boolean, required: true
 
   def comic_reader(assigns) do
     ~H"""
@@ -125,6 +152,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
     ~H"""
     <div
       class="fixed inset-0 z-50 bg-black flex justify-center items-center"
+      phx-window-keydown="handle_keydown"
       phx-click="toggle_fullscreen"
     >
       <.fullscreen_nav_zone :if={@current_page > 1} direction="left" target_page={@current_page - 1} />
