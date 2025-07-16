@@ -60,9 +60,10 @@
   * ✅ Stress tested with 49.9 GB of comics with 2700 items
   * ✅ Stores optimized versions to save you disk space
 * Front-End
-  *  ✅ Search, List, Explore, Filter, Viewer
+  *  ✅ Search, List, Explore, Filter
   *  ✅ Smart full screen viewer
-  *  🚧 In Progress: Continue making  it more ergonomic 
+  *  🚧 In Progress: Continue making  it more ergonomic
+  *  🚧 Admin pages
 * 🚧 Rest is in development
 
 ### ⏸️ Deep Backlog
