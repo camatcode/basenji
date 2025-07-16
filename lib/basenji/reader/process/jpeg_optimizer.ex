@@ -20,8 +20,44 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
   end
 
   defp optimize_impl(bytes, _opts) when is_binary(bytes) do
+    # Use file-based approach in CI environments to avoid epipe issues
+    # GitHub Actions and other CI systems can have issues with stdin/stdout pipes
+    use_file_mode =
+      System.get_env("CI") == "true" or
+        System.get_env("GITHUB_ACTIONS") == "true" or
+        System.get_env("BASENJI_JPEG_FILE_MODE") == "true"
+
+    if use_file_mode do
+      optimize_with_file(bytes)
+    else
+      # Try stdin first for local development (more efficient), fallback to file on error
+      case optimize_with_stdin(bytes) do
+        {:ok, result} -> {:ok, result}
+        {:error, _} -> optimize_with_file(bytes)
+      end
+    end
+  end
+
+  defp optimize_with_stdin(bytes) do
     cmd = "jpegoptim"
     cmd_opts = ["-f", "--stdout", "-q", "--stdin"]
     exec(cmd, cmd_opts, in: bytes)
+  end
+
+  defp optimize_with_file(bytes) do
+    cmd = "jpegoptim"
+
+    tmp_dir = System.tmp_dir!() |> Path.join("basenji") |> Path.join("jpeg_optimize")
+    :ok = File.mkdir_p!(tmp_dir)
+    path = Path.join(tmp_dir, "#{System.monotonic_time(:nanosecond)}.jpg")
+
+    try do
+      :ok = File.write!(path, bytes)
+      cmd_opts = ["-f", "--stdout", "-q", path]
+      exec(cmd, cmd_opts)
+    after
+      # Ensure cleanup even if exec fails
+      File.rm(path)
+    end
   end
 end
