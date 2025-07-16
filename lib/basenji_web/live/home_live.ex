@@ -96,7 +96,7 @@ defmodule BasenjiWeb.HomeLive do
         {"inserted_at", "Sort by Date Added"}
       ],
       placeholder: "Search comics...",
-      filter_info: %{type: "filter_format", default: "All Formats", options: filter_options}
+      filter_info: %{type: "filter_format", default: "All Formats", options: [{"", "All Formats"}] ++ filter_options}
     }
 
     socket
@@ -180,7 +180,7 @@ defmodule BasenjiWeb.HomeLive do
         for={@form}
         phx-submit="search"
         phx-change="search"
-        class="flex flex-col lg:flex-row gap-2 items-center "
+        class="flex flex-col lg:flex-row gap-2 lg:items-center"
       >
         <div class="flex-1">
           <.input
@@ -191,22 +191,20 @@ defmodule BasenjiWeb.HomeLive do
           />
         </div>
 
-        <div class="lg:w-48">
+        <div class="lg:w-48 lg:pt-2">
           <select
             name="search_form[format_filter]"
             value={@form[:format_filter].value || ""}
-            class={form_input_classes()}
+            class={[form_input_classes()]}
           >
-            <option value="">All Formats</option>
+            <option value="" selected={@form[:format_filter].value == ""} label="All Formats" />
             <%= for {value, label} <- @search_options.filter_info.options do %>
-              <option value={value} selected={@form[:format_filter].value == value}>
-                {label}
-              </option>
+              <option value={value} selected={@form[:format_filter].value == value} label={label} />
             <% end %>
           </select>
         </div>
 
-        <div class="lg:w-48">
+        <div class="lg:w-48 lg:pt-2">
           <select
             name="search_form[sort_by]"
             value={@form[:sort_by].value || "title"}

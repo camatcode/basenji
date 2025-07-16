@@ -176,14 +176,15 @@ defmodule BasenjiWeb.Style.SharedStyle do
   @privdoc """
   **comics_standard**: Standard responsive grid for comic cards
 
-  * `grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4`: responsive columns
-    - 2 columns on mobile (comics are narrow)
-    - 3 columns on small screens
-    - 4 columns on medium+ screens
+  * `grid ...`: responsive columns
+    - 1 columns on mobile (comics are narrow)
+    - 2 columns on small screens
+    - 3 columns on medium screens
+    - 4 columns on large screens
   * `gap-6`: consistent spacing (24px) between cards
   """
   @doc false
-  def grid_classes(:comics_standard), do: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6"
+  def grid_classes(:comics_standard), do: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
 
   @privdoc """
   **collections_standard**: Standard responsive grid for collection cards
