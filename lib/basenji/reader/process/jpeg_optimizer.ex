@@ -19,29 +19,9 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
     end
   end
 
-  # opts - target_size_kb - a size target you want to hit
-  defp optimize_impl(bytes, opts) when is_binary(bytes) do
-    opts = Keyword.merge([target_size_kb: min(byte_size(bytes) / 1000, 1000)], opts)
+  defp optimize_impl(bytes, _opts) when is_binary(bytes) do
     cmd = "jpegoptim"
-
-    tmp_dir = System.tmp_dir!() |> Path.join("basenji") |> Path.join("jpeg_optimize")
-    :ok = File.mkdir_p!(tmp_dir)
-    path = Path.join(tmp_dir, "#{System.monotonic_time(:nanosecond)}.jpg")
-
-    try do
-      :ok = File.write!(path, bytes)
-
-      cmd_opts = ["-f", "--stdout", "-q"]
-
-      cmd_opts =
-        if opts[:target_size_kb],
-          do: cmd_opts ++ ["--size=#{opts[:target_size_kb]}"],
-          else: cmd_opts
-
-      cmd_opts = cmd_opts ++ [path]
-      exec(cmd, cmd_opts)
-    after
-      File.rm(path)
-    end
+    cmd_opts = ["-f", "--stdout", "-q", "--stdin"]
+    exec(cmd, cmd_opts, in: bytes)
   end
 end

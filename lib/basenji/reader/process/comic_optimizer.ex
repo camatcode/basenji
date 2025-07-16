@@ -20,7 +20,7 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
         :ok = File.mkdir_p!(tmp_dir)
         :ok = File.mkdir_p!(result_directory)
 
-        image_dir_name = "images#{System.monotonic_time()}"
+        image_dir_name = "0_images#{System.monotonic_time()}"
         images_dir = Path.join(tmp_dir, image_dir_name)
         :ok = File.mkdir_p!(images_dir)
 
@@ -46,10 +46,8 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
     ext = Path.extname(file_name)
     clean_name = "#{String.pad_leading("#{page_idx + 1}", padding, "0")}#{ext}"
     file_path = Path.join(images_dir, clean_name)
-
-    File.open!(file_path, [:write, :binary], fn file ->
-      stream_func.() |> Enum.each(&IO.binwrite(file, &1))
-    end)
+    data = stream_func.() |> Enum.to_list() |> :binary.list_to_bin()
+    File.write!(file_path, data)
   end
 
   def basenji_comment?(comic_file_path) do
