@@ -232,7 +232,7 @@ defmodule Basenji.ComicsTest do
     |> Enum.each(fn page ->
       ref = Enum.random([comic, comic.id])
       {:ok, bytes, mime} = Comics.get_page(ref, page)
-      assert mime == "image/jpg"
+      assert mime == "image/jpeg"
       refute bytes == <<>>
     end)
 

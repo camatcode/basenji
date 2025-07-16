@@ -122,14 +122,11 @@ defmodule Basenji.Comics do
     with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do
       entry = Enum.at(entries, page_num - 1)
 
-      ext =
-        Map.get(entry, :file_name)
-        |> Path.extname()
-        |> String.replace(".", "")
+      mime = MIME.from_path(entry.file_name)
 
-      bytes = Enum.at(entries, page_num - 1).stream_fun.() |> Enum.to_list() |> :binary.list_to_bin()
+      bytes = entry.stream_fun.() |> Enum.to_list() |> :binary.list_to_bin()
 
-      {:ok, bytes, "image/#{ext}"}
+      {:ok, bytes, mime}
     end
   end
 
