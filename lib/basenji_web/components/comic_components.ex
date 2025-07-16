@@ -30,7 +30,7 @@ defmodule BasenjiWeb.ComicComponents do
 
           <div class={comic_card_classes(:content_area)}>
             <h3 class={comic_card_classes(:title)}>
-              {@comic.title || "Untitled"}
+              {String.replace(@comic.title, " Optimized", "") || "Untitled"}
             </h3>
             <%= if @comic.author do %>
               <p class={comic_card_classes(:author)}>{@comic.author}</p>

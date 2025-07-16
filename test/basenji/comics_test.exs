@@ -45,7 +45,7 @@ defmodule Basenji.ComicsTest do
       {:ok, inserted_again} = Comics.create_comics(to_assert)
       assert Enum.count(inserted_again) == 100
 
-      assert 100 == Comics.list_comics() |> Enum.count()
+      assert 100 == Comics.count_comics()
     end
 
     test "from_resource/2" do
@@ -216,12 +216,13 @@ defmodule Basenji.ComicsTest do
       [^b, ^c] = Comics.list_comics(search: "or", order_by: :title)
       [^a, ^b] = Comics.list_comics(search: "it", order_by: :title)
       [^b, ^c] = Comics.list_comics(search: "25", order_by: :title)
-    end
-  end
 
-  test "count" do
-    insert_list(10, :comic)
-    assert 10 == Comics.count_comics()
+      assert 2 == Comics.count_comics(search: "and", order_by: :title)
+      assert 2 == Comics.count_comics(search: "and", order_by: :title)
+      assert 2 == Comics.count_comics(search: "or", order_by: :title)
+      assert 2 == Comics.count_comics(search: "it", order_by: :title)
+      assert 2 == Comics.count_comics(search: "25", order_by: :title)
+    end
   end
 
   test "get_page" do
