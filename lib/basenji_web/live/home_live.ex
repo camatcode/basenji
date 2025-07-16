@@ -14,101 +14,24 @@ defmodule BasenjiWeb.HomeLive do
   @per_page 24
 
   def mount(_params, _session, socket) do
-    # Initialize form changeset
-    form_params = %{
-      "search_query" => "",
-      "format_filter" => "",
-      "sort_by" => "title"
-    }
-
-    form = to_form(form_params, as: :search_form)
-
     socket
     |> assign_search_options()
-    |> assign(:search_form, form)
-    |> assign_page()
     |> assign_content()
     |> then(&{:ok, &1})
   end
 
-  # Handle unified form submission
   def handle_event("search_submit", %{"search_form" => form_params}, socket) do
     search = Map.get(form_params, "search_query", "")
     format = Map.get(form_params, "format_filter", "")
     sort = Map.get(form_params, "sort_by", "title")
 
-    # Update form state
-    form = to_form(form_params, as: :search_form)
-
     socket
-    |> assign(:search_form, form)
-    |> assign_page(1, search, format, sort)
-    |> assign_content()
-    |> then(&{:noreply, &1})
-  end
-
-  # Handle individual field changes (for immediate feedback)
-  def handle_event("search_change", %{"search_form" => form_params}, socket) do
-    # Update form state without triggering search
-    form = to_form(form_params, as: :search_form)
-
-    socket
-    |> assign(:search_form, form)
-    |> then(&{:noreply, &1})
-  end
-
-  # Handle quick filter changes (immediate effect)  
-  def handle_event("quick_filter", %{"search_form" => %{"format_filter" => format}}, socket) do
-    search = socket.assigns.search_form.params["search_query"] || ""
-    sort = socket.assigns.search_form.params["sort_by"] || "title"
-
-    new_params = %{
-      "search_query" => search,
-      "format_filter" => format,
-      "sort_by" => sort
-    }
-
-    form = to_form(new_params, as: :search_form)
-
-    socket
-    |> assign(:search_form, form)
-    |> assign_page(1, search, format, sort)
-    |> assign_content()
-    |> then(&{:noreply, &1})
-  end
-
-  def handle_event("quick_filter", %{"search_form" => %{"sort_by" => sort}}, socket) do
-    search = socket.assigns.search_form.params["search_query"] || ""
-    format = socket.assigns.search_form.params["format_filter"] || ""
-
-    new_params = %{
-      "search_query" => search,
-      "format_filter" => format,
-      "sort_by" => sort
-    }
-
-    form = to_form(new_params, as: :search_form)
-
-    socket
-    |> assign(:search_form, form)
-    |> assign_page(1, search, format, sort)
-    |> assign_content()
+    |> assign_content(1, search, format, sort)
     |> then(&{:noreply, &1})
   end
 
   def handle_event("clear_filters", _params, socket) do
-    # Reset form to defaults
-    form_params = %{
-      "search_query" => "",
-      "format_filter" => "",
-      "sort_by" => "title"
-    }
-
-    form = to_form(form_params, as: :search_form)
-
     socket
-    |> assign(:search_form, form)
-    |> assign_page()
     |> assign_content()
     |> then(&{:noreply, &1})
   end
@@ -116,19 +39,19 @@ defmodule BasenjiWeb.HomeLive do
   def handle_event("paginate", %{"page" => page}, socket) do
     {page_num, _} = Integer.parse(page)
 
-    # Keep current form state, just change page
     form_params = socket.assigns.search_form.params
     search = Map.get(form_params, "search_query", "")
     format = Map.get(form_params, "format_filter", "")
     sort = Map.get(form_params, "sort_by", "title")
 
     socket
-    |> assign_page(page_num, search, format, sort)
-    |> assign_content()
+    |> assign_content(page_num, search, format, sort)
     |> then(&{:noreply, &1})
   end
 
-  defp assign_content(socket) do
+  defp assign_content(socket, current_page \\ 1, search_query \\ "", format_filter \\ "", sort_by \\ "title") do
+    socket = assign_page(socket, current_page, search_query, format_filter, sort_by)
+
     %{
       search_query: search,
       format_filter: format,
@@ -136,7 +59,6 @@ defmodule BasenjiWeb.HomeLive do
       current_page: page
     } = socket.assigns
 
-    # Get comics with search, pagination, etc
     opts = [
       limit: @per_page,
       offset: (page - 1) * @per_page,
@@ -160,13 +82,12 @@ defmodule BasenjiWeb.HomeLive do
 
     socket
     |> assign(:comics, comics)
-    |> assign(:total_comics, total_comics)
     |> assign(:total_pages, total_pages)
   end
 
   defp assign_search_options(socket) do
     formats = Comics.formats()
-    # Create options with string values and uppercase labels
+
     filter_options =
       formats
       |> Enum.map(fn format ->
@@ -187,6 +108,14 @@ defmodule BasenjiWeb.HomeLive do
   end
 
   defp assign_page(socket, current_page \\ 1, search_query \\ "", format_filter \\ "", sort_by \\ "title") do
+    form_params = %{
+      "search_query" => search_query,
+      "format_filter" => format_filter,
+      "sort_by" => sort_by
+    }
+
+    form = to_form(form_params, as: :search_form)
+
     socket
     |> assign(:page_info, %{
       current_page: current_page,
@@ -198,6 +127,7 @@ defmodule BasenjiWeb.HomeLive do
     |> assign(:search_query, search_query)
     |> assign(:format_filter, format_filter)
     |> assign(:sort_by, sort_by)
+    |> assign(:search_form, form)
   end
 
   defp maybe_add_search(opts, ""), do: opts
@@ -206,7 +136,6 @@ defmodule BasenjiWeb.HomeLive do
   defp maybe_add_format(opts, ""), do: opts
 
   defp maybe_add_format(opts, format) when is_binary(format) do
-    # Convert to lowercase and then to atom safely
     format_atom =
       format
       |> String.downcase()
@@ -215,7 +144,6 @@ defmodule BasenjiWeb.HomeLive do
     Keyword.put(opts, :format, format_atom)
   end
 
-  # Safely convert sort values to atoms
   defp safe_sort_atom(sort) when is_binary(sort) do
     case sort do
       "title" -> :title
@@ -259,10 +187,9 @@ defmodule BasenjiWeb.HomeLive do
       <.form
         for={@form}
         phx-submit="search_submit"
-        phx-change="search_change"
+        phx-change="search_submit"
         class="flex flex-col lg:flex-row gap-6"
       >
-        <!-- Search Input -->
         <div class="flex-1">
           <div class="relative">
             <.input
@@ -276,8 +203,7 @@ defmodule BasenjiWeb.HomeLive do
             </div>
           </div>
         </div>
-        
-    <!-- Format Filter -->
+
         <div class="lg:w-48">
           <select
             name="search_form[format_filter]"
@@ -292,8 +218,7 @@ defmodule BasenjiWeb.HomeLive do
             <% end %>
           </select>
         </div>
-        
-    <!-- Sort -->
+
         <div class="lg:w-48">
           <select
             name="search_form[sort_by]"
@@ -307,8 +232,7 @@ defmodule BasenjiWeb.HomeLive do
             <% end %>
           </select>
         </div>
-        
-    <!-- Submit & Clear -->
+
         <div class="flex gap-2">
           <button type="submit" class={button_classes(:primary)}>
             Search
