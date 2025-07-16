@@ -114,11 +114,55 @@ defmodule BasenjiWeb.Comics.ReadLive do
   def reader_page_display(assigns) do
     ~H"""
     <div class={comics_live_classes(:reader_page_display)}>
-      <img
-        src={~p"/api/comics/#{@comic.id}/page/#{@current_page}"}
-        alt={"Page #{@current_page}"}
-        class={comics_live_classes(:reader_page_image)}
-      />
+      <div class="relative">
+        <img
+          src={~p"/api/comics/#{@comic.id}/page/#{@current_page}"}
+          alt={"Page #{@current_page}"}
+          class={comics_live_classes(:reader_page_image)}
+        />
+        
+    <!-- Left navigation zone -->
+        <%= if @current_page > 1 do %>
+          <div
+            class="absolute left-0 top-0 h-full w-1/6 cursor-pointer group"
+            phx-click="change_page"
+            phx-value-page={@current_page - 1}
+          >
+            <!-- Gradient background -->
+            <div class="h-full w-full bg-gradient-to-r from-black from-0% via-black via-10% to-transparent to-70% opacity-0 group-hover:opacity-15 transition-opacity duration-300">
+            </div>
+            
+    <!-- Large, prominent icon -->
+            <div class="absolute inset-0 flex items-center justify-start pl-3">
+              <.icon
+                name="hero-chevron-left"
+                class="h-14 w-14 text-white bg-black bg-opacity-75 rounded-full p-3 opacity-0 group-hover:opacity-95 transition-all duration-300 shadow-2xl backdrop-blur-sm hover:scale-110"
+              />
+            </div>
+          </div>
+        <% end %>
+        
+    <!-- Right navigation zone -->
+        <%= if @current_page < @comic.page_count do %>
+          <div
+            class="absolute right-0 top-0 h-full w-1/6 cursor-pointer group"
+            phx-click="change_page"
+            phx-value-page={@current_page + 1}
+          >
+            <!-- Gradient background -->
+            <div class="h-full w-full bg-gradient-to-l from-black from-0% via-black via-10% to-transparent to-70% opacity-0 group-hover:opacity-15 transition-opacity duration-300">
+            </div>
+            
+    <!-- Large, prominent icon -->
+            <div class="absolute inset-0 flex items-center justify-end pr-3">
+              <.icon
+                name="hero-chevron-right"
+                class="h-14 w-14 text-white bg-black bg-opacity-75 rounded-full p-3 opacity-0 group-hover:opacity-95 transition-all duration-300 shadow-2xl backdrop-blur-sm hover:scale-110"
+              />
+            </div>
+          </div>
+        <% end %>
+      </div>
     </div>
     """
   end
