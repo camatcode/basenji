@@ -2,10 +2,8 @@ defmodule BasenjiWeb.HomeLive do
   @moduledoc false
   use BasenjiWeb, :live_view
 
-  import BasenjiWeb.CollectionComponents
   import BasenjiWeb.ComicComponents
   import BasenjiWeb.SharedComponents
-  import BasenjiWeb.Style.ComicStyle
   import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Comics
@@ -103,7 +101,7 @@ defmodule BasenjiWeb.HomeLive do
     |> assign(:search_options_info, info)
   end
 
-  defp assign_page(socket, current_page \\ 1, search_query \\ "", format_filter \\ "", sort_by \\ "title") do
+  defp assign_page(socket, current_page, search_query, format_filter, sort_by) do
     form_params = %{
       "search_query" => search_query,
       "format_filter" => format_filter,

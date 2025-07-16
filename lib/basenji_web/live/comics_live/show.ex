@@ -25,7 +25,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
         socket =
           socket
           |> put_flash(:error, "Comic not found")
-          |> push_navigate(to: ~p"/comics")
+          |> push_navigate(to: ~p"/")
 
         {:ok, socket}
     end
@@ -120,7 +120,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
   def back_to_comics_navigation(assigns) do
     ~H"""
     <div>
-      <.link navigate={~p"/comics"} class={navigation_classes(:back_link)}>
+      <.link navigate={~p"/"} class={navigation_classes(:back_link)}>
         <.icon name="hero-arrow-left" class={navigation_classes(:back_icon)} /> Back to Comics
       </.link>
     </div>
@@ -386,10 +386,7 @@ defmodule BasenjiWeb.ComicsLive.Show do
       <div class={comics_live_classes(:collection_tags_container)}>
         <%= for collection <- @comic.member_collections do %>
           <div class={comics_live_classes(:collection_tag)}>
-            <.link
-              navigate={~p"/collections/#{collection.id}"}
-              class={comics_live_classes(:collection_tag_link)}
-            >
+            <.link class={comics_live_classes(:collection_tag_link)}>
               {collection.title}
             </.link>
             <button
