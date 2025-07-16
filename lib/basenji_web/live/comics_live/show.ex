@@ -6,28 +6,33 @@ defmodule BasenjiWeb.ComicsLive.Show do
   import BasenjiWeb.Style.SharedStyle
 
   alias Basenji.Collections
+  alias Basenji.Comic
   alias Basenji.Comics
 
   def mount(%{"id" => id}, _session, socket) do
-    case Comics.get_comic(id, preload: [:member_collections, :optimized_comic, :original_comic]) do
+    socket
+    |> assign_comic(id)
+  end
+
+  defp assign_comic(socket, %Comic{} = comic) do
+    socket
+    |> assign(:page_title, comic.title || "Comic")
+    |> assign(:comic, comic)
+    |> assign(:current_page, 1)
+    |> assign(:show_reader, false)
+    |> then(&{:ok, &1})
+  end
+
+  defp assign_comic(socket, comic_id) when is_bitstring(comic_id) do
+    Comics.get_comic(comic_id, preload: [:member_collections, :optimized_comic, :original_comic])
+    |> case do
       {:ok, comic} ->
-        socket =
-          socket
-          |> assign(:page_title, comic.title || "Comic")
-          |> assign(:comic, comic)
-          |> assign(:current_page, 1)
-          |> assign(:show_reader, false)
-          |> assign(:collections, Collections.list_collections())
+        assign_comic(socket, comic)
 
-        {:ok, socket}
-
-      {:error, :not_found} ->
-        socket =
-          socket
-          |> put_flash(:error, "Comic not found")
-          |> push_navigate(to: ~p"/")
-
-        {:ok, socket}
+      _ ->
+        socket
+        |> put_flash(:error, "Comic not found")
+        |> push_navigate(to: ~p"/")
     end
   end
 
@@ -63,66 +68,14 @@ defmodule BasenjiWeb.ComicsLive.Show do
     {:noreply, assign(socket, :current_page, new_page)}
   end
 
-  def handle_event("add_to_collection", %{"collection_id" => collection_id}, socket) do
-    case Collections.add_to_collection(collection_id, socket.assigns.comic.id) do
-      {:ok, _} ->
-        # Reload comic to get updated collections
-        {:ok, updated_comic} =
-          Comics.get_comic(socket.assigns.comic.id, preload: [:member_collections, :optimized_comic, :original_comic])
-
-        socket =
-          socket
-          |> assign(:comic, updated_comic)
-          |> put_flash(:info, "Added to collection successfully")
-
-        {:noreply, socket}
-
-      {:error, _} ->
-        socket = put_flash(socket, :error, "Failed to add to collection")
-        {:noreply, socket}
-    end
-  end
-
-  def handle_event("remove_from_collection", %{"collection_id" => collection_id}, socket) do
-    case Collections.remove_from_collection(collection_id, socket.assigns.comic.id) do
-      {:ok, _} ->
-        # Reload comic to get updated collections
-        {:ok, updated_comic} =
-          Comics.get_comic(socket.assigns.comic.id, preload: [:member_collections, :optimized_comic, :original_comic])
-
-        socket =
-          socket
-          |> assign(:comic, updated_comic)
-          |> put_flash(:info, "Removed from collection successfully")
-
-        {:noreply, socket}
-
-      {:error, _} ->
-        socket = put_flash(socket, :error, "Failed to remove from collection")
-        {:noreply, socket}
-    end
-  end
-
   def render(assigns) do
     ~H"""
     <div class="max-w-8xl mx-auto space-y-6">
-      <.back_to_comics_navigation />
-
       <%= if @show_reader do %>
         <.comic_reader comic={@comic} current_page={@current_page} />
       <% else %>
-        <.comic_details_view comic={@comic} collections={@collections} />
+        <.comic_details_view comic={@comic} />
       <% end %>
-    </div>
-    """
-  end
-
-  def back_to_comics_navigation(assigns) do
-    ~H"""
-    <div>
-      <.link navigate={~p"/"} class={navigation_classes(:back_link)}>
-        <.icon name="hero-arrow-left" class={navigation_classes(:back_icon)} /> Back to Comics
-      </.link>
     </div>
     """
   end
@@ -211,13 +164,12 @@ defmodule BasenjiWeb.ComicsLive.Show do
   end
 
   attr :comic, :any, required: true
-  attr :collections, :list, required: true
 
   def comic_details_view(assigns) do
     ~H"""
     <div class={comics_live_classes(:details_grid)}>
       <.comic_cover_and_actions comic={@comic} />
-      <.comic_details_and_collections comic={@comic} collections={@collections} />
+      <.comic_details comic={@comic} />
     </div>
     """
   end
@@ -286,13 +238,11 @@ defmodule BasenjiWeb.ComicsLive.Show do
   end
 
   attr :comic, :any, required: true
-  attr :collections, :list, required: true
 
-  def comic_details_and_collections(assigns) do
+  def comic_details(assigns) do
     ~H"""
     <div class={comics_live_classes(:details_section)}>
       <.comic_metadata comic={@comic} />
-      <.comic_collections_management comic={@comic} collections={@collections} />
     </div>
     """
   end
@@ -361,77 +311,6 @@ defmodule BasenjiWeb.ComicsLive.Show do
         <dd class={comics_live_classes(:metadata_value)}>{DateTime.to_date(@comic.inserted_at)}</dd>
       </div>
     </div>
-    """
-  end
-
-  attr :comic, :any, required: true
-  attr :collections, :list, required: true
-
-  def comic_collections_management(assigns) do
-    ~H"""
-    <div class={comics_live_classes(:metadata_card)}>
-      <h3 class={comics_live_classes(:collections_section_heading)}>Collections</h3>
-
-      <.current_collections comic={@comic} />
-      <.add_to_collection_form comic={@comic} collections={@collections} />
-    </div>
-    """
-  end
-
-  attr :comic, :any, required: true
-
-  def current_collections(assigns) do
-    ~H"""
-    <%= if length(@comic.member_collections) > 0 do %>
-      <div class={comics_live_classes(:collection_tags_container)}>
-        <%= for collection <- @comic.member_collections do %>
-          <div class={comics_live_classes(:collection_tag)}>
-            <.link class={comics_live_classes(:collection_tag_link)}>
-              {collection.title}
-            </.link>
-            <button
-              phx-click="remove_from_collection"
-              phx-value-collection_id={collection.id}
-              class={comics_live_classes(:collection_tag_remove)}
-            >
-              <.icon name="hero-x-mark" class={comics_live_classes(:collection_tag_icon)} />
-            </button>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-    """
-  end
-
-  attr :comic, :any, required: true
-  attr :collections, :list, required: true
-
-  def add_to_collection_form(assigns) do
-    ~H"""
-    <%= if length(@collections) > 0 do %>
-      <div class={comics_live_classes(:add_collection_form)}>
-        <select id="collection-select" class={comics_live_classes(:add_collection_select)}>
-          <option value="">Select a collection...</option>
-          <%= for collection <- @collections do %>
-            <%= unless Enum.any?(@comic.member_collections, &(&1.id == collection.id)) do %>
-              <option value={collection.id}>{collection.title}</option>
-            <% end %>
-          <% end %>
-        </select>
-        <button
-          phx-click="add_to_collection"
-          phx-value-collection_id=""
-          onclick="this.setAttribute('phx-value-collection_id', document.getElementById('collection-select').value)"
-          class={comics_live_classes(:add_collection_button)}
-        >
-          Add
-        </button>
-      </div>
-    <% else %>
-      <p class={comics_live_classes(:no_collections_message)}>
-        No collections available. Create some collections first.
-      </p>
-    <% end %>
     """
   end
 
