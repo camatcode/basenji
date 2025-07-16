@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.ComicsLive.Show do
+defmodule BasenjiWeb.Comics.ShowLive do
   @moduledoc false
   use BasenjiWeb, :live_view
 
@@ -41,31 +41,14 @@ defmodule BasenjiWeb.ComicsLive.Show do
   end
 
   def handle_event("change_page", %{"page" => page}, socket) do
-    page_num = String.to_integer(page)
     max_page = socket.assigns.comic.page_count
 
     page_num =
-      cond do
-        page_num < 1 -> 1
-        page_num > max_page -> max_page
-        true -> page_num
-      end
+      String.to_integer(page)
+      |> min(max_page)
+      |> max(1)
 
     {:noreply, assign(socket, :current_page, page_num)}
-  end
-
-  def handle_event("next_page", _params, socket) do
-    current = socket.assigns.current_page
-    max_page = socket.assigns.comic.page_count
-
-    new_page = if current < max_page, do: current + 1, else: current
-    {:noreply, assign(socket, :current_page, new_page)}
-  end
-
-  def handle_event("prev_page", _params, socket) do
-    current = socket.assigns.current_page
-    new_page = if current > 1, do: current - 1, else: current
-    {:noreply, assign(socket, :current_page, new_page)}
   end
 
   def render(assigns) do
@@ -117,7 +100,8 @@ defmodule BasenjiWeb.ComicsLive.Show do
     ~H"""
     <div class={comics_live_classes(:reader_navigation)}>
       <button
-        phx-click="prev_page"
+        phx-click="change_page"
+        phx-value-page={@current_page + 1}
         class={comics_live_classes(:reader_nav_button)}
         disabled={@current_page == 1}
       >
@@ -138,7 +122,8 @@ defmodule BasenjiWeb.ComicsLive.Show do
       </div>
 
       <button
-        phx-click="next_page"
+        phx-click="change_page"
+        phx-value-page={@current_page + 1}
         class={comics_live_classes(:reader_nav_button)}
         disabled={@current_page == @page_count}
       >
