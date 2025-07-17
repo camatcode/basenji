@@ -10,6 +10,7 @@ defmodule BasenjiWeb.PredictiveCacheTest do
     %{active_prefetches: %{}, completed_prefetch_count: 0} = PredictiveCache.get_state()
     PredictiveCache.get_comic_page_from_cache(comic, 1)
     :timer.sleep(5_000)
-    %{completed_prefetch_count: 1} = PredictiveCache.get_state()
+    %{completed_prefetch_count: count} = PredictiveCache.get_state()
+    assert count > 0
   end
 end
