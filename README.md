@@ -46,10 +46,10 @@
 
 ### Features / Running Roadmap
 
-* ✅ Supports CBZ, CBR, CBT, CB7, and PDF comic book formats
+* ✅ Supported formats:  CBZ, CBR, CBT, CB7, and PDF
 * ✅ Optimizes pages to improve read times on-the-fly
 * ✅ Efficent CRUD, filtering, sorting
-  *  🚧 In Progress: Test that its faster than every other comic book reader, especially under load
+  *  ✅ Intelligently pre-fetches pages, so you're *never* waiting on it to send you the next page (thank you `GenServer`)
 * ✅ APIs / Services
   * ✅ JSON:API
   * ✅ GraphQL
@@ -59,12 +59,11 @@
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
   * ✅ Stress tested with 49.9 GB of comics with 2700 items
   * ✅ Stores optimized versions to save you disk space
-* Front-End
+*  ✅ Front-End
   *  ✅ Search, List, Explore, Filter
   *  ✅ Smart full screen viewer
   *  🚧 In Progress: Continue making  it more ergonomic
   *  🚧 Admin pages
-* 🚧 Rest is in development
 
 ### ⏸️ Deep Backlog
 
