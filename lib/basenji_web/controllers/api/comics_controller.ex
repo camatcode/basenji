@@ -5,13 +5,15 @@ defmodule BasenjiWeb.ComicsController do
   alias Basenji.Comics
   alias Basenji.ImageProcessor
   alias BasenjiWeb.API.Utils
+  alias BasenjiWeb.PredictiveCache
 
   def get_page(conn, params) do
     id = params["id"]
     page = params["page"]
 
-    with {:ok, page_num} <- Utils.safe_to_int(page) do
-      Utils.get_comic_page_from_cache(id, page_num)
+    with {:ok, page_num} <- Utils.safe_to_int(page),
+         {:ok, comic} <- Comics.get_comic(id) do
+      PredictiveCache.get_comic_page_from_cache(comic, page_num)
     end
     |> case do
       {:ok, binary, mime} ->
@@ -58,7 +60,7 @@ defmodule BasenjiWeb.ComicsController do
   end
 
   defp make_preview(comic) do
-    {:ok, bytes, _mime} = Utils.get_comic_page_from_cache(comic, 1)
+    {:ok, bytes, _mime} = PredictiveCache.get_comic_page_from_cache(comic, 1)
     {:ok, preview_bytes} = ImageProcessor.get_image_preview(bytes, 600, 600)
     Comics.update_comic(comic, %{image_preview: preview_bytes})
     {:ok, preview_bytes}
