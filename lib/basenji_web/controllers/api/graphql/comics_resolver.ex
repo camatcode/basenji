@@ -97,7 +97,7 @@ defmodule BasenjiWeb.GraphQL.ComicsResolver do
 
   defp set_optimization_flags(comic) do
     comic
-    |> Map.put(:is_optimized, not is_nil(comic.original_id))
+    |> Map.put(:is_optimized, not is_nil(comic.original_id) && !comic.pre_optimized?)
     |> Map.put(:has_optimization, not is_nil(comic.optimized_id))
   end
 

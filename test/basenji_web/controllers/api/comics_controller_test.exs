@@ -23,11 +23,10 @@ defmodule BasenjiWeb.ComicsControllerTest do
     %{resource_location: loc} = build(:comic)
     {:ok, %{title: nil, page_count: -1, format: nil} = comic} = Comics.create_comic(%{resource_location: loc})
 
-    %{status: 400, resp_body: ~s({"error":"no_preview"})} =
+    %{status: 200, resp_body: body} =
       get(conn, ~p"/api/comics/#{comic.id}/preview", %{})
 
-    %{failure: 0} = TestHelper.drain_queue(:comic)
-    %{status: 200, resp_body: body} = get(conn, ~p"/api/comics/#{comic.id}/preview", %{})
     assert body
+    %{failure: 0} = TestHelper.drain_queue(:comic)
   end
 end

@@ -20,7 +20,8 @@ defmodule Basenji.Comic do
     :format,
     :byte_size,
     :original_id,
-    :optimized_id
+    :optimized_id,
+    :pre_optimized?
   ]
 
   @cloneable_attrs [:title, :author, :description, :released_year, :page_count, :format, :image_preview]
@@ -48,6 +49,7 @@ defmodule Basenji.Comic do
     field(:image_preview, :binary)
     field(:byte_size, :integer, default: -1)
     field(:optimized_id, :binary_id)
+    field(:pre_optimized?, :boolean)
 
     belongs_to(:original_comic, Comic, foreign_key: :original_id, type: :binary_id)
     has_one(:optimized_comic, Comic, foreign_key: :original_id)
@@ -85,7 +87,6 @@ defmodule Basenji.Comic do
   end
 
   defp maybe_validate_optimization(changeset) do
-    # Only run optimization validations if optimization fields are being changed
     if get_change(changeset, :original_id) || get_change(changeset, :optimized_id) do
       changeset
       |> validate_no_optimization_chain()

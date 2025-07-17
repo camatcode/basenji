@@ -37,7 +37,7 @@ defmodule Basenji.Worker.ComicLowWorker do
 
     with {:ok, optimized_resource_location} <- ComicOptimizer.optimize(resource_location, tmp_dir, parent_dir) do
       if optimized_resource_location == resource_location do
-        :ok
+        Comics.update_comic(comic, %{pre_optimized?: true})
       else
         Comics.create_optimized_comic(comic, %{resource_location: optimized_resource_location})
       end

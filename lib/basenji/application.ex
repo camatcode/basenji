@@ -12,6 +12,7 @@ defmodule Basenji.Application do
       Basenji.Repo,
       {Oban, Application.fetch_env!(:basenji, Oban)},
       {DNSCluster, query: Application.get_env(:basenji, :dns_cluster_query) || :ignore},
+      {Cachex, [:basenji_cache]},
       {Phoenix.PubSub, name: Basenji.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Basenji.Finch},

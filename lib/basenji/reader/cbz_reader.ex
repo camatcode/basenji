@@ -11,7 +11,6 @@ defmodule Basenji.Reader.CBZReader do
   def get_magic_numbers, do: [%{offset: 0, magic: [0x50, 0x4B, 0x03, 0x04]}]
 
   def get_entries(cbz_file_path, _opts \\ []) do
-    # zipinfo -1 /home/cam/Documents/comics/Great_Lakes_Avengers/Great_Lakes_Avengers_04.cbz
     with {:ok, output} <- exec("zipinfo", ["-1", cbz_file_path]) do
       file_names = output |> String.split("\n")
 

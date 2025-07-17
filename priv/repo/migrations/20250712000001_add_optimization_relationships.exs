@@ -5,6 +5,7 @@ defmodule Basenji.Repo.Migrations.AddOptimizationRelationships do
     alter table(:comics) do
       add(:original_id, references(:comics, type: :uuid, on_delete: :nilify_all))
       add(:optimized_id, references(:comics, type: :uuid, on_delete: :nilify_all))
+      add(:pre_optimized?, :boolean, default: false, null: false)
     end
 
     create(index(:comics, [:original_id]))

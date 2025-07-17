@@ -157,23 +157,6 @@ defmodule BasenjiWeb.Style.SharedStyle do
   def page_classes(:header_layout), do: "flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
 
   @privdoc """
-  **back_link**: Styling for "Back to X" navigation links
-
-  * `inline-flex items-center`: allows icon and text to align properly
-  * `text-gray-600 hover:text-gray-900`: medium gray with darker hover
-  """
-  @doc false
-  def navigation_classes(:back_link), do: "inline-flex items-center text-gray-600 hover:text-gray-900"
-
-  @privdoc """
-  **back_icon**: Icon styling for back navigation
-
-  * `h-5 w-5 mr-2`: medium icon with right margin for spacing from text
-  """
-  @doc false
-  def navigation_classes(:back_icon), do: "h-5 w-5 mr-2"
-
-  @privdoc """
   **comics_standard**: Standard responsive grid for comic cards
 
   * `grid ...`: responsive columns
@@ -185,59 +168,4 @@ defmodule BasenjiWeb.Style.SharedStyle do
   """
   @doc false
   def grid_classes(:comics_standard), do: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-
-  @privdoc """
-  **collections_standard**: Standard responsive grid for collection cards
-
-  * `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`: responsive columns
-    - 1 column on mobile (collections need more width)
-    - 2 columns on small screens
-    - 3 columns on large screens
-  * `gap-6`: consistent spacing (24px) between cards
-  """
-  @doc false
-  def grid_classes(:collections_standard), do: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-
-  @privdoc """
-  **collections_extended**: Extended grid for collection cards with more columns
-
-  * `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`: responsive columns
-    - Same as standard but adds 4th column on extra large screens
-  * `gap-6`: consistent spacing (24px) between cards
-  """
-  @doc false
-  def grid_classes(:collections_extended), do: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-
-  @privdoc """
-  **container**: Container for content sections
-
-  * `mb-8`: bottom margin (32px) between major sections
-  """
-  @doc false
-  def section_classes(:container), do: "mb-8"
-
-  @privdoc """
-  **header**: Header for content sections with title and action
-
-  * `flex items-center justify-between mb-4`: spreads title and "view all" link
-  """
-  @doc false
-  def section_classes(:header), do: "flex items-center justify-between mb-4"
-
-  @privdoc """
-  **title**: Title for content sections
-
-  * `text-xl font-semibold text-gray-900`: large, bold section title
-  """
-  @doc false
-  def section_classes(:title), do: "text-xl font-semibold text-gray-900"
-
-  @privdoc """
-  **view_all_link**: "View all →" links to full pages
-
-  * `text-blue-600 hover:text-blue-700`: blue link with darker hover
-  * `font-medium`: slightly bolder for prominence
-  """
-  @doc false
-  def section_classes(:view_all_link), do: "text-blue-600 hover:text-blue-700 font-medium"
 end
