@@ -5,6 +5,7 @@ defmodule Basenji.Comics do
   import Ecto.Query, warn: false
 
   alias Basenji.Comic
+  alias Basenji.Comics.ComicPreview
   alias Basenji.Processor
   alias Basenji.Reader
   alias Basenji.Repo
@@ -144,17 +145,38 @@ defmodule Basenji.Comics do
 
   def get_image_preview(comic_ref)
 
-  def get_image_preview(%Comic{image_preview: nil}) do
-    {:error, :no_preview}
-  end
-
-  def get_image_preview(%Comic{image_preview: bytes}) do
-    {:ok, bytes}
+  def get_image_preview(%Comic{id: comic_id}) do
+    case Repo.get_by(ComicPreview, comic_id: comic_id) do
+      nil -> {:error, :no_preview}
+      preview -> {:ok, preview.image_data}
+    end
   end
 
   def get_image_preview(comic_id) when is_bitstring(comic_id) do
     with {:ok, comic} <- get_comic(comic_id) do
       get_image_preview(comic)
+    end
+  end
+
+  def associate_image_preview(%Comic{id: id} = comic, bytes, assoc_opts \\ []) do
+    content_type = Keyword.get(assoc_opts, :content_type, "image/jpeg")
+    width = Keyword.get(assoc_opts, :width, nil)
+    height = Keyword.get(assoc_opts, :height, nil)
+
+    attrs = %{
+      comic_id: id,
+      image_data: bytes,
+      content_type: content_type,
+      width: width,
+      height: height
+    }
+
+    with {:ok, preview} <-
+           %ComicPreview{}
+           |> ComicPreview.changeset(attrs)
+           |> Repo.insert(on_conflict: :replace_all, conflict_target: :comic_id),
+         {:ok, _} <- update_comic(comic, %{image_preview_id: preview.id}) do
+      {:ok, preview}
     end
   end
 

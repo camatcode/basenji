@@ -27,12 +27,12 @@ defmodule Basenji.Worker.ComicMedWorker do
       reraise e, __STACKTRACE__
   end
 
-  defp snapshot(%{image_preview: preview}, _args) when is_binary(preview), do: :ok
+  defp snapshot(%{image_preview_id: id}, _args) when is_bitstring(id), do: :ok
 
   defp snapshot(comic, _args) do
     with {:ok, bytes, _mime} <- Comics.get_page(comic, 1),
          {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 600, 600) do
-      Comics.update_comic(comic, %{image_preview: preview_bytes})
+      Comics.associate_image_preview(comic, preview_bytes, width: 600, height: 600)
     end
   end
 end
