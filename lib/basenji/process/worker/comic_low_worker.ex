@@ -15,7 +15,7 @@ defmodule Basenji.Worker.ComicLowWorker do
       Logger.info("Someone is browsing, snoozing low comic #{comic_id} for 5 minutes")
       {:snooze, 300}
     else
-      do_work(comic_id, args)
+      do_work(action, comic_id, args)
     end
   rescue
     e ->
@@ -23,7 +23,7 @@ defmodule Basenji.Worker.ComicLowWorker do
       reraise e, __STACKTRACE__
   end
 
-  def do_work(comic_id, args) do
+  def do_work(action, comic_id, args) do
     Comics.get_comic(comic_id)
     |> case do
       {:ok, comic} ->
