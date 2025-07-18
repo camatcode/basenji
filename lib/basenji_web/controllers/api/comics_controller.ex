@@ -3,7 +3,7 @@ defmodule BasenjiWeb.ComicsController do
   use BasenjiWeb, :controller
 
   alias Basenji.Comics
-  alias Basenji.ImageProcessor
+  # alias Basenji.ImageProcessor
   alias BasenjiWeb.API.Utils
   alias BasenjiWeb.PredictiveCache
 
@@ -59,10 +59,10 @@ defmodule BasenjiWeb.ComicsController do
     end
   end
 
-  defp make_preview(comic) do
-    {:ok, bytes, _mime} = PredictiveCache.get_comic_page_from_cache(comic, 1)
-    {:ok, preview_bytes} = ImageProcessor.get_image_preview(bytes, 600, 600)
-    Comics.associate_image_preview(comic, preview_bytes, width: 600, height: 600)
-    {:ok, preview_bytes}
-  end
+  #  defp make_preview(comic) do
+  #    {:ok, bytes, _mime} = PredictiveCache.get_comic_page_from_cache(comic, 1)
+  #    {:ok, preview_bytes} = ImageProcessor.get_image_preview(bytes, 600, 600)
+  #    Comics.associate_image_preview(comic, preview_bytes, width: 600, height: 600)
+  #    {:ok, preview_bytes}
+  #  end
 end
