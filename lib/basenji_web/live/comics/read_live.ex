@@ -10,6 +10,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
   def mount(%{"id" => id}, _session, socket) do
     socket
     |> assign_comic(id)
+    |> assign(:show_controls, false)
     |> then(&{:ok, &1})
   end
 
@@ -40,6 +41,18 @@ defmodule BasenjiWeb.Comics.ReadLive do
 
   def handle_event("change_page", %{"page" => page}, socket) do
     {:noreply, change_page(socket, page)}
+  end
+
+  def handle_event("toggle_controls", _params, socket) do
+    {:noreply, assign(socket, :show_controls, !socket.assigns.show_controls)}
+  end
+
+  def handle_event("hide_controls", _params, socket) do
+    {:noreply, assign(socket, :show_controls, false)}
+  end
+
+  def handle_event("handle_keydown", %{"key" => "c"}, socket) do
+    handle_event("toggle_controls", %{}, socket)
   end
 
   def handle_event("handle_keydown", %{"key" => "Escape"}, socket) do
@@ -80,7 +93,12 @@ defmodule BasenjiWeb.Comics.ReadLive do
   def render(assigns) do
     ~H"""
     <div class="max-w-8xl mx-auto space-y-6">
-      <.comic_reader comic={@comic} current_page={@current_page} fullscreen={@fullscreen} />
+      <.comic_reader
+        comic={@comic}
+        current_page={@current_page}
+        fullscreen={@fullscreen}
+        show_controls={@show_controls}
+      />
     </div>
     """
   end
@@ -88,12 +106,18 @@ defmodule BasenjiWeb.Comics.ReadLive do
   attr :comic, :any, required: true
   attr :current_page, :integer, required: true
   attr :fullscreen, :boolean, required: true
+  attr :show_controls, :boolean, required: true
 
   def comic_reader(assigns) do
     ~H"""
     <div class="bg-black rounded-lg overflow-hidden">
       <.reader_header comic={@comic} current_page={@current_page} />
-      <.reader_page_display comic={@comic} current_page={@current_page} fullscreen={@fullscreen} />
+      <.reader_page_display
+        comic={@comic}
+        current_page={@current_page}
+        fullscreen={@fullscreen}
+        show_controls={@show_controls}
+      />
     </div>
     """
   end
@@ -125,6 +149,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
   attr :comic, :any, required: true
   attr :current_page, :integer, required: true
   attr :fullscreen, :boolean, required: true
+  attr :show_controls, :boolean, required: true
 
   def reader_page_display(assigns) do
     ~H"""
@@ -140,19 +165,31 @@ defmodule BasenjiWeb.Comics.ReadLive do
         <.next_page_nav :if={@current_page < @comic.page_count} current_page={@current_page} />
       </div>
 
-      <.fullscreen_overlay :if={@fullscreen} comic={@comic} current_page={@current_page} />
+      <.fullscreen_overlay
+        :if={@fullscreen}
+        comic={@comic}
+        current_page={@current_page}
+        show_controls={@show_controls}
+      />
+      <.reader_controls
+        :if={@show_controls && !@fullscreen}
+        comic={@comic}
+        current_page={@current_page}
+      />
     </div>
     """
   end
 
   attr :comic, :any, required: true
   attr :current_page, :integer, required: true
+  attr :show_controls, :boolean, required: true
 
   defp fullscreen_overlay(assigns) do
     ~H"""
     <div
       class="fixed inset-0 z-50 bg-black flex justify-center items-center"
       phx-window-keydown="handle_keydown"
+      phx-debounce="100"
       phx-click="toggle_fullscreen"
     >
       <.fullscreen_nav_zone :if={@current_page > 1} direction="left" target_page={@current_page - 1} />
@@ -168,6 +205,8 @@ defmodule BasenjiWeb.Comics.ReadLive do
         alt={"Page #{@current_page}"}
         class="max-w-[100vw] max-h-[100vh] object-contain pointer-events-none"
       />
+
+      <.reader_controls :if={@show_controls} comic={@comic} current_page={@current_page} />
     </div>
     """
   end
@@ -254,6 +293,42 @@ defmodule BasenjiWeb.Comics.ReadLive do
           name="hero-chevron-right"
           class="h-14 w-14 text-white bg-black bg-opacity-75 rounded-full p-3 opacity-0 group-hover:opacity-95 transition-all duration-300 shadow-2xl backdrop-blur-sm hover:scale-110"
         />
+      </div>
+    </div>
+    """
+  end
+
+  attr :comic, :map, required: true
+  attr :current_page, :integer, required: true
+
+  def reader_controls(assigns) do
+    ~H"""
+    <div
+      class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40"
+      phx-click="hide_controls"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" phx-click="prevent_close">
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold text-center">Reader Controls</h3>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-blue-600">{@current_page}</div>
+              <div class="text-sm text-gray-600">Current Page</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-blue-600">{@comic.page_count}</div>
+              <div class="text-sm text-gray-600">Total Pages</div>
+            </div>
+          </div>
+
+          <button
+            phx-click="hide_controls"
+            class="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
     """
