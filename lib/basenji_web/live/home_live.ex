@@ -61,7 +61,7 @@ defmodule BasenjiWeb.HomeLive do
         limit: @per_page,
         offset: (page - 1) * @per_page,
         order_by: safe_sort_atom(sort),
-        inserted_before: DateTime.shift(DateTime.utc_now(), second: -30)
+        inserted_before: DateTime.shift(DateTime.utc_now(), second: -5)
       ]
       |> maybe_add_search(search)
       |> maybe_add_format(format)
@@ -70,7 +70,7 @@ defmodule BasenjiWeb.HomeLive do
 
     total_opts =
       [
-        inserted_before: DateTime.shift(DateTime.utc_now(), second: -30)
+        inserted_before: DateTime.shift(DateTime.utc_now(), second: -5)
       ]
       |> maybe_add_search(search)
       |> maybe_add_format(format)

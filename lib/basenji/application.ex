@@ -15,6 +15,7 @@ defmodule Basenji.Application do
       {Cachex, [:basenji_cache]},
       BasenjiWeb.PredictiveCache,
       {Phoenix.PubSub, name: Basenji.PubSub},
+      {Basenji.UserPresenceTracker, [pubsub_server: Basenji.PubSub]},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Basenji.Finch},
       # Start a worker by calling: Basenji.Worker.start_link(arg)
