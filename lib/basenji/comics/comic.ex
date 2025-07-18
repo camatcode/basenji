@@ -6,13 +6,13 @@ defmodule Basenji.Comic do
 
   alias Basenji.Collection
   alias Basenji.Comic
+  alias Basenji.Comics.ComicPreview
 
   @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3, pdf: 4]
 
   @attrs [
     :title,
     :author,
-    :image_preview,
     :description,
     :resource_location,
     :released_year,
@@ -21,10 +21,11 @@ defmodule Basenji.Comic do
     :byte_size,
     :original_id,
     :optimized_id,
+    :image_preview_id,
     :pre_optimized?
   ]
 
-  @cloneable_attrs [:title, :author, :description, :released_year, :page_count, :format, :image_preview]
+  @cloneable_attrs [:title, :author, :description, :released_year, :page_count, :format]
 
   @derive {
     JSONAPIPlug.Resource,
@@ -33,7 +34,8 @@ defmodule Basenji.Comic do
     relationships: [
       member_collections: [many: true, resource: Basenji.Collection],
       original_comic: [resource: Comic],
-      optimized_comic: [resource: Comic]
+      optimized_comic: [resource: Comic],
+      image_preview: [resource: ComicPreview]
     ]
   }
 
@@ -46,13 +48,14 @@ defmodule Basenji.Comic do
     field(:released_year, :integer, default: -1)
     field(:page_count, :integer, default: -1)
     field(:format, Ecto.Enum, values: @formats)
-    field(:image_preview, :binary)
     field(:byte_size, :integer, default: -1)
     field(:optimized_id, :binary_id)
+    field(:image_preview_id, :binary_id)
     field(:pre_optimized?, :boolean)
 
     belongs_to(:original_comic, Comic, foreign_key: :original_id, type: :binary_id)
     has_one(:optimized_comic, Comic, foreign_key: :original_id)
+    has_one(:image_preview, ComicPreview, foreign_key: :id)
 
     many_to_many(:member_collections, Collection,
       join_through: "collection_comics",

@@ -21,10 +21,12 @@ defmodule Basenji.Worker.ComicWorkerTest do
 
   test "snapshot" do
     %{resource_location: loc} = build(:comic)
-    {:ok, %{image_preview: nil} = comic} = Comics.create_comic(%{resource_location: loc})
+    {:ok, %{image_preview_id: nil} = comic} = Comics.create_comic(%{resource_location: loc})
     %{failure: 0} = TestHelper.drain_queue(:comic)
-    {:ok, comic} = Comics.get_comic(comic.id)
-    assert byte_size(comic.image_preview) > 0
+    {:ok, %{image_preview_id: pre_id}} = Comics.get_comic(comic.id)
+    assert pre_id
+    {:ok, bytes} = Comics.get_image_preview(comic.id)
+    assert byte_size(bytes) > 0
   end
 
   test "delete" do
