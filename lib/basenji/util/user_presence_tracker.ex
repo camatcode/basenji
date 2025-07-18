@@ -4,12 +4,13 @@ defmodule Basenji.UserPresenceTracker do
   use Phoenix.Tracker
 
   alias __MODULE__, as: UserPresenceTracker
+  alias Phoenix.Tracker
 
   @topic "browsers"
 
   def start_link(opts) do
-    opts = Keyword.merge([name: UserPresenceTracker], opts)
-    Phoenix.Tracker.start_link(UserPresenceTracker, opts, opts)
+    opts = Keyword.put(opts, :name, UserPresenceTracker)
+    Tracker.start_link(UserPresenceTracker, opts, opts)
   end
 
   def init(opts) do
@@ -19,14 +20,7 @@ defmodule Basenji.UserPresenceTracker do
 
   def handle_diff(_diff, state), do: {:ok, state}
 
-  def track_presence(pid) do
-    Phoenix.Tracker.track(UserPresenceTracker, pid, @topic, pid, %{})
-  end
+  def track_presence(pid), do: Tracker.track(UserPresenceTracker, pid, @topic, pid, %{})
 
-  def anyone_browsing? do
-    case Phoenix.Tracker.list(UserPresenceTracker, @topic) do
-      [] -> false
-      _ -> true
-    end
-  end
+  def anyone_browsing?, do: !Enum.empty?(Tracker.list(UserPresenceTracker, @topic))
 end
