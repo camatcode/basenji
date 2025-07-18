@@ -4,6 +4,7 @@ defmodule Basenji.Worker.ComicLowWorker do
   use Oban.Worker, queue: :comic_low, unique: [period: 3000], max_attempts: 3
 
   alias Basenji.Comics
+  alias Basenji.ImageProcessor
   alias Basenji.Reader.Process.ComicOptimizer
   alias Basenji.UserPresenceTracker
 
@@ -29,6 +30,7 @@ defmodule Basenji.Worker.ComicLowWorker do
       {:ok, comic} ->
         case action do
           "optimize" -> optimize(comic, args)
+          "snapshot" -> snapshot(comic, args)
           _ -> {:error, "Unknown action #{action}"}
         end
 
@@ -55,4 +57,12 @@ defmodule Basenji.Worker.ComicLowWorker do
   end
 
   defp optimize(_comic, _args), do: :ok
+  defp snapshot(%{image_preview_id: id}, _args) when is_bitstring(id), do: :ok
+
+  defp snapshot(comic, _args) do
+    with {:ok, bytes, _mime} <- Comics.get_page(comic, 1),
+         {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 600, 600) do
+      Comics.associate_image_preview(comic, preview_bytes, width: 600, height: 600)
+    end
+  end
 end

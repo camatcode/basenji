@@ -8,7 +8,6 @@ defmodule Basenji.Worker.ComicWorker do
   alias Basenji.Comics
   alias Basenji.Reader
   alias Basenji.Worker.ComicLowWorker
-  alias Basenji.Worker.ComicMedWorker
 
   require Logger
 
@@ -18,10 +17,6 @@ defmodule Basenji.Worker.ComicWorker do
       to_low_job(%{action: :snapshot, comic_id: comic_id}, schedule_in: 10),
       to_low_job(%{action: :optimize, comic_id: comic_id}, schedule_in: 10)
     ]
-  end
-
-  def to_med_job(args, opts \\ []) do
-    ComicMedWorker.new(args, opts)
   end
 
   def to_low_job(args, opts \\ []) do
