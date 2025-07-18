@@ -5,11 +5,25 @@ defmodule Basenji.Worker.ComicLowWorker do
 
   alias Basenji.Comics
   alias Basenji.Reader.Process.ComicOptimizer
+  alias Basenji.UserPresenceTracker
 
   require Logger
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "comic_id" => comic_id} = args}) do
+    if UserPresenceTracker.anyone_browsing?() do
+      Logger.info("Someone is browsing, snoozing low comic #{comic_id} for 5 minutes")
+      {:snooze, 300}
+    else
+      do_work(comic_id, args)
+    end
+  rescue
+    e ->
+      Logger.error(Exception.format(:error, e, __STACKTRACE__))
+      reraise e, __STACKTRACE__
+  end
+
+  def do_work(comic_id, args) do
     Comics.get_comic(comic_id)
     |> case do
       {:ok, comic} ->
@@ -21,10 +35,6 @@ defmodule Basenji.Worker.ComicLowWorker do
       _ ->
         :ok
     end
-  rescue
-    e ->
-      Logger.error(Exception.format(:error, e, __STACKTRACE__))
-      reraise e, __STACKTRACE__
   end
 
   defp optimize(%{optimized_id: nil, original_id: nil, resource_location: resource_location} = comic, _args) do

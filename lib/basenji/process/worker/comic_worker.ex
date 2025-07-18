@@ -15,7 +15,7 @@ defmodule Basenji.Worker.ComicWorker do
   def to_job(%{action: :insert, comic_id: comic_id}) do
     [
       to_job(%{action: :extract_metadata, comic_id: comic_id}),
-      to_med_job(%{action: :snapshot, comic_id: comic_id}, schedule_in: 10),
+      to_low_job(%{action: :snapshot, comic_id: comic_id}, schedule_in: 10),
       to_low_job(%{action: :optimize, comic_id: comic_id}, schedule_in: 10)
     ]
   end

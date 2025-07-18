@@ -20,7 +20,7 @@ defmodule Basenji.UserPresenceTracker do
   def handle_diff(_diff, state), do: {:ok, state}
 
   def track_presence(pid) do
-    Phoenix.Tracker.track(UserPresenceTracker, pid, @topic, inspect(pid), %{})
+    Phoenix.Tracker.track(UserPresenceTracker, pid, @topic, pid, %{})
   end
 
   def anyone_browsing? do
