@@ -5,6 +5,7 @@ defmodule BasenjiWeb.Router do
 
   alias Absinthe.Plug.GraphiQL
   alias BasenjiWeb.GraphQL.Schema
+  alias BasenjiWeb.Plugs.UserPresencePlug
   alias Plug.Swoosh.MailboxPreview
 
   pipeline :browser do
@@ -14,6 +15,7 @@ defmodule BasenjiWeb.Router do
     plug :put_root_layout, html: {BasenjiWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug UserPresencePlug
   end
 
   pipeline :api do
