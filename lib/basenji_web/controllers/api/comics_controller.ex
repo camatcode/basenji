@@ -54,7 +54,7 @@ defmodule BasenjiWeb.ComicsController do
       Comics.get_image_preview(comic)
       |> case do
         {:ok, bytes} -> {:ok, bytes}
-        _ -> make_preview(comic)
+        _ -> {:error, :not_found}
       end
     end
   end

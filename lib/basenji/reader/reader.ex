@@ -50,7 +50,32 @@ defmodule Basenji.Reader do
     |> Enum.map_join(" ", &String.capitalize(&1))
   end
 
+  defp info_cache_key(location, opts) do
+    %{location: location, opts: opts}
+  end
+
   def info(location, opts \\ []) do
+    Cachex.fetch(
+      :basenji_cache,
+      info_cache_key(location, opts),
+      fn _key ->
+        any_result = get_info(location, opts)
+        {:commit, any_result, [ttl: to_timeout(minute: 5)]}
+      end
+    )
+    |> case do
+      {:ignore, {:error, error}} ->
+        {:error, error}
+
+      {_, result} ->
+        result
+
+      response ->
+        response
+    end
+  end
+
+  defp get_info(location, opts) do
     reader = find_reader(location)
 
     info =
