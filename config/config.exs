@@ -33,7 +33,7 @@ config :basenji, BasenjiWeb.Endpoint,
 
 config :basenji, Oban,
   engine: Oban.Engines.Basic,
-  queues: [comic: 50, comic_med: 7, comic_low: 5, collection: 25],
+  queues: [comic: 15, comic_med: 7, comic_low: 5, collection: 25],
   repo: Basenji.Repo,
   plugins: [
     {Oban.Plugins.Pruner, max_age: to_timeout(hour: 6)},
