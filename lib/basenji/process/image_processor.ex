@@ -28,12 +28,17 @@ defmodule Basenji.ImageProcessor do
     end
   end
 
-  defp calculate_resize_opts(start_width, start_height, width: width, height: height) do
-    horizontal_scale = width / start_width
-    vertical_scale = height / start_height
-    {horizontal_scale, [vertical_scale: vertical_scale]}
+  defp calculate_resize_opts(start_width, start_height, opts) do
+    if Keyword.has_key?(opts, :width) && Keyword.has_key?(opts, :height) do
+      horizontal_scale = opts[:width] / start_width
+      vertical_scale = opts[:height] / start_height
+      {horizontal_scale, [vertical_scale: vertical_scale]}
+    else
+      if Keyword.has_key?(opts, :width) do
+        {opts[:width] / start_width, []}
+      else
+        {opts[:height] / start_height, []}
+      end
+    end
   end
-
-  defp calculate_resize_opts(start_width, _start_height, width: width), do: {width / start_width, []}
-  defp calculate_resize_opts(_start_width, start_height, height: height), do: {height / start_height, []}
 end
