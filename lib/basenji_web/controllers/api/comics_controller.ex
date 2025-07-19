@@ -10,10 +10,11 @@ defmodule BasenjiWeb.ComicsController do
   def get_page(conn, params) do
     id = params["id"]
     page = params["page"]
+    opts = to_page_opts(params)
 
     with {:ok, page_num} <- Utils.safe_to_int(page),
          {:ok, comic} <- Comics.get_comic(id) do
-      PredictiveCache.get_comic_page_from_cache(comic, page_num)
+      PredictiveCache.get_comic_page_from_cache(comic, page_num, opts)
     end
     |> case do
       {:ok, binary, mime} ->
@@ -64,5 +65,13 @@ defmodule BasenjiWeb.ComicsController do
     {:ok, preview_bytes} = ImageProcessor.get_image_preview(bytes, 600, 600)
     Comics.associate_image_preview(comic, preview_bytes, width: 600, height: 600)
     {:ok, preview_bytes}
+  end
+
+  defp to_page_opts(params) do
+    width = params["width"]
+    height = params["height"]
+
+    opts = if width, do: [width: String.to_integer(width)], else: []
+    if height, do: Keyword.put(opts, :height, String.to_integer(height)), else: opts
   end
 end

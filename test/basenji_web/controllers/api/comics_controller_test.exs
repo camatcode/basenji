@@ -16,6 +16,18 @@ defmodule BasenjiWeb.ComicsControllerTest do
       conn = get(conn, ~p"/api/comics/#{comic.id}/page/#{page}", %{})
       assert conn.status == 200
       assert conn.resp_body
+
+      conn = get(conn, ~p"/api/comics/#{comic.id}/page/#{page}?width=1920", %{})
+      assert conn.status == 200
+      assert conn.resp_body
+
+      conn = get(conn, ~p"/api/comics/#{comic.id}/page/#{page}?height=1080", %{})
+      assert conn.status == 200
+      assert conn.resp_body
+
+      conn = get(conn, ~p"/api/comics/#{comic.id}/page/#{page}?width-1920&height=1080", %{})
+      assert conn.status == 200
+      assert conn.resp_body
     end)
   end
 

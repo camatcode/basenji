@@ -6,6 +6,7 @@ defmodule BasenjiWeb.PredictiveCache do
   alias __MODULE__, as: PredictiveCache
   alias Basenji.Comic
   alias Basenji.Comics
+  alias Basenji.ImageProcessor
 
   require Logger
 
@@ -30,10 +31,10 @@ defmodule BasenjiWeb.PredictiveCache do
     GenServer.call(PredictiveCache, :state)
   end
 
-  def get_comic_page_from_cache(%Comic{} = comic, page_num) do
-    result = fetch_page_from_cache(comic, page_num)
+  def get_comic_page_from_cache(%Comic{} = comic, page_num, opts \\ []) do
+    result = fetch_page_from_cache(comic, page_num, opts)
 
-    prefetch_next_pages(comic, page_num)
+    prefetch_next_pages(comic, page_num, opts)
 
     result
   end
@@ -43,8 +44,8 @@ defmodule BasenjiWeb.PredictiveCache do
     {:reply, state, state}
   end
 
-  def handle_cast({:prefetch, comic, current_page}, state) do
-    Process.send_after(self(), {:do_prefetch, comic, current_page}, @prefetch_delay)
+  def handle_cast({:prefetch, comic, current_page, opts}, state) do
+    Process.send_after(self(), {:do_prefetch, comic, current_page, opts}, @prefetch_delay)
     {:noreply, state}
   end
 
@@ -54,15 +55,15 @@ defmodule BasenjiWeb.PredictiveCache do
     {:noreply, %{active_prefetches: prefetches, completed_prefetch_count: count}}
   end
 
-  def handle_info({:do_prefetch, comic, current_page}, state) do
-    prefetch_key = "#{comic.id}_#{current_page}"
+  def handle_info({:do_prefetch, comic, current_page, opts}, state) do
+    prefetch_key = "#{comic.id}_#{current_page}_#{inspect(opts)}"
 
     if Map.has_key?(state.active_prefetches, prefetch_key) do
       {:noreply, state}
     else
       task =
         Task.start(fn ->
-          prefetch_pages(comic, current_page)
+          prefetch_pages(comic, current_page, opts)
           GenServer.cast(PredictiveCache, {:prefetch_complete, prefetch_key})
         end)
 
@@ -71,7 +72,7 @@ defmodule BasenjiWeb.PredictiveCache do
     end
   end
 
-  defp prefetch_pages(comic, current_page) do
+  defp prefetch_pages(comic, current_page, opts) do
     max_page = comic.page_count
 
     forward_pages = calculate_forward_pages(current_page, max_page)
@@ -79,11 +80,11 @@ defmodule BasenjiWeb.PredictiveCache do
 
     all_pages = forward_pages ++ backward_pages
 
-    Logger.debug("Prefetching pages #{inspect(all_pages)} for comic #{comic.id}")
+    Logger.debug("Prefetching pages #{inspect(all_pages)} for comic #{comic.id} with #{inspect(opts)}")
 
     all_pages
     |> Task.async_stream(
-      fn page_num -> prefetch_single_page(comic, page_num) end,
+      fn page_num -> prefetch_single_page(comic, page_num, opts) end,
       max_concurrency: @max_concurrent_prefetches,
       timeout: 30_000
     )
@@ -109,12 +110,12 @@ defmodule BasenjiWeb.PredictiveCache do
     end
   end
 
-  defp prefetch_single_page(comic, page_num) do
-    cache_key = page_cache_key(comic.id, page_num)
+  defp prefetch_single_page(comic, page_num, opts) do
+    cache_key = page_cache_key(comic.id, page_num, opts)
 
     case Cachex.exists?(:basenji_cache, cache_key) do
       {:ok, false} ->
-        case fetch_page_from_cache(comic, page_num) do
+        case fetch_page_from_cache(comic, page_num, opts) do
           {:ok, _data, _mime} ->
             Logger.debug("Prefetched page #{page_num} for comic #{comic.id}")
             :ok
@@ -132,19 +133,21 @@ defmodule BasenjiWeb.PredictiveCache do
     end
   end
 
-  defp page_cache_key(comic_id, page_num) do
-    %{comic_id: comic_id, page_num: page_num, optimized: true}
+  defp page_cache_key(comic_id, page_num, opts) do
+    %{comic_id: comic_id, page_num: page_num, optimized: true, opts: opts}
   end
 
-  defp fetch_page_from_cache(%Comic{id: comic_id} = comic, page_num) do
+  defp fetch_page_from_cache(%Comic{id: comic_id} = comic, page_num, opts) do
     Cachex.fetch(
       :basenji_cache,
-      page_cache_key(comic_id, page_num),
+      page_cache_key(comic_id, page_num, opts),
       fn _key ->
-        Comics.get_page(comic, page_num)
+        with {:ok, page, _mime} <- Comics.get_page(comic, page_num) do
+          ImageProcessor.resize_image(page, opts)
+        end
         |> case do
-          {:ok, page, mime} ->
-            {:commit, {page, mime}, [ttl: to_timeout(minute: 1)]}
+          {:ok, page} ->
+            {:commit, {page, "image/jpeg"}, [ttl: to_timeout(minute: 1)]}
 
           {_, resp} ->
             {:ignore, {:error, resp}}
@@ -163,7 +166,7 @@ defmodule BasenjiWeb.PredictiveCache do
     end
   end
 
-  defp prefetch_next_pages(%Comic{} = comic, current_page) do
-    GenServer.cast(PredictiveCache, {:prefetch, comic, current_page})
+  defp prefetch_next_pages(%Comic{} = comic, current_page, opts) do
+    GenServer.cast(PredictiveCache, {:prefetch, comic, current_page, opts})
   end
 end
