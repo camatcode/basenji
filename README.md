@@ -59,11 +59,12 @@
   * ✅ Creates image previews, extracts metadata, handles the comic life cycle
   * ✅ Stress tested with 49.9 GB of comics with 2700 items
   * ✅ Stores optimized versions to save you disk space
+  * ✅ Won't run expensive background jobs when the app is in you (thanks, [Phoenix.Tracker](https://hexdocs.pm/phoenix_pubsub/Phoenix.Tracker.html)!)
 *  ✅ Front-End
-  *  ✅ Search, List, Explore, Filter
-  *  ✅ Smart full screen viewer
-  *  🚧 In Progress: Continue making  it more ergonomic
-  *  🚧 Admin pages
+  * ✅  Search, List, Explore, Filter
+  * ✅ Smart full screen viewer
+  * 🚧 In Progress: Continue making  it more ergonomic
+  * 🚧 Admin pages
 
 ### ⏸️ Deep Backlog
 
