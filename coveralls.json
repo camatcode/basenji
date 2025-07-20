@@ -20,7 +20,20 @@
     "file_column_width": 40
   },
   "skip_files": [
-    "test/support/factories/",
-    "test/support/factory.ex"
+    "test/support/factory/",
+    "test/support/factory.ex",
+    "lib/basenji.ex",
+    "lib/basenji/mailer.ex",
+    "lib/basenji_web/controllers/api/graphql/collections_schema.ex",
+    "lib/basenji_web/controllers/api/graphql/comics_schema.ex",
+    "lib/basenji_web/controllers/api/graphql/common_schema.ex",
+    "lib/basenji_web/controllers/api/graphql/schema.ex",
+    "lib/basenji_web/components/layouts.ex",
+    "lib/basenji_web/controllers/page_controller.ex",
+    "lib/basenji_web/controllers/page_html.ex",
+    "lib/basenji_web/controllers/api.ex",
+    "lib/basenji_web/endpoint.ex",
+    "lib/basenji_web/gettext.ex",
+    "deps/"
   ]
 }
