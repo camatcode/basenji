@@ -28,6 +28,8 @@
     "lib/basenji_web/controllers/api/graphql/comics_schema.ex",
     "lib/basenji_web/controllers/api/graphql/common_schema.ex",
     "lib/basenji_web/controllers/api/graphql/schema.ex",
+    "lib/basenji_web/controllers/api/json_api/collections_json.ex",
+    "lib/basenji_web/controllers/api/json_api/comics_json.ex",
     "lib/basenji_web/components/layouts.ex",
     "lib/basenji_web/controllers/page_controller.ex",
     "lib/basenji_web/controllers/page_html.ex",
