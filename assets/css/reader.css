@@ -1,0 +1,51 @@
+/* Comic Reader Responsive Styles */
+
+.portrait-image { 
+  display: none; 
+}
+
+.landscape-image { 
+  display: block; 
+}
+
+@media (orientation: portrait) {
+  .portrait-image { 
+    display: block;
+    width: 150vw;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    object-fit: none;
+  }
+  
+  .landscape-image { 
+    display: none; 
+  }
+  
+  .portrait-container {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  /* Navigation zones positioned relative to viewport, covering edges */
+  .portrait-container .previous_page_nav,
+  .portrait-container .next_page_nav {
+    position: fixed;
+    width: 15vw;  /* Smaller zones at viewport edges */
+    height: 100vh;
+    top: 0;
+    z-index: 100;
+    opacity: 0.3;  /* Make them semi-transparent so user can see they're there */
+  }
+  
+  .portrait-container .previous_page_nav {
+    left: 0;  /* Left edge of viewport */
+  }
+  
+  .portrait-container .next_page_nav {
+    right: 0;  /* Right edge of viewport */
+  }
+}

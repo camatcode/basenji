@@ -24,13 +24,15 @@ import topbar from "../vendor/topbar"
 
 // Import hooks
 import { ScrollToTop } from "./hooks/scroll_hook"
+import { ResponsiveImageHook } from "./hooks/responsive_image_hook"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
   hooks: {
-    ScrollToTop
+    ScrollToTop,
+    ResponsiveImageHook
   }
 })
 
