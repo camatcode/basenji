@@ -97,16 +97,53 @@ defmodule BasenjiWeb.Comics.ReadLive do
       phx-hook="ScrollToTop"
       id="reader-page-display"
     >
-      <div class="relative">
+      <div class="relative portrait-container">
+        <!-- Default image for landscape viewports -->
         <img
           src={~p"/api/comics/#{@comic.id}/page/#{@current_page}"}
           alt={"Page #{@current_page}"}
-          class={comics_live_classes(:reader_page_image)}
+          class="landscape-image w-full h-auto object-contain"
+        />
+        <!-- Larger image for portrait viewports -->
+        <img
+          src={~p"/api/comics/#{@comic.id}/page/#{@current_page}?height=1200"}
+          alt={"Page #{@current_page}"}
+          class="portrait-image block"
         />
         <.previous_page_nav :if={@current_page > 1} current_page={@current_page} />
         <.next_page_nav :if={@current_page < @comic.page_count} current_page={@current_page} />
       </div>
     </div>
+
+    <style>
+      .portrait-image { 
+        display: none; 
+      }
+      .landscape-image { 
+        display: block; 
+      }
+
+      @media (orientation: portrait) {
+        .portrait-image { 
+          display: block;
+          width: 150vw;
+          height: auto;
+          max-width: none;
+          max-height: none;
+          object-fit: none;
+        }
+        .landscape-image { 
+          display: none; 
+        }
+        .portrait-container {
+          overflow: auto;
+          -webkit-overflow-scrolling: touch;
+          touch-action: manipulation;
+          width: 100vw;
+          height: 100vh;
+        }
+      }
+    </style>
     """
   end
 
