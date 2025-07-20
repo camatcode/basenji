@@ -359,12 +359,12 @@ defmodule BasenjiWeb.Style.ComicsLiveStyle do
   * `flex justify-center items-center`: centers the comic page
   * `min-h-[80vh] p-4`: takes up most of viewport height with padding
   """
-  def comics_live_classes(:reader_page_display), do: "flex justify-center items-center min-h-[80vh] p-4"
+  def comics_live_classes(:reader_page_display), do: "flex justify-center items-center min-h-[80vh]"
 
   @privdoc """
   **reader_page_image**: The actual comic page image
 
   * `max-w-full max-h-full object-contain`: fits within container while maintaining aspect ratio
   """
-  def comics_live_classes(:reader_page_image), do: "max-w-full max-h-full object-contain"
+  def comics_live_classes(:reader_page_image), do: "w-full h-auto object-contain"
 end

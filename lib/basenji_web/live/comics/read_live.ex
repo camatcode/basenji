@@ -11,7 +11,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
   def mount(%{"id" => id}, _session, socket) do
     socket
     |> assign_comic(id)
-    |> then(&{:ok, &1})
+    |> then(&{:ok, &1, layout: {BasenjiWeb.Layouts, :reader}})
   end
 
   defp assign_comic(socket, %Comic{} = comic) do
@@ -88,7 +88,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
 
   def render(assigns) do
     ~H"""
-    <div class="max-w-8xl mx-auto space-y-6">
+    <div class="w-full">
       <.comic_reader comic={@comic} current_page={@current_page} fullscreen={@fullscreen} />
     </div>
     """
@@ -100,7 +100,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
 
   def comic_reader(assigns) do
     ~H"""
-    <div class="bg-black rounded-lg overflow-hidden" id="comic-reader" phx-hook="FullscreenHook">
+    <div class="bg-black overflow-hidden" id="comic-reader" phx-hook="FullscreenHook">
       <.reader_header comic={@comic} current_page={@current_page} />
       <.reader_page_display comic={@comic} current_page={@current_page} fullscreen={@fullscreen} />
     </div>
