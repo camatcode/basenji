@@ -34,19 +34,31 @@ defmodule BasenjiWeb.Comics.ReadLive do
   end
 
   def handle_event("change_page", %{"page" => page}, socket) do
-    {:noreply, change_page(socket, page)}
+    {:noreply,
+     socket
+     |> change_page(page)
+     |> push_event("scroll-to-top", %{})}
   end
 
   def handle_event("handle_keydown", %{"key" => "ArrowLeft"}, socket) do
-    {:noreply, change_page(socket, socket.assigns.current_page - 1)}
+    {:noreply,
+     socket
+     |> change_page(socket.assigns.current_page - 1)
+     |> push_event("scroll-to-top", %{})}
   end
 
   def handle_event("handle_keydown", %{"key" => "ArrowRight"}, socket) do
-    {:noreply, change_page(socket, socket.assigns.current_page + 1)}
+    {:noreply,
+     socket
+     |> change_page(socket.assigns.current_page + 1)
+     |> push_event("scroll-to-top", %{})}
   end
 
   def handle_event("handle_keydown", %{"key" => " "}, socket) do
-    {:noreply, change_page(socket, socket.assigns.current_page + 1)}
+    {:noreply,
+     socket
+     |> change_page(socket.assigns.current_page + 1)
+     |> push_event("scroll-to-top", %{})}
   end
 
   def handle_event("handle_keydown", _params, socket) do
@@ -79,7 +91,12 @@ defmodule BasenjiWeb.Comics.ReadLive do
 
   def reader_page_display(assigns) do
     ~H"""
-    <div class={comics_live_classes(:reader_page_display)} phx-window-keydown="handle_keydown">
+    <div
+      class={comics_live_classes(:reader_page_display)}
+      phx-window-keydown="handle_keydown"
+      phx-hook="ScrollToTop"
+      id="reader-page-display"
+    >
       <div class="relative">
         <img
           src={~p"/api/comics/#{@comic.id}/page/#{@current_page}"}
