@@ -60,8 +60,7 @@ defmodule BasenjiWeb.HomeLive do
       [
         limit: @per_page,
         offset: (page - 1) * @per_page,
-        order_by: safe_sort_atom(sort),
-        inserted_before: DateTime.shift(DateTime.utc_now(), second: -5)
+        order_by: safe_sort_atom(sort)
       ]
       |> maybe_add_search(search)
       |> maybe_add_format(format)
@@ -69,9 +68,7 @@ defmodule BasenjiWeb.HomeLive do
     results = Comics.list_comics(opts)
 
     total_opts =
-      [
-        inserted_before: DateTime.shift(DateTime.utc_now(), second: -5)
-      ]
+      []
       |> maybe_add_search(search)
       |> maybe_add_format(format)
 
@@ -142,13 +139,8 @@ defmodule BasenjiWeb.HomeLive do
 
   defp safe_sort_atom(sort) when is_binary(sort) do
     case sort do
-      "title" -> :title
       "inserted_at" -> :inserted_at
-      # Handle incorrect form submission
-      "Sort by Title" -> :title
-      # Handle incorrect form submission
       "Sort by Date Added" -> :inserted_at
-      # Default fallback
       _ -> :title
     end
   end
@@ -160,11 +152,11 @@ defmodule BasenjiWeb.HomeLive do
     <div class={page_classes(:container)} id="page-container">
       <.search_bar form={@search_form} search_options={@search_options_info} page_info={@page_info} />
 
-      <.pagination_section page_info={@page_info} total_pages={@total_pages} />
+      <.pagination_section id="top_pagination" page_info={@page_info} total_pages={@total_pages} />
 
       <.content_section comics={@comics} page_info={@page_info} />
 
-      <.pagination_section page_info={@page_info} total_pages={@total_pages} />
+      <.pagination_section id="bottom_pagination" page_info={@page_info} total_pages={@total_pages} />
     </div>
     """
   end
@@ -251,11 +243,12 @@ defmodule BasenjiWeb.HomeLive do
 
   attr :page_info, :map, required: true
   attr :total_pages, :integer, required: true
+  attr :id, :string, required: true
 
   def pagination_section(assigns) do
     ~H"""
     <%= if @total_pages > 1 do %>
-      <div class="flex items-center justify-center gap-2">
+      <div id={@id} class="flex items-center justify-center gap-2">
         <%= if @page_info.current_page > 1 do %>
           <button
             phx-click="paginate"

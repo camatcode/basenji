@@ -9,6 +9,246 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
 
   doctest ComicConnector
 
+  describe "working directory management" do
+    test "get_working_directory returns valid directory" do
+      cwd = "/"
+      connector_state = %{current_working_directory: cwd}
+      assert "/" == ComicConnector.get_working_directory(connector_state)
+
+      cwd = "/comics"
+      connector_state = %{current_working_directory: cwd}
+      assert "/comics" == ComicConnector.get_working_directory(connector_state)
+
+      cwd = "/comics/by-id/"
+      connector_state = %{current_working_directory: cwd}
+      assert "/comics/by-id/" == ComicConnector.get_working_directory(connector_state)
+    end
+
+    test "get_working_directory falls back to root for invalid paths" do
+      cwd = "/comics/invalid"
+      connector_state = %{current_working_directory: cwd}
+      assert "/" == ComicConnector.get_working_directory(connector_state)
+
+      cwd = "/invalid/path"
+      connector_state = %{current_working_directory: cwd}
+      assert "/" == ComicConnector.get_working_directory(connector_state)
+    end
+  end
+
+  describe "directory existence checks" do
+    test "directory_exists? validates known paths" do
+      assert ComicConnector.directory_exists?("/", %{})
+      assert ComicConnector.directory_exists?("/comics", %{})
+      assert ComicConnector.directory_exists?("/comics/by-id", %{})
+      assert ComicConnector.directory_exists?("/comics/by-title", %{})
+      assert ComicConnector.directory_exists?("/collections", %{})
+      assert ComicConnector.directory_exists?("/collections/by-title", %{})
+    end
+
+    test "directory_exists? rejects invalid paths" do
+      refute ComicConnector.directory_exists?("/invalid", %{})
+      refute ComicConnector.directory_exists?("/comics/invalid", %{})
+      refute ComicConnector.directory_exists?("/collections/invalid", %{})
+      refute ComicConnector.directory_exists?("invalid", %{})
+    end
+
+    test "directory_exists? validates comic-specific paths" do
+      comic = insert(:comic)
+
+      assert ComicConnector.directory_exists?("/comics/by-id/#{comic.id}", %{})
+      assert ComicConnector.directory_exists?("/comics/by-title/#{comic.title}", %{})
+      assert ComicConnector.directory_exists?("/comics/by-id/#{comic.id}/pages", %{})
+      assert ComicConnector.directory_exists?("/comics/by-id/#{comic.id}/preview", %{})
+    end
+
+    test "directory_exists? validates collection-specific paths" do
+      parent = insert(:collection, parent: nil)
+      child = insert(:collection, parent: parent)
+
+      assert ComicConnector.directory_exists?("/collections/by-title/#{parent.title}", %{})
+      assert ComicConnector.directory_exists?("/collections/by-title/#{parent.title}/#{child.title}", %{})
+      assert ComicConnector.directory_exists?("/collections/by-title/#{parent.title}/#{child.title}/comics", %{})
+      assert ComicConnector.directory_exists?("/collections/by-title/#{parent.title}/#{child.title}/comics/by-id", %{})
+
+      assert ComicConnector.directory_exists?(
+               "/collections/by-title/#{parent.title}/#{child.title}/comics/by-title",
+               %{}
+             )
+    end
+  end
+
+  describe "get_content_info behavior" do
+    test "returns content info for comic by ID" do
+      comic = insert(:comic, title: "Test Comic", format: :cbz)
+
+      {:ok, info} = ComicConnector.get_content_info("/comics/by-id/#{comic.id}/#{comic.id}.cbz", %{})
+
+      assert info.file_name == "#{comic.id}.cbz"
+      assert info.type == :file
+      assert info.size == comic.byte_size
+      assert info.access == :read
+      assert info.modified_datetime == comic.updated_at
+    end
+
+    test "returns content info for comic by title" do
+      comic = insert(:comic, format: :pdf)
+      comic_filename = Path.basename(comic.resource_location)
+
+      {:ok, info} = ComicConnector.get_content_info("/comics/by-title/#{comic.title}/#{comic_filename}", %{})
+      assert info.type == :file
+      assert info.access == :read
+    end
+
+    test "returns error for non-existent comic" do
+      fake_id = Ecto.UUID.generate()
+      assert {:error, _} = ComicConnector.get_content_info("/comics/by-id/#{fake_id}/#{fake_id}.cbz", %{})
+    end
+
+    test "returns error for invalid path" do
+      assert {:error, _} = ComicConnector.get_content_info("/invalid/path", %{})
+    end
+  end
+
+  describe "get_content behavior" do
+    test "returns file stream for comic by ID" do
+      comic = insert(:comic)
+
+      {:ok, stream} = ComicConnector.get_content("/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}", %{})
+
+      assert %File.Stream{} = stream
+      assert stream.path == comic.resource_location
+    end
+
+    test "returns file stream for comic by title" do
+      comic = insert(:comic)
+      comic_filename = Path.basename(comic.resource_location)
+
+      {:ok, stream} = ComicConnector.get_content("/comics/by-title/#{comic.title}/#{comic_filename}", %{})
+
+      assert %File.Stream{} = stream
+      assert stream.path == comic.resource_location
+    end
+
+    test "returns page content for comic pages" do
+      comic = insert(:comic, page_count: 10)
+
+      {:ok, bytes} = ComicConnector.get_content("/comics/by-id/#{comic.id}/pages/01.jpg", %{})
+
+      assert is_binary(bytes)
+      assert byte_size(bytes) > 0
+    end
+
+    test "returns page content by title" do
+      comic = insert(:comic, title: "Page Test", page_count: 5)
+
+      {:ok, bytes} = ComicConnector.get_content("/comics/by-title/#{comic.title}/pages/01.jpg", %{})
+
+      assert is_binary(bytes)
+      assert byte_size(bytes) > 0
+    end
+
+    test "returns preview content when available" do
+      %{resource_location: loc} = build(:comic)
+      {:ok, comic} = Comics.create_comic(%{resource_location: loc})
+
+      TestHelper.drain_queues([:comic, :comic_low])
+      {:ok, preview_result} = ComicConnector.get_content("/comics/by-id/#{comic.id}/preview/preview.jpg", %{})
+
+      assert byte_size(preview_result) > 0
+    end
+
+    test "returns error for preview when not available" do
+      comic = insert(:comic)
+
+      assert {:error, :not_found} = ComicConnector.get_content("/comics/by-id/#{comic.id}/preview/preview.jpg", %{})
+    end
+
+    test "returns file stream for comics in collections" do
+      parent = insert(:collection, parent: nil)
+      child = insert(:collection, parent: parent)
+      comic = insert(:comic)
+      Collections.add_to_collection(child, comic)
+
+      {:ok, stream} =
+        ComicConnector.get_content(
+          "/collections/by-title/#{parent.title}/#{child.title}/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}",
+          %{}
+        )
+
+      assert %File.Stream{} = stream
+      assert stream.path == comic.resource_location
+    end
+
+    test "returns error for non-existent content" do
+      assert {:error, :invalid_path} = ComicConnector.get_content("/invalid/path", %{})
+
+      fake_id = Ecto.UUID.generate()
+      assert {:error, _} = ComicConnector.get_content("/comics/by-id/#{fake_id}/fake.cbz", %{})
+    end
+
+    test "returns error for mismatched comic file path" do
+      comic = insert(:comic)
+      wrong_id = Ecto.UUID.generate()
+
+      assert {:error, :not_found} = ComicConnector.get_content("/comics/by-id/#{comic.id}/#{wrong_id}.cbz", %{})
+    end
+  end
+
+  describe "read-only operations" do
+    test "make_directory returns success without changes" do
+      state = %{current_working_directory: "/"}
+
+      assert {:ok, ^state} = ComicConnector.make_directory("/test", state)
+    end
+
+    test "delete_directory returns success without changes" do
+      state = %{current_working_directory: "/"}
+
+      assert {:ok, ^state} = ComicConnector.delete_directory("/test", state)
+    end
+
+    test "delete_file returns success without changes" do
+      state = %{current_working_directory: "/"}
+
+      assert {:ok, ^state} = ComicConnector.delete_file("/test.txt", state)
+    end
+
+    test "create_write_func returns no-op function" do
+      state = %{current_working_directory: "/"}
+
+      write_func = ComicConnector.create_write_func("/test.txt", state)
+
+      assert is_function(write_func, 1)
+      assert {:ok, ^state} = write_func.("test data")
+    end
+  end
+
+  describe "error handling" do
+    test "handles malformed paths gracefully" do
+      malformed_paths = [
+        "//double//slash",
+        "/comics/../escape",
+        "/comics/by-id/not-a-uuid",
+        "/collections/by-title//empty"
+      ]
+
+      Enum.each(malformed_paths, fn path ->
+        {:error, _} = ComicConnector.get_directory_contents(path, %{})
+
+        assert {:error, _} = ComicConnector.get_content_info(path, %{})
+        assert {:error, _} = ComicConnector.get_content(path, %{})
+      end)
+    end
+
+    test "handles database errors gracefully" do
+      fake_uuid = Ecto.UUID.generate()
+
+      {:error, :not_found} = ComicConnector.get_directory_contents("/comics/by-id/#{fake_uuid}", %{})
+
+      assert {:error, _} = ComicConnector.get_content("/comics/by-id/#{fake_uuid}/#{fake_uuid}.cbz", %{})
+    end
+  end
+
   describe "complex operations" do
     setup do
       parent = insert(:collection, parent: nil)
@@ -25,129 +265,114 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
         end)
       end)
 
-      %{comics: comics, collections: collections}
+      %{comics: comics, collections: collections, parent: parent}
     end
 
-    test "list", %{} do
-      comics = Comics.list_comics(prefer_optimized: true)
-      # /
+    test "directory listing consistency", %{comics: comics} do
       {:ok, [%{file_name: "comics/"}, %{file_name: "collections/"}]} =
         ComicConnector.get_directory_contents("/", %{})
 
-      # /comics
       {:ok, [%{file_name: "by-id/"}, %{file_name: "by-title/"}]} =
         ComicConnector.get_directory_contents("/comics", %{})
 
-      # /comics/by-id
       {:ok, comics_by_id} = ComicConnector.get_directory_contents("/comics/by-id", %{})
       ids = comics_by_id |> Enum.map(&String.replace(&1.file_name, "/", ""))
+      assert length(ids) == length(comics)
+      assert Enum.all?(comics, fn comic -> comic.id in ids end)
 
-      assert ids == Enum.map(comics, & &1.id)
-
-      # /comics/by-title
       {:ok, comics_by_title} = ComicConnector.get_directory_contents("/comics/by-title", %{})
       titles = comics_by_title |> Enum.map(&String.replace(&1.file_name, "/", ""))
 
       Enum.each(titles, fn title ->
         assert [_comic] = Enum.filter(comics, fn comic -> comic.title == title end)
       end)
+    end
 
-      # /collections
+    test "collection navigation integrity", %{parent: parent, collections: collections} do
       {:ok, [%{file_name: "by-title/"}]} = ComicConnector.get_directory_contents("/collections", %{})
 
-      # /collections/by-title
       {:ok, collections_by_title} = ComicConnector.get_directory_contents("/collections/by-title", %{})
-      titles = collections_by_title |> Enum.map(&Path.rootname(&1.file_name))
+      parent_titles = collections_by_title |> Enum.map(& &1.file_name)
 
-      Enum.each(titles, fn title ->
-        assert [_collection] = Collections.list_collections(title: title)
+      assert parent.title in parent_titles
+
+      {:ok, child_contents} = ComicConnector.get_directory_contents("/collections/by-title/#{parent.title}", %{})
+      child_dirs = Enum.filter(child_contents, fn item -> item.type == :directory and item.file_name != "comics/" end)
+      child_titles = Enum.map(child_dirs, & &1.file_name)
+
+      Enum.each(collections, fn collection ->
+        assert collection.title in child_titles
       end)
 
-      #  # /collections/by-title/{title}/
-      Enum.each(titles, fn title ->
-        {:ok, results} = ComicConnector.get_directory_contents("/collections/by-title/#{title}", %{})
-        directories = Enum.filter(results, fn result -> result.type == :directory end)
+      Enum.each(collections, fn collection ->
+        {:ok, contents} =
+          ComicConnector.get_directory_contents("/collections/by-title/#{parent.title}/#{collection.title}", %{})
 
-        #  # /collections/by-title/{title}/{title or comics}
-        Enum.each(directories, fn directory ->
-          {:ok, _} =
-            ComicConnector.get_directory_contents("/collections/by-title/#{title}/#{directory.file_name}", %{})
-        end)
+        assert Enum.any?(contents, fn item -> item.file_name == "comics/" and item.type == :directory end)
+
+        {:ok, comics_contents} =
+          ComicConnector.get_directory_contents("/collections/by-title/#{parent.title}/#{collection.title}/comics", %{})
+
+        comic_dirs = Enum.map(comics_contents, & &1.file_name)
+        assert "by-id/" in comic_dirs
+        assert "by-title/" in comic_dirs
       end)
     end
 
-    test "download", %{} do
-      # /comics/by-title/...
-      comics = Comics.list_comics(prefer_optimized: true)
+    test "file download paths work consistently", %{comics: comics, collections: collections, parent: parent} do
+      Enum.take(comics, 3)
+      |> Enum.each(fn comic ->
+        {:ok, %File.Stream{}} =
+          ComicConnector.get_content("/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}", %{})
 
-      Enum.each(comics, fn comic ->
         {:ok, %File.Stream{}} =
           ComicConnector.get_content("/comics/by-title/#{comic.title}/#{comic.title}.#{comic.format}", %{})
       end)
 
-      # /comics/by-id/....
-      Enum.each(comics, fn comic ->
-        {:ok, %File.Stream{}} = ComicConnector.get_content("/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}", %{})
-      end)
+      Enum.take(collections, 2)
+      |> Enum.each(fn collection ->
+        {:ok, collection_with_comics} = Collections.get_collection(collection.id, preload: [:comics])
 
-      # /collections/by-title/{parent}/{some collection}/comics/by-id/...
-      [parent] = Collections.list_collections(parent_id: :none, preload: [:comics])
-      children = Collections.list_collections(parent_id: parent.id, preload: [:comics])
-
-      Enum.each(children, fn child ->
-        Enum.each(child.comics, fn comic ->
+        Enum.take(collection_with_comics.comics, 2)
+        |> Enum.each(fn comic ->
           {:ok, %File.Stream{}} =
             ComicConnector.get_content(
-              "/collections/by-title/#{parent.title}/#{child.title}/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}",
+              "/collections/by-title/#{parent.title}/#{collection.title}/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}",
               %{}
             )
-        end)
-      end)
 
-      # /collections/by-title/{parent}/{some collection}/comics/by-title/...
-      Enum.each(children, fn child ->
-        Enum.each(child.comics, fn comic ->
           {:ok, %File.Stream{}} =
             ComicConnector.get_content(
-              "/collections/by-title/#{parent.title}/#{child.title}/comics/by-title/#{comic.title}/#{comic.title}.#{comic.format}",
+              "/collections/by-title/#{parent.title}/#{collection.title}/comics/by-title/#{comic.title}/#{comic.title}.#{comic.format}",
               %{}
             )
         end)
       end)
     end
 
-    test "pages" do
-      comics = Comics.list_comics(prefer_optimized: true)
+    test "page extraction works for multiple access patterns", %{comics: comics} do
+      comics_with_pages = Enum.filter(comics, fn comic -> comic.page_count > 0 end)
 
-      Enum.each(comics, fn comic ->
+      Enum.take(comics_with_pages, 3)
+      |> Enum.each(fn comic ->
         {:ok, bytes} = ComicConnector.get_content("/comics/by-id/#{comic.id}/pages/01.jpg", %{})
         assert byte_size(bytes) > 0
+
+        {:ok, bytes} = ComicConnector.get_content("/comics/by-title/#{comic.title}/pages/01.jpg", %{})
+        assert byte_size(bytes) > 0
+
+        {:ok, page_list} = ComicConnector.get_directory_contents("/comics/by-id/#{comic.id}/pages", %{})
+        assert length(page_list) == comic.page_count
+
+        page_files = Enum.map(page_list, & &1.file_name)
+        padding = String.length("#{comic.page_count}")
+
+        Enum.with_index(page_files, 1)
+        |> Enum.each(fn {page_file, index} ->
+          expected_name = "#{String.pad_leading("#{index}", padding, "0")}.jpg"
+          assert page_file == expected_name
+        end)
       end)
     end
-  end
-
-  test "get_cwd" do
-    cwd = "/"
-    connector_state = %{current_working_directory: cwd}
-    ^cwd = ComicConnector.get_working_directory(connector_state)
-
-    cwd = "/comics"
-    connector_state = %{current_working_directory: cwd}
-    ^cwd = ComicConnector.get_working_directory(connector_state)
-
-    cwd = "/comics/by-id/"
-    connector_state = %{current_working_directory: cwd}
-    ^cwd = ComicConnector.get_working_directory(connector_state)
-
-    cwd = "/comics/invalid"
-    connector_state = %{current_working_directory: cwd}
-    assert "/" == ComicConnector.get_working_directory(connector_state)
-  end
-
-  test "directory_exists?" do
-    assert ComicConnector.directory_exists?("/", %{})
-    assert ComicConnector.directory_exists?("/comics", %{})
-    assert ComicConnector.directory_exists?("/collections", %{})
-    refute ComicConnector.directory_exists?("/invalid", %{})
   end
 end

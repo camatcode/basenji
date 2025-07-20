@@ -39,7 +39,11 @@ defmodule BasenjiWeb.FTP.ComicConnector do
           {:ok, [StorageConnector.content_info()]} | {:error, term()}
   def get_directory_contents(path, _connector_state) do
     with {:ok, path_info} <- PathValidator.parse_path(path) do
-      {:ok, build_directory_contents(path_info)}
+      build_directory_contents(path_info)
+      |> case do
+        {:error, _} = e -> e
+        other -> {:ok, other}
+      end
     end
   end
 
@@ -89,37 +93,37 @@ defmodule BasenjiWeb.FTP.ComicConnector do
 
   defp get_content(%{comic_id: comic_id, subpath: "preview/" <> _preview_file}) do
     with {:ok, comic} <- Comics.get_comic(comic_id) do
-      if comic.image_preview do
-        {:ok, comic.image_preview}
-      else
-        {:error, :not_found}
+      Comics.get_image_preview(comic)
+      |> case do
+        {:ok, bytes} -> {:ok, bytes}
+        _ -> {:error, :not_found}
       end
     end
   end
 
   defp get_content(%{comic_title: comic_title, subpath: "preview/" <> _preview_file}) do
     with {:ok, comic} <- get_comic_from_title(comic_title) do
-      if comic.image_preview do
-        {:ok, comic.image_preview}
-      else
-        {:error, :not_found}
+      Comics.get_image_preview(comic)
+      |> case do
+        {:ok, bytes} -> {:ok, bytes}
+        _ -> {:error, :not_found}
       end
     end
   end
 
-  defp get_content(%{comic_id: comic_id, subpath: subpath}) do
+  defp get_content(%{comic_id: comic_id, subpath: subpath}) when is_bitstring(subpath) do
     if String.starts_with?(subpath, comic_id) do
       with {:ok, comic} <- Comics.get_comic(comic_id) do
         {:ok, File.stream!(comic.resource_location)}
       end
+    else
+      {:error, :not_found}
     end
   end
 
-  defp get_content(%{comic_title: comic_title, subpath: subpath}) do
-    if String.starts_with?(subpath, comic_title) do
-      with {:ok, comic} <- get_comic_from_title(comic_title) do
-        {:ok, File.stream!(comic.resource_location)}
-      end
+  defp get_content(%{comic_title: comic_title, subpath: _subpath}) do
+    with {:ok, comic} <- get_comic_from_title(comic_title) do
+      {:ok, File.stream!(comic.resource_location)}
     end
   end
 
@@ -174,10 +178,12 @@ defmodule BasenjiWeb.FTP.ComicConnector do
   end
 
   defp get_content_info(%{comic_title: title}) do
-    with {:ok, [found]} <- Comics.list_comics(title: title, prefer_optimized: true) do
+    with [found] <- Comics.list_comics(title: title, prefer_optimized: true) do
       comic_to_content_info(found, true)
     end
   end
+
+  defp get_content_info(_), do: {:error, :not_found}
 
   defp to_content_info(path, :directory) do
     %{
@@ -328,7 +334,7 @@ defmodule BasenjiWeb.FTP.ComicConnector do
 
   defp comic_to_content_info(comic, title? \\ false) do
     format = comic.format || "unknown"
-    file_name = if title?, do: "#{comic.title}.#{format}", else: "#{comic.id}.#{format}"
+    file_name = if title?, do: "#{Path.basename(comic.resource_location)}", else: "#{comic.id}.#{format}"
 
     %{
       file_name: file_name,

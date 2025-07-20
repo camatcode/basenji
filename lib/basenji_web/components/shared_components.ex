@@ -157,7 +157,6 @@ defmodule BasenjiWeb.SharedComponents do
     """
   end
 
-  # Pagination range helper - same logic used across all pages
   defp pagination_range(_current_page, total_pages) when total_pages <= 7 do
     1..total_pages |> Enum.to_list()
   end

@@ -4,6 +4,8 @@ defmodule Basenji.ComicsTest do
   alias Basenji.Comic
   alias Basenji.Comics
 
+  @moduletag :capture_log
+
   describe "crud" do
     test "create_comic/2" do
       to_assert = build_list(100, :comic)
@@ -83,6 +85,9 @@ defmodule Basenji.ComicsTest do
 
       {:ok, %{member_collections: [%{id: ^collection_id}]}} =
         Comics.get_comic(comic.id, preload: [:member_collections])
+
+      # Test bad UUID
+      assert {:error, :not_found} = Comics.get_comic("1234-1234")
     end
 
     test "update_comic/2" do

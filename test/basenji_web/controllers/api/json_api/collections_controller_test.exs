@@ -408,6 +408,33 @@ defmodule BasenjiWeb.JSONAPI.CollectionsControllerTest do
     end
   end
 
+  test "overrides jsonapi_plug bug", %{conn: conn} do
+    %{title: title, description: desc, resource_location: location} = build(:collection)
+    parent = insert(:collection)
+    collection = %{title: title, description: desc, resource_location: location, parent_id: parent.id}
+    include = "parent"
+
+    body = TestHelper.JSONAPI.build_request_body("collection", nil, collection)
+
+    # did not specify content type
+    conn = post(conn, @api_path <> "?include=#{include}", body)
+
+    %{
+      "errors" => [
+        %{
+          "detail" => "Content-Type header must be 'application/vnd.api+json' for JSON:API requests",
+          "source" => %{"header" => "Content-Type"},
+          "status" => "415",
+          "title" => "Unsupported Media Type"
+        }
+      ]
+    } = json_response(conn, 415)
+
+    # bad UUID
+    conn = get(conn, "#{@api_path}/1234-1234", %{})
+    assert %{"error" => "not_found"} == json_response(conn, 400)
+  end
+
   defp valid_collection?(%{"attributes" => attributes, "id" => id, "type" => "collection"} = collection) do
     assert id
     assert attributes["title"]
