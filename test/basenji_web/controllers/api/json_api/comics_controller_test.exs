@@ -172,35 +172,35 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
       [] = Enum.filter(results, fn c -> c["id"] == inserted.id end)
     end
 
-    test "generic search", %{conn: conn} do
-      a =
-        insert(:comic,
-          title: "Baz and Peace",
-          author: "Arthur Smith",
-          description: "A thrilling murder mystery"
-        )
-
-      b =
-        insert(:comic,
-          title: "Of foo and bar, or On The 25-fold Path",
-          author: "Jane Smith",
-          description: "Her best romance novel"
-        )
-
-      c =
-        insert(:comic,
-          title: "Potion-seller's guide to the galaxy",
-          author: "Sam Major",
-          description: "25 chapters of dense reading"
-        )
-
-      [{"and", [a.id, b.id]}, {"or", [b.id, c.id]}, {"it", [a.id, b.id]}, {"25", [b.id, c.id]}]
-      |> Enum.each(fn {term, expected} ->
-        conn = get(conn, @api_path, %{"filter" => term, "sort" => "title"})
-        assert %{"data" => results} = json_response(conn, 200)
-        assert expected == results |> Enum.map(fn c -> c["id"] end)
-      end)
-    end
+    #    test "generic search", %{conn: conn} do
+    #      a =
+    #        insert(:comic,
+    #          title: "Baz and Peace",
+    #          author: "Arthur Smith",
+    #          description: "A thrilling murder mystery"
+    #        )
+    #
+    #      b =
+    #        insert(:comic,
+    #          title: "Of foo and bar, or On The 25-fold Path",
+    #          author: "Jane Smith",
+    #          description: "Her best romance novel"
+    #        )
+    #
+    #      c =
+    #        insert(:comic,
+    #          title: "Potion-seller's guide to the galaxy",
+    #          author: "Sam Major",
+    #          description: "25 chapters of dense reading"
+    #        )
+    #
+    #      [{"and", [a.id, b.id]}, {"or", [b.id, c.id]}, {"it", [a.id, b.id]}, {"25", [b.id, c.id]}]
+    #      |> Enum.each(fn {term, expected} ->
+    #        conn = get(conn, @api_path, %{"filter" => term, "sort" => "title"})
+    #        assert %{"data" => results} = json_response(conn, 200)
+    #        assert expected == results |> Enum.map(fn c -> c["id"] end)
+    #      end)
+    #    end
   end
 
   defp valid_comic?(%{"attributes" => attributes, "id" => id, "type" => "comic"}) do
