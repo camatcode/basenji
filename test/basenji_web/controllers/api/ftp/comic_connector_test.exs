@@ -49,7 +49,6 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
       refute ComicConnector.directory_exists?("/invalid", %{})
       refute ComicConnector.directory_exists?("/comics/invalid", %{})
       refute ComicConnector.directory_exists?("/collections/invalid", %{})
-      # Note: Empty string is normalized to "/" by PathValidator, so it returns true
       refute ComicConnector.directory_exists?("invalid", %{})
     end
 
@@ -270,21 +269,17 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
     end
 
     test "directory listing consistency", %{comics: comics} do
-      # Root directory structure
       {:ok, [%{file_name: "comics/"}, %{file_name: "collections/"}]} =
         ComicConnector.get_directory_contents("/", %{})
 
-      # Comics directory structure
       {:ok, [%{file_name: "by-id/"}, %{file_name: "by-title/"}]} =
         ComicConnector.get_directory_contents("/comics", %{})
 
-      # Verify all comics appear in by-id listing
       {:ok, comics_by_id} = ComicConnector.get_directory_contents("/comics/by-id", %{})
       ids = comics_by_id |> Enum.map(&String.replace(&1.file_name, "/", ""))
       assert length(ids) == length(comics)
       assert Enum.all?(comics, fn comic -> comic.id in ids end)
 
-      # Verify all comics appear in by-title listing
       {:ok, comics_by_title} = ComicConnector.get_directory_contents("/comics/by-title", %{})
       titles = comics_by_title |> Enum.map(&String.replace(&1.file_name, "/", ""))
 
@@ -294,16 +289,13 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
     end
 
     test "collection navigation integrity", %{parent: parent, collections: collections} do
-      # Collections root structure
       {:ok, [%{file_name: "by-title/"}]} = ComicConnector.get_directory_contents("/collections", %{})
 
-      # Parent collections listing
       {:ok, collections_by_title} = ComicConnector.get_directory_contents("/collections/by-title", %{})
       parent_titles = collections_by_title |> Enum.map(& &1.file_name)
 
       assert parent.title in parent_titles
 
-      # Child collections under parent
       {:ok, child_contents} = ComicConnector.get_directory_contents("/collections/by-title/#{parent.title}", %{})
       child_dirs = Enum.filter(child_contents, fn item -> item.type == :directory and item.file_name != "comics/" end)
       child_titles = Enum.map(child_dirs, & &1.file_name)
@@ -312,14 +304,12 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
         assert collection.title in child_titles
       end)
 
-      # Verify comics directory exists in each child collection
       Enum.each(collections, fn collection ->
         {:ok, contents} =
           ComicConnector.get_directory_contents("/collections/by-title/#{parent.title}/#{collection.title}", %{})
 
         assert Enum.any?(contents, fn item -> item.file_name == "comics/" and item.type == :directory end)
 
-        # Verify comics subdirectories
         {:ok, comics_contents} =
           ComicConnector.get_directory_contents("/collections/by-title/#{parent.title}/#{collection.title}/comics", %{})
 
@@ -330,34 +320,27 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
     end
 
     test "file download paths work consistently", %{comics: comics, collections: collections, parent: parent} do
-      # Test direct comic downloads by ID and title
       Enum.take(comics, 3)
       |> Enum.each(fn comic ->
-        # By ID
         {:ok, %File.Stream{}} =
           ComicConnector.get_content("/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}", %{})
 
-        # By title
         {:ok, %File.Stream{}} =
           ComicConnector.get_content("/comics/by-title/#{comic.title}/#{comic.title}.#{comic.format}", %{})
       end)
 
-      # Test downloads through collections
       Enum.take(collections, 2)
       |> Enum.each(fn collection ->
-        # Get comics from this collection
         {:ok, collection_with_comics} = Collections.get_collection(collection.id, preload: [:comics])
 
         Enum.take(collection_with_comics.comics, 2)
         |> Enum.each(fn comic ->
-          # Via collection by-id path
           {:ok, %File.Stream{}} =
             ComicConnector.get_content(
               "/collections/by-title/#{parent.title}/#{collection.title}/comics/by-id/#{comic.id}/#{comic.id}.#{comic.format}",
               %{}
             )
 
-          # Via collection by-title path
           {:ok, %File.Stream{}} =
             ComicConnector.get_content(
               "/collections/by-title/#{parent.title}/#{collection.title}/comics/by-title/#{comic.title}/#{comic.title}.#{comic.format}",
@@ -372,19 +355,15 @@ defmodule BasenjiWeb.FTP.ComicConnectorTest do
 
       Enum.take(comics_with_pages, 3)
       |> Enum.each(fn comic ->
-        # Test page access by ID
         {:ok, bytes} = ComicConnector.get_content("/comics/by-id/#{comic.id}/pages/01.jpg", %{})
         assert byte_size(bytes) > 0
 
-        # Test page access by title
         {:ok, bytes} = ComicConnector.get_content("/comics/by-title/#{comic.title}/pages/01.jpg", %{})
         assert byte_size(bytes) > 0
 
-        # Test that page directory lists correct number of pages
         {:ok, page_list} = ComicConnector.get_directory_contents("/comics/by-id/#{comic.id}/pages", %{})
         assert length(page_list) == comic.page_count
 
-        # Verify page numbering format
         page_files = Enum.map(page_list, & &1.file_name)
         padding = String.length("#{comic.page_count}")
 
