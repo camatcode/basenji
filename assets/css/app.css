@@ -4,6 +4,9 @@
 
 /* This file is for your main application CSS */
 
+/* Comic Reader Responsive Styles */
+@import "./reader.css";
+
 /* Line clamp utilities for text truncation */
 .line-clamp-2 {
   overflow: hidden;
