@@ -5,7 +5,7 @@ defmodule Basenji.ImageProcessor do
 
   def get_image_preview(binary, preview_width_target, preview_height_target) do
     with {:ok, image} <- Image.from_binary(binary),
-         {:ok, preview} <- Image.thumbnail(image, "#{preview_width_target}x#{preview_height_target}", fit: :contain) do
+         {:ok, preview} <- make_preview(image, preview_width_target, preview_height_target) do
       bytes =
         Image.write!(preview, :memory, suffix: ".jpg")
         |> JPEGOptimizer.optimize!()
@@ -13,6 +13,17 @@ defmodule Basenji.ImageProcessor do
       {:ok, bytes}
     end
   end
+
+  defp make_preview(image, preview_width_target, preview_height_target) do
+    width = Image.width(image)
+    height = Image.height(image)
+
+    opts = thumbnail_opts(width, height)
+    Image.thumbnail(image, "#{preview_width_target}x#{preview_height_target}", opts)
+  end
+
+  defp thumbnail_opts(width, height) when width > height * 2 or height > width * 2, do: [fit: :cover, crop: :attention]
+  defp thumbnail_opts(_width, _height), do: [fit: :contain]
 
   def resize_image(binary, opts \\ []) when is_binary(binary) do
     if Keyword.has_key?(opts, :width) || Keyword.has_key?(opts, :height) do
