@@ -1,7 +1,7 @@
 defmodule Basenji.Worker.CollectionWorker do
   @moduledoc false
 
-  use Oban.Worker, queue: :collection, unique: [period: 30], max_attempts: 3
+  use Oban.Worker, queue: :collection, unique: [period: 5], max_attempts: 3
 
   alias __MODULE__, as: CollectionWorker
   alias Basenji.Collection
