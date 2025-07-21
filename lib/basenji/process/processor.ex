@@ -22,7 +22,9 @@ defmodule Basenji.Processor do
 
     jobs =
       actions
-      |> Enum.map(fn action -> ComicWorker.to_job(%{action: action, comic: comic}) end)
+      |> Enum.map(fn action ->
+        ComicWorker.to_job(%{action: action, comic_id: comic.id, resource_location: comic.resource_location})
+      end)
       |> Enum.filter(fn thing -> thing != nil end)
       |> List.flatten()
 
@@ -34,7 +36,7 @@ defmodule Basenji.Processor do
 
     jobs =
       actions
-      |> Enum.map(fn action -> CollectionWorker.to_job(%{action: action, collection: collection}) end)
+      |> Enum.map(fn action -> CollectionWorker.to_job(%{action: action, collection_id: collection.id}) end)
       |> Enum.filter(fn thing -> thing != nil end)
       |> List.flatten()
 

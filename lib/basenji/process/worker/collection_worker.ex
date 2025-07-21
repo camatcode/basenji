@@ -10,13 +10,9 @@ defmodule Basenji.Worker.CollectionWorker do
 
   require Logger
 
-  def to_job(%{action: :insert, collection: collection}) do
-    %{inserted_at: inserted_at, updated_at: updated_at} = collection
-
-    if DateTime.diff(updated_at, inserted_at) < 5 do
-      [:explore_resource]
-      |> Enum.map(&to_job(%{action: &1, collection_id: collection.id}))
-    end
+  def to_job(%{action: :insert, collection_id: collection_id}) do
+    [:explore_resource]
+    |> Enum.map(&to_job(%{action: &1, collection_id: collection_id}))
   end
 
   def to_job(args), do: CollectionWorker.new(args)
@@ -50,11 +46,11 @@ defmodule Basenji.Worker.CollectionWorker do
 
       if File.dir?(full_path) do
         {child_dirs, child_files} = walk(full_path)
-        dirs = [full_path] ++ [child_dirs] ++ dirs
+        dirs = [full_path] ++ child_dirs ++ dirs
         files = files ++ child_files
-        {dirs, files}
+        {dirs |> List.flatten() |> Enum.uniq(), files |> List.flatten() |> Enum.uniq()}
       else
-        {dirs, [full_path | files]}
+        {dirs, [full_path | files] |> Enum.uniq()}
       end
     end)
   end

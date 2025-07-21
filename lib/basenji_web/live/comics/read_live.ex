@@ -73,6 +73,10 @@ defmodule BasenjiWeb.Comics.ReadLive do
      |> push_event("scroll-to-top", %{})}
   end
 
+  def handle_event("handle_keydown", _, socket) do
+    {:noreply, socket}
+  end
+
   defp patch_url(socket) do
     socket
     |> push_patch(to: "/comics/#{socket.assigns.comic.id}/read?#{socket.assigns.q_string}")
@@ -91,7 +95,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
       |> max(1)
 
     assign(socket, :current_page, page_num)
-    |> update_current_params(%{"page" => "#{page}"})
+    |> update_current_params(%{"page" => "#{page_num}"})
   end
 
   defp update_current_params(socket, params) do
