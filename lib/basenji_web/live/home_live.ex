@@ -58,6 +58,7 @@ defmodule BasenjiWeb.HomeLive do
 
     opts =
       [
+        prefer_optimized: true,
         limit: @per_page,
         offset: (page - 1) * @per_page,
         order_by: safe_sort_atom(sort)
@@ -68,7 +69,7 @@ defmodule BasenjiWeb.HomeLive do
     results = Comics.list_comics(opts)
 
     total_opts =
-      []
+      [prefer_optimized: true]
       |> maybe_add_search(search)
       |> maybe_add_format(format)
 

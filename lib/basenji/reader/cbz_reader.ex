@@ -28,15 +28,20 @@ defmodule Basenji.Reader.CBZReader do
 
   def get_entry_stream!(cbz_file_path, entry) do
     create_resource(fn ->
-      escaped_filename =
-        String.replace(entry[:file_name], "[", "\\[")
-        |> String.replace("]", "\\]")
-        |> String.replace(" ", "\\ ")
+      escaped_filename = entry[:file_name]
+      #        String.replace(entry[:file_name], "[", "\\[")
+      #        |> String.replace("]", "\\]")
+      #        |> String.replace(" ", "\\ ")
+      #        |> String.replace("(", "\\(")
+      #        |> String.replace(")", "\\)")
 
-      cbz_file_path =
-        String.replace(cbz_file_path, "[", "\\[")
-        |> String.replace("]", "\\]")
-        |> String.replace(" ", "\\ ")
+      cbz_file_path = cbz_file_path
+
+      #      String.replace(cbz_file_path, "[", "\\[")
+      #      |> String.replace("]", "\\]")
+      #      |> String.replace(" ", "\\ ")
+      #      |> String.replace("(", "\\(")
+      #      |> String.replace(")", "\\)")
 
       with {:ok, output} <- exec("unzip", ["-p", cbz_file_path, escaped_filename]) do
         [output |> :binary.bin_to_list()]

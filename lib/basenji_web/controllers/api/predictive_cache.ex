@@ -39,6 +39,35 @@ defmodule BasenjiWeb.PredictiveCache do
     result
   end
 
+  def fetch_page_from_cache(%Comic{id: comic_id} = comic, page_num, opts) do
+    Cachex.fetch(
+      :basenji_cache,
+      page_cache_key(comic_id, page_num, opts),
+      fn _key ->
+        with {:ok, page, _mime} <- Comics.get_page(comic, page_num) do
+          ImageProcessor.resize_image(page, opts)
+        end
+        |> case do
+          {:ok, page} ->
+            {:commit, {page, "image/jpeg"}, [ttl: to_timeout(minute: 1)]}
+
+          {_, resp} ->
+            {:ignore, {:error, resp}}
+        end
+      end
+    )
+    |> case do
+      {:ignore, {:error, error}} ->
+        {:error, error}
+
+      {_, {page, mime}} ->
+        {:ok, page, mime}
+
+      response ->
+        response
+    end
+  end
+
   # for testing / probing
   def handle_call(:state, _, state) do
     {:reply, state, state}
@@ -135,35 +164,6 @@ defmodule BasenjiWeb.PredictiveCache do
 
   defp page_cache_key(comic_id, page_num, opts) do
     %{comic_id: comic_id, page_num: page_num, optimized: true, opts: opts}
-  end
-
-  defp fetch_page_from_cache(%Comic{id: comic_id} = comic, page_num, opts) do
-    Cachex.fetch(
-      :basenji_cache,
-      page_cache_key(comic_id, page_num, opts),
-      fn _key ->
-        with {:ok, page, _mime} <- Comics.get_page(comic, page_num) do
-          ImageProcessor.resize_image(page, opts)
-        end
-        |> case do
-          {:ok, page} ->
-            {:commit, {page, "image/jpeg"}, [ttl: to_timeout(minute: 1)]}
-
-          {_, resp} ->
-            {:ignore, {:error, resp}}
-        end
-      end
-    )
-    |> case do
-      {:ignore, {:error, error}} ->
-        {:error, error}
-
-      {_, {page, mime}} ->
-        {:ok, page, mime}
-
-      response ->
-        response
-    end
   end
 
   defp prefetch_next_pages(%Comic{} = comic, current_page, opts) do
