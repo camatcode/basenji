@@ -37,8 +37,7 @@ config :basenji, Oban,
   repo: Basenji.Repo,
   plugins: [
     {Oban.Plugins.Pruner, max_age: to_timeout(hour: 6)},
-    # Rescue jobs that have been running for more than 5 days
-    {Oban.Plugins.Lifeline, rescue_after: to_timeout(minute: 60 * 24 * 5)}
+    {Oban.Plugins.Lifeline, rescue_after: to_timeout(hour: 1)}
   ]
 
 config :basenji,

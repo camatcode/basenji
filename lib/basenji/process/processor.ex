@@ -17,23 +17,25 @@ defmodule Basenji.Processor do
     |> Oban.insert_all()
   end
 
-  def process(%Comic{id: comic_id, resource_location: loc}, actions, opts) when is_list(actions) do
+  def process(%Comic{id: _} = comic, actions, opts) when is_list(actions) do
     opts = Keyword.merge([insert: true], opts)
 
     jobs =
       actions
-      |> Enum.map(fn action -> ComicWorker.to_job(%{action: action, comic_id: comic_id, resource_location: loc}) end)
+      |> Enum.map(fn action -> ComicWorker.to_job(%{action: action, comic: comic}) end)
+      |> Enum.filter(fn thing -> thing != nil end)
       |> List.flatten()
 
     if opts[:insert], do: Oban.insert_all(jobs), else: jobs
   end
 
-  def process(%Collection{id: collection_id}, actions, opts) when is_list(actions) do
+  def process(%Collection{id: _} = collection, actions, opts) when is_list(actions) do
     opts = Keyword.merge([insert: true], opts)
 
     jobs =
       actions
-      |> Enum.map(fn action -> CollectionWorker.to_job(%{action: action, collection_id: collection_id}) end)
+      |> Enum.map(fn action -> CollectionWorker.to_job(%{action: action, collection: collection}) end)
+      |> Enum.filter(fn thing -> thing != nil end)
       |> List.flatten()
 
     if opts[:insert], do: Oban.insert_all(jobs), else: jobs
