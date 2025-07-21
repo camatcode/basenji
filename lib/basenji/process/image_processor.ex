@@ -14,17 +14,6 @@ defmodule Basenji.ImageProcessor do
     end
   end
 
-  defp make_preview(image, preview_width_target, preview_height_target) do
-    width = Image.width(image)
-    height = Image.height(image)
-
-    opts = thumbnail_opts(width, height)
-    Image.thumbnail(image, "#{preview_width_target}x#{preview_height_target}", opts)
-  end
-
-  defp thumbnail_opts(width, height) when width > height * 2 or height > width * 2, do: [fit: :cover, crop: :attention]
-  defp thumbnail_opts(_width, _height), do: [fit: :contain]
-
   def resize_image(binary, opts \\ []) when is_binary(binary) do
     if Keyword.has_key?(opts, :width) || Keyword.has_key?(opts, :height) do
       with {:ok, image} <- Image.from_binary(binary) do
@@ -38,6 +27,17 @@ defmodule Basenji.ImageProcessor do
       {:ok, binary}
     end
   end
+
+  defp make_preview(image, preview_width_target, preview_height_target) do
+    width = Image.width(image)
+    height = Image.height(image)
+
+    opts = thumbnail_opts(width, height)
+    Image.thumbnail(image, "#{preview_width_target}x#{preview_height_target}", opts)
+  end
+
+  defp thumbnail_opts(width, height) when width > height * 2 or height > width * 2, do: [fit: :cover, crop: :attention]
+  defp thumbnail_opts(_width, _height), do: [fit: :contain]
 
   defp calculate_resize_opts(start_width, start_height, opts) do
     if Keyword.has_key?(opts, :width) && Keyword.has_key?(opts, :height) do
