@@ -26,10 +26,7 @@ defmodule Basenji.Reader.CBRReader do
 
   def get_entry_stream!(cbz_file_path, entry) do
     create_resource(fn ->
-      escaped_filename =
-        String.replace(entry[:file_name], "[", "\\[")
-        |> String.replace("]", "\\]")
-        |> String.replace(" ", "\\ ")
+      escaped_filename = entry[:file_name]
 
       with {:ok, output} <- exec("unrar", ["p", cbz_file_path, escaped_filename]) do
         [output |> :binary.bin_to_list()]
