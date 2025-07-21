@@ -32,7 +32,11 @@ defmodule Basenji.Collections do
         collections =
           transactions
           |> Map.values()
-          |> Enum.map(fn collection -> list_collections(title: collection.title) |> hd() end)
+          |> Enum.map(fn collection ->
+            list_collections(title: collection.title)
+            |> hd()
+          end)
+          |> Enum.filter(fn collection -> collection != nil end)
 
         handle_insert_side_effects({:ok, collections})
 

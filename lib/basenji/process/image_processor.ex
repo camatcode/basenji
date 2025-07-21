@@ -36,8 +36,10 @@ defmodule Basenji.ImageProcessor do
     Image.thumbnail(image, "#{preview_width_target}x#{preview_height_target}", opts)
   end
 
-  defp thumbnail_opts(width, height) when width > height * 2 or height > width * 2, do: [fit: :cover, crop: :attention]
-  defp thumbnail_opts(_width, _height), do: [fit: :contain]
+  defp thumbnail_opts(width, height) when width > height * 2 or height > width * 2,
+    do: [fit: :cover, crop: :attention, resize: :down]
+
+  defp thumbnail_opts(_width, _height), do: [fit: :contain, resize: :down]
 
   defp calculate_resize_opts(start_width, start_height, opts) do
     if Keyword.has_key?(opts, :width) && Keyword.has_key?(opts, :height) do

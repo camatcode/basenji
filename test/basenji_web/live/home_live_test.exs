@@ -130,4 +130,29 @@ defmodule BasenjiWeb.HomeLiveTest do
 
     refute has_element?(lv, "button", "Reset")
   end
+
+  test "verify params", %{conn: conn} do
+    _inserted_comics = insert_list(8 * 24, :comic)
+
+    [chunk_1 | other_chunks] =
+      Comics.list_comics(order_by: :title)
+      |> Enum.chunk_every(24)
+
+    assert {:ok, _lv, html} = live(conn, ~p"/?page=1")
+
+    Enum.each(chunk_1, fn comic ->
+      assert html =~ comic.id
+      assert html =~ comic.title
+    end)
+
+    Enum.with_index(other_chunks, 2)
+    |> Enum.each(fn {chunk, page_num} ->
+      assert {:ok, _lv, html} = live(conn, ~p"/?page=#{page_num}")
+
+      Enum.each(chunk, fn comic ->
+        assert html =~ comic.id
+        assert html =~ comic.title
+      end)
+    end)
+  end
 end

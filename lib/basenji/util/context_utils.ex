@@ -43,7 +43,7 @@ defmodule Basenji.ContextUtils do
         {:updated_after, dt}, query ->
           where(query, [c], c.updated_at > ^dt)
 
-        {:offset, offset}, query ->
+        {:offset, offset}, query when offset > 0 ->
           offset(query, [p], ^offset)
 
         {:order_by, order}, query when is_bitstring(order) ->

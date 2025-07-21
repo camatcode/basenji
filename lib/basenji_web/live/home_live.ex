@@ -10,11 +10,24 @@ defmodule BasenjiWeb.HomeLive do
 
   @per_page 24
 
+  @path "/"
+
   def mount(_params, _session, socket) do
     socket
     |> assign_search_options()
     |> assign_content()
     |> then(&{:ok, &1})
+  end
+
+  def handle_params(params, _url, socket) do
+    page = params["page"] || "1"
+    search = params["search_query"] || ""
+    format = params["format_filter"] || ""
+    sort = params["sort"] || ""
+
+    socket
+    |> assign_content(page, search, format, sort)
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("search", %{"search_form" => form_params}, socket) do
@@ -24,27 +37,59 @@ defmodule BasenjiWeb.HomeLive do
 
     socket
     |> assign_content(1, search, format, sort)
+    |> patch_url()
     |> then(&{:noreply, &1})
   end
 
   def handle_event("clear_filters", _params, socket) do
     socket
     |> assign_content()
+    |> patch_url()
     |> then(&{:noreply, &1})
   end
 
   def handle_event("paginate", %{"page" => page}, socket) do
-    {page_num, _} = Integer.parse(page)
+    socket
+    |> change_page(page)
+    |> patch_url()
+    |> then(&{:noreply, &1})
+  end
 
+  defp patch_url(socket) do
+    socket
+    |> push_patch(to: "#{@path}?#{socket.assigns.q_string}")
+  end
+
+  defp update_current_params(socket, params) do
+    current_params = socket.assigns[:current_params] || %{}
+    new_current_params = Map.merge(current_params, params)
+    q = URI.encode_query(new_current_params)
+
+    socket
+    |> assign(:current_params, new_current_params)
+    |> assign(:q_string, q)
+  end
+
+  defp change_page(socket, page) when is_integer(page) do
     form_params = socket.assigns.search_form.params
     search = Map.get(form_params, "search_query", "")
     format = Map.get(form_params, "format_filter", "")
     sort = Map.get(form_params, "sort_by", "title")
 
+    total_pages = socket.assigns.total_pages
+
+    page = max(page, 1) |> min(total_pages)
+
     socket
-    |> assign_content(page_num, search, format, sort)
-    |> then(&{:noreply, &1})
+    |> assign_content(page, search, format, sort)
   end
+
+  defp change_page(socket, page) when is_bitstring(page) do
+    {page_num, _} = Integer.parse(page)
+    change_page(socket, page_num)
+  end
+
+  defp change_page(socket, page) when is_nil(page), do: socket
 
   defp assign_content(socket, current_page \\ 1, search_query \\ "", format_filter \\ "", sort_by \\ "title") do
     socket = assign_page(socket, current_page, search_query, format_filter, sort_by)
@@ -79,6 +124,12 @@ defmodule BasenjiWeb.HomeLive do
     socket
     |> assign(:comics, results)
     |> assign(:total_pages, total_pages)
+    |> update_current_params(%{
+      "page" => page,
+      "search_query" => search_query,
+      "format_filter" => format_filter,
+      "sort" => sort_by
+    })
   end
 
   defp assign_search_options(socket) do
@@ -99,6 +150,11 @@ defmodule BasenjiWeb.HomeLive do
 
     socket
     |> assign(:search_options_info, info)
+  end
+
+  defp assign_page(socket, current_page, search_query, format_filter, sort_by) when is_bitstring(current_page) do
+    {page_num, _} = Integer.parse(current_page)
+    assign_page(socket, page_num, search_query, format_filter, sort_by)
   end
 
   defp assign_page(socket, current_page, search_query, format_filter, sort_by) do
@@ -190,7 +246,6 @@ defmodule BasenjiWeb.HomeLive do
             value={@form[:format_filter].value || ""}
             class={[form_input_classes()]}
           >
-            <option value="" selected={@form[:format_filter].value == ""} label="All Formats" />
             <%= for {value, label} <- @search_options.filter_info.options do %>
               <option value={value} selected={@form[:format_filter].value == value} label={label} />
             <% end %>
