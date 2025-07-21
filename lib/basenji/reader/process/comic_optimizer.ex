@@ -29,7 +29,7 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
         1..page_count
         |> Task.async_stream(
           &extract_page(&1, entries, padding, images_dir),
-          max_concurrency: 8,
+          max_concurrency: 3,
           timeout: max(300_000, page_count * 2_000)
         )
         |> Stream.run()

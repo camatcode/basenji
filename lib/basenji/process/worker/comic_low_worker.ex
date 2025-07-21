@@ -61,8 +61,8 @@ defmodule Basenji.Worker.ComicLowWorker do
 
   defp snapshot(comic, _args) do
     with {:ok, bytes, _mime} <- Comics.get_page(comic, 1),
-         {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 600, 600) do
-      Comics.associate_image_preview(comic, preview_bytes, width: 600, height: 600)
+         {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 400, 600) do
+      Comics.associate_image_preview(comic, preview_bytes, width: 400, height: 600)
     end
   end
 end
