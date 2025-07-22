@@ -68,10 +68,14 @@ jobs:
       - name: Run credo
         run: mix credo --strict
 
+      - name: Run sobelow
+        run: mix sobelow --skip
+
       - name: Run tests
         run: mix coveralls.github
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+
 
 #      - name: Run dialyzer
 #        run: mix dialyzer --format github --format dialyxir

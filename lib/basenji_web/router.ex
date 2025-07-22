@@ -15,6 +15,7 @@ defmodule BasenjiWeb.Router do
     plug :put_root_layout, html: {BasenjiWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :put_csp_headers
     plug UserPresencePlug
   end
 
@@ -78,5 +79,20 @@ defmodule BasenjiWeb.Router do
       live_dashboard "/dashboard", metrics: BasenjiWeb.Telemetry
       forward "/mailbox", MailboxPreview
     end
+  end
+
+  defp put_csp_headers(conn, _opts) do
+    csp_directives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self'",
+      "connect-src 'self'",
+      "frame-ancestors 'none'"
+    ]
+
+    conn
+    |> put_resp_header("content-security-policy", Enum.join(csp_directives, "; "))
   end
 end

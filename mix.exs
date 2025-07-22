@@ -99,6 +99,7 @@ defmodule Basenji.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:quokka, "~> 2.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: [:test]},
+      {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},
       # api deps
       {:jsonapi_plug, "~> 2.0"},
       {:absinthe, "~> 1.7"},
