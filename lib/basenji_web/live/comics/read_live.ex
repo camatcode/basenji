@@ -2,8 +2,6 @@ defmodule BasenjiWeb.Comics.ReadLive do
   @moduledoc false
   use BasenjiWeb, :live_view
 
-  import BasenjiWeb.Style.ComicsLiveStyle
-
   alias Basenji.Comic
   alias Basenji.Comics
 
@@ -19,26 +17,6 @@ defmodule BasenjiWeb.Comics.ReadLive do
     socket
     |> change_page(page)
     |> then(&{:noreply, &1})
-  end
-
-  defp assign_comic(socket, %Comic{} = comic) do
-    socket
-    |> assign(:page_title, comic.title || "Comic")
-    |> assign(:comic, comic)
-    |> assign(:current_page, 1)
-  end
-
-  defp assign_comic(socket, comic_id) when is_bitstring(comic_id) do
-    Comics.get_comic(comic_id, preload: [:member_collections, :optimized_comic, :original_comic])
-    |> case do
-      {:ok, comic} ->
-        assign_comic(socket, comic)
-
-      _ ->
-        socket
-        |> put_flash(:error, "Comic not found")
-        |> push_navigate(to: ~p"/")
-    end
   end
 
   def handle_event("change_page", %{"page" => page}, socket) do
@@ -65,16 +43,28 @@ defmodule BasenjiWeb.Comics.ReadLive do
      |> push_event("scroll-to-top", %{})}
   end
 
-  def handle_event("handle_keydown", %{"key" => " "}, socket) do
-    {:noreply,
-     socket
-     |> change_page(socket.assigns.current_page + 1)
-     |> patch_url()
-     |> push_event("scroll-to-top", %{})}
-  end
-
   def handle_event("handle_keydown", _, socket) do
     {:noreply, socket}
+  end
+
+  defp assign_comic(socket, %Comic{} = comic) do
+    socket
+    |> assign(:page_title, comic.title || "Comic")
+    |> assign(:comic, comic)
+    |> assign(:current_page, 1)
+  end
+
+  defp assign_comic(socket, comic_id) when is_bitstring(comic_id) do
+    Comics.get_comic(comic_id)
+    |> case do
+      {:ok, comic} ->
+        assign_comic(socket, comic)
+
+      _ ->
+        socket
+        |> put_flash(:error, "Comic not found")
+        |> push_navigate(to: ~p"/")
+    end
   end
 
   defp patch_url(socket) do
@@ -113,12 +103,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
 
   def render(assigns) do
     ~H"""
-    <div
-      class={comics_live_classes(:reader_page_display)}
-      phx-window-keydown="handle_keydown"
-      phx-hook="ScrollToTop"
-      id="reader-page-display"
-    >
+    <div phx-window-keydown="handle_keydown" phx-hook="ScrollToTop" id="reader-page-display">
       <div class="relative portrait-container">
         <div
           phx-hook="ResponsiveImageHook"
