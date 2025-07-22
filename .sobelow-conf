@@ -1,0 +1,10 @@
+{
+  "configs": ["lib"],
+  "exit": "medium",
+  "format": "txt",
+  "ignore": [],
+  "ignore-files": [],
+  "details": true,
+  "threshold": "medium",
+  "verbose": true
+}
