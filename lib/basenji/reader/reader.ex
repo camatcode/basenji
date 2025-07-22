@@ -76,6 +76,7 @@ defmodule Basenji.Reader do
   end
 
   defp get_info(location, opts) do
+    opts = Keyword.merge([include_hash: false], opts)
     reader = find_reader(location)
 
     info =
@@ -85,7 +86,15 @@ defmodule Basenji.Reader do
         {:ok, response} = reader.read(location, opts)
         %{entries: entries} = response
         reader.close(response[:file])
-        %{format: reader.format(), resource_location: location, title: title, page_count: Enum.count(entries)}
+        xxhash = if opts[:include_hash], do: xxhash(location)
+
+        %{
+          format: reader.format(),
+          resource_location: location,
+          title: title,
+          page_count: Enum.count(entries),
+          hash: xxhash
+        }
       else
         {:error, :unreadable}
       end
@@ -95,6 +104,12 @@ defmodule Basenji.Reader do
       {:error, e} -> {:error, e}
       inf -> {:ok, inf}
     end
+  end
+
+  def xxhash(location) do
+    {:ok, output} = exec("xxhsum", [location])
+    [hash, _] = output |> String.split(" ", parts: 2)
+    hash
   end
 
   def exec(cmd, args, opts \\ []) do

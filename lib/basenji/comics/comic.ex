@@ -18,6 +18,7 @@ defmodule Basenji.Comic do
     :released_year,
     :page_count,
     :format,
+    :hash,
     :byte_size,
     :original_id,
     :optimized_id,
@@ -41,13 +42,14 @@ defmodule Basenji.Comic do
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "comics" do
-    field(:title, :string)
+    field(:title, :string, default: "Unknown")
     field(:author, :string)
     field(:description, :string)
     field(:resource_location, :string)
     field(:released_year, :integer, default: -1)
     field(:page_count, :integer, default: -1)
     field(:format, Ecto.Enum, values: @formats)
+    field(:hash, :string)
     field(:byte_size, :integer, default: -1)
     field(:optimized_id, :binary_id)
     field(:image_preview_id, :binary_id)

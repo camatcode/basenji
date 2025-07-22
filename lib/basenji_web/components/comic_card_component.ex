@@ -18,7 +18,7 @@ defmodule BasenjiWeb.ComicCardComponent do
               <img
                 id={@comic.id <> "_preview"}
                 src={~p"/api/comics/#{@comic.id}/preview"}
-                alt={@comic.title}
+                alt={@comic.title || "Unknown"}
                 class={comic_card_classes(:cover_image)}
                 loading={if @lazy_loading, do: "lazy", else: "eager"}
               />
@@ -30,7 +30,7 @@ defmodule BasenjiWeb.ComicCardComponent do
 
         <div class={comic_card_classes(:content_area)}>
           <h3 class={comic_card_classes(:title)}>
-            {String.replace(@comic.title, " Optimized", "") || "Untitled"}
+            {String.replace(@comic.title || "Unknown", " Optimized", "") || "Untitled"}
           </h3>
           <%= if @comic.author do %>
             <p class={comic_card_classes(:author)}>{@comic.author}</p>
