@@ -73,5 +73,11 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
+      - id: run-action
+        uses: sobelow/action@v1
+      - uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: results.sarif
+
 #      - name: Run dialyzer
 #        run: mix dialyzer --format github --format dialyxir
