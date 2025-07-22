@@ -42,7 +42,7 @@ defmodule Basenji.Comic do
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "comics" do
-    field(:title, :string, default: "Unknown")
+    field(:title, :string)
     field(:author, :string)
     field(:description, :string)
     field(:resource_location, :string)
