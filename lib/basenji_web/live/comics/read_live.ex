@@ -13,6 +13,14 @@ defmodule BasenjiWeb.Comics.ReadLive do
     |> then(&{:ok, &1, layout: {BasenjiWeb.Layouts, :reader}})
   end
 
+  def handle_params(params, _url, socket) do
+    page = params["page"] || "1"
+
+    socket
+    |> change_page(page)
+    |> then(&{:noreply, &1})
+  end
+
   defp assign_comic(socket, %Comic{} = comic) do
     socket
     |> assign(:page_title, comic.title || "Comic")
@@ -37,6 +45,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
     {:noreply,
      socket
      |> change_page(page)
+     |> patch_url()
      |> push_event("scroll-to-top", %{})}
   end
 
@@ -44,6 +53,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
     {:noreply,
      socket
      |> change_page(socket.assigns.current_page - 1)
+     |> patch_url()
      |> push_event("scroll-to-top", %{})}
   end
 
@@ -51,6 +61,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
     {:noreply,
      socket
      |> change_page(socket.assigns.current_page + 1)
+     |> patch_url()
      |> push_event("scroll-to-top", %{})}
   end
 
@@ -58,11 +69,17 @@ defmodule BasenjiWeb.Comics.ReadLive do
     {:noreply,
      socket
      |> change_page(socket.assigns.current_page + 1)
+     |> patch_url()
      |> push_event("scroll-to-top", %{})}
   end
 
-  def handle_event("handle_keydown", _params, socket) do
+  def handle_event("handle_keydown", _, socket) do
     {:noreply, socket}
+  end
+
+  defp patch_url(socket) do
+    socket
+    |> push_patch(to: "/comics/#{socket.assigns.comic.id}/read?#{socket.assigns.q_string}")
   end
 
   defp change_page(socket, page) when is_bitstring(page) do
@@ -78,6 +95,17 @@ defmodule BasenjiWeb.Comics.ReadLive do
       |> max(1)
 
     assign(socket, :current_page, page_num)
+    |> update_current_params(%{"page" => "#{page_num}"})
+  end
+
+  defp update_current_params(socket, params) do
+    current_params = socket.assigns[:current_params] || %{}
+    new_current_params = Map.merge(current_params, params)
+    q = URI.encode_query(new_current_params)
+
+    socket
+    |> assign(:current_params, new_current_params)
+    |> assign(:q_string, q)
   end
 
   attr :comic, :any, required: true

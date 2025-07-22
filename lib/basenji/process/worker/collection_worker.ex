@@ -1,7 +1,7 @@
 defmodule Basenji.Worker.CollectionWorker do
   @moduledoc false
 
-  use Oban.Worker, queue: :collection, unique: [period: 5], max_attempts: 3
+  use Oban.Worker, queue: :collection, unique: [period: 60], max_attempts: 3
 
   alias __MODULE__, as: CollectionWorker
   alias Basenji.Collection
@@ -30,23 +30,41 @@ defmodule Basenji.Worker.CollectionWorker do
   end
 
   defp explore_resource(collection_id, _args) do
-    with {:ok, %{resource_location: resource_location} = collection} <- Collections.get_collection(collection_id) do
-      if resource_location, do: explore_resource(collection), else: :ok
+    case Collections.get_collection(collection_id) do
+      {:ok, %{resource_location: resource_location} = collection} when not is_nil(resource_location) ->
+        explore_resource(collection)
+
+      _ ->
+        :ok
     end
+  end
+
+  defp walk(path) do
+    File.ls!(path)
+    |> Enum.reduce({[], []}, fn file_or_dir, {dirs, files} ->
+      full_path = Path.join(path, file_or_dir)
+
+      if File.dir?(full_path) do
+        {child_dirs, child_files} = walk(full_path)
+        dirs = [full_path] ++ child_dirs ++ dirs
+        files = files ++ child_files
+        {dirs |> List.flatten() |> Enum.uniq(), files |> List.flatten() |> Enum.uniq()}
+      else
+        {dirs, [full_path | files] |> Enum.uniq()}
+      end
+    end)
   end
 
   defp explore_resource(%Collection{resource_location: resource_location} = collection)
        when is_bitstring(resource_location) do
     path = Path.expand(resource_location)
-    children = Path.wildcard("#{path}/*")
 
-    files = Enum.filter(children, &File.regular?/1)
-    dirs = children -- files
+    {dirs, files} = walk(path)
 
     if Enum.empty?(files) && Enum.empty?(dirs) do
       Collections.delete_collection(collection)
     else
-      insert_comics(collection, files)
+      if !Enum.empty?(files), do: insert_comics(collection, files)
       if Enum.empty?(dirs), do: :ok, else: insert_collections(collection, dirs)
     end
   end
