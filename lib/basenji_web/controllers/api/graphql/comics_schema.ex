@@ -16,6 +16,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchema do
     field :page_count, :integer
     field :pages, list_of(:string)
     field :format, :comic_format
+    field :hash, :string
     field :image_preview, :string
     field :byte_size, :integer
     field :original_id, :id

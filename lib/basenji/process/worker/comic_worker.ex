@@ -6,6 +6,7 @@ defmodule Basenji.Worker.ComicWorker do
   alias __MODULE__, as: ComicWorker
   alias Basenji.Comic
   alias Basenji.Comics
+  alias Basenji.Processor
   alias Basenji.Reader
   alias Basenji.Worker.ComicLowWorker
 
@@ -18,6 +19,8 @@ defmodule Basenji.Worker.ComicWorker do
       to_low_job(%{action: :optimize, comic_id: comic_id}, schedule_in: 10)
     ]
   end
+
+  def to_job(%{action: :hash} = args), do: to_low_job(args, schedule_in: 10)
 
   def to_low_job(args, opts \\ []) do
     ComicLowWorker.new(args, opts)
@@ -41,8 +44,10 @@ defmodule Basenji.Worker.ComicWorker do
   end
 
   defp extract_metadata(%Comic{} = comic, _args) do
-    with {:ok, info} <- Reader.info(comic.resource_location) do
-      Comics.update_comic(comic, info)
+    with {:ok, info} <- Reader.info(comic.resource_location),
+         {:ok, comic} <- Comics.update_comic(comic, info) do
+      Processor.process(comic, [:hash])
+      :ok
     end
     |> case do
       {:error, :unreadable} -> Comics.delete_comic(comic.id)

@@ -8,7 +8,7 @@ defmodule Basenji.Factory.ComicFactory do
       def comic_factory(attrs) do
         format = Map.get(attrs, :format, Enum.random(Basenji.Comic.formats()))
 
-        {resource_location, page_count} = make_resource_location(attrs, format)
+        {resource_location, page_count, hash} = make_resource_location(attrs, format)
 
         %Basenji.Comic{
           title: Faker.Lorem.sentence(),
@@ -18,7 +18,8 @@ defmodule Basenji.Factory.ComicFactory do
           format: format,
           resource_location: resource_location,
           released_year: Faker.Date.date_of_birth(1..20).year,
-          page_count: page_count
+          page_count: page_count,
+          hash: hash
         }
         |> merge_attributes(attrs)
         |> evaluate_lazy_attributes()
@@ -29,7 +30,8 @@ defmodule Basenji.Factory.ComicFactory do
       defp make_resource_location(%{resource_location: rec_loc}, format) when is_bitstring(rec_loc) do
         {:ok, %{entries: entries}} = Basenji.Reader.read(rec_loc)
         page_count = Enum.count(entries)
-        {rec_loc, page_count}
+        {:ok, %{hash: hash}} = Basenji.Reader.info(rec_loc, include_hash: true)
+        {rec_loc, page_count, hash}
       end
 
       defp make_resource_location(_attrs, format) do
@@ -48,8 +50,8 @@ defmodule Basenji.Factory.ComicFactory do
 
         {:ok, %{entries: entries}} = Basenji.Reader.read(rec_loc)
         page_count = Enum.count(entries)
-
-        {rec_loc, page_count}
+        {:ok, %{hash: hash}} = Basenji.Reader.info(rec_loc, include_hash: true)
+        {rec_loc, page_count, hash}
       end
     end
   end

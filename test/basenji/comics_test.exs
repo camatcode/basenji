@@ -228,6 +228,17 @@ defmodule Basenji.ComicsTest do
       assert 2 == Comics.count_comics(search: "it", order_by: :title)
       assert 2 == Comics.count_comics(search: "25", order_by: :title)
     end
+
+    test "search hash" do
+      [comic | _rest] = insert_list(10, :comic)
+
+      results = Comics.list_comics(hash: comic.hash)
+      refute Enum.empty?(results)
+
+      Enum.each(results, fn result ->
+        assert result.hash == comic.hash
+      end)
+    end
   end
 
   test "get_page" do

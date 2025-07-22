@@ -422,6 +422,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
         }) {
           id
           title
+          hash
           memberCollections {
             id
             title
@@ -434,6 +435,7 @@ defmodule BasenjiWeb.GraphQL.ComicsSchemaTest do
 
       assert result["id"] == comic.id
       assert result["title"] == "Updated Comic Title"
+      assert result["hash"]
       assert Enum.count(result["memberCollections"]) == 1
       assert Enum.at(result["memberCollections"], 0)["id"] == collection.id
     end

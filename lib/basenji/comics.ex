@@ -328,6 +328,9 @@ defmodule Basenji.Comics do
       {:format, fmt}, query ->
         where(query, [c], c.format == ^fmt)
 
+      {:hash, hash}, query ->
+        where(query, [c], c.hash == ^hash)
+
       _, query ->
         query
     end)

@@ -5,6 +5,7 @@ defmodule Basenji.Worker.ComicLowWorker do
 
   alias Basenji.Comics
   alias Basenji.ImageProcessor
+  alias Basenji.Reader
   alias Basenji.Reader.Process.ComicOptimizer
   alias Basenji.UserPresenceTracker
 
@@ -31,6 +32,7 @@ defmodule Basenji.Worker.ComicLowWorker do
         case action do
           "optimize" -> optimize(comic, args)
           "snapshot" -> snapshot(comic, args)
+          "hash" -> hash(comic, args)
           _ -> {:error, "Unknown action #{action}"}
         end
 
@@ -63,6 +65,14 @@ defmodule Basenji.Worker.ComicLowWorker do
     with {:ok, bytes, _mime} <- Comics.get_page(comic, 1),
          {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 400, 600) do
       Comics.associate_image_preview(comic, preview_bytes, width: 400, height: 600)
+    end
+  end
+
+  def hash(%{hash: hash}) when is_bitstring(hash), do: :ok
+
+  def hash(comic, _args) do
+    with {:ok, info} <- Reader.info(comic.resource_location, include_hash: true) do
+      Comics.update_comic(comic, %{hash: info.hash})
     end
   end
 end

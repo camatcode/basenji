@@ -20,7 +20,8 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
       format: format,
       page_count: page_count,
       released_year: r_year,
-      resource_location: loc
+      resource_location: loc,
+      hash: "05806fa2a77b3dbb"
     }
 
     conn =
@@ -215,6 +216,7 @@ defmodule BasenjiWeb.JSONAPI.ComicsControllerTest do
     assert attributes["insertedAt"]
     assert attributes["updatedAt"]
     assert attributes["byteSize"]
+    assert attributes["hash"]
     true
   end
 end

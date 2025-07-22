@@ -1,7 +1,7 @@
 defmodule Basenji.Worker.CollectionWorker do
   @moduledoc false
 
-  use Oban.Worker, queue: :collection, unique: [period: 60], max_attempts: 3
+  use Oban.Worker, queue: :collection, unique: [period: 60, keys: [:collection_id, :action]], max_attempts: 3
 
   alias __MODULE__, as: CollectionWorker
   alias Basenji.Collection
@@ -81,9 +81,15 @@ defmodule Basenji.Worker.CollectionWorker do
 
   defp insert_collections(parent_collection, dirs) do
     Enum.map(dirs, fn dir ->
-      %{title: Path.basename(dir), parent_id: parent_collection.id, resource_location: dir}
+      File.ls!(dir)
+      |> case do
+        [] -> nil
+        _ -> %{title: Path.basename(dir), parent_id: parent_collection.id, resource_location: dir}
+      end
     end)
     |> Enum.filter(&(&1 != nil))
     |> Collections.create_collections()
+
+    :ok
   end
 end
