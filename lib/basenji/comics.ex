@@ -255,6 +255,32 @@ defmodule Basenji.Comics do
     end
   end
 
+  def get_hash(comic_id) when is_bitstring(comic_id) do
+    with {:ok, comic} <- get_comic(comic_id) do
+      get_hash(comic)
+    end
+  end
+
+  def get_hash(%{hash: hash}) when is_bitstring(hash), do: hash
+
+  def get_hash(%Comic{} = comic), do: hash_content(comic)
+
+  defp hash_content(comic) do
+    {:ok, stream} = stream_pages(comic, optimize: false)
+
+    h64_stream = :xxh3.new()
+
+    stream
+    |> Enum.each(fn page_stream ->
+      bin_list = page_stream |> Enum.to_list() |> :erlang.iolist_to_binary()
+      :xxh3.update(h64_stream, bin_list)
+    end)
+
+    result = :xxh3.digest(h64_stream)
+
+    {:ok, "#{result}"}
+  end
+
   defp handle_insert_side_effects({:ok, comic}) do
     Processor.process(comic, [:insert])
     {:ok, comic}

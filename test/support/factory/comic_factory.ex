@@ -50,7 +50,7 @@ defmodule Basenji.Factory.ComicFactory do
 
         {:ok, %{entries: entries}} = Basenji.Reader.read(rec_loc)
         page_count = Enum.count(entries)
-        {:ok, %{hash: hash}} = Basenji.Reader.info(rec_loc, include_hash: true)
+        hash = Faker.UUID.v4()
         {rec_loc, page_count, hash}
       end
     end

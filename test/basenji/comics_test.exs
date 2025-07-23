@@ -61,11 +61,20 @@ defmodule Basenji.ComicsTest do
         files
         |> Enum.each(fn file ->
           {:ok, comic} = Comics.from_resource(file)
+          # by draining the queue, the system with de-dupe any comics with the same pages
           TestHelper.drain_queue(:comic)
-          {:ok, comic} = Comics.get_comic(comic.id)
-          assert comic.title
-          assert comic.page_count
-          assert comic.resource_location
+
+          Comics.get_comic(comic.id)
+          |> case do
+            {:ok, comic} ->
+              # This comic survived de-dupe
+              assert comic.title
+              assert comic.page_count
+              assert comic.resource_location
+
+            _ ->
+              :ok
+          end
         end)
       end)
     end
@@ -236,9 +245,15 @@ defmodule Basenji.ComicsTest do
       refute Enum.empty?(results)
 
       Enum.each(results, fn result ->
-        assert result.hash == comic.hash
+        assert result.hash == Comics.get_hash(comic)
       end)
     end
+  end
+
+  test "make hash" do
+    comic = insert(:comic, hash: nil)
+    {:ok, hash} = Comics.get_hash(comic)
+    assert hash
   end
 
   test "get_page" do
