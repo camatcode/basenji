@@ -13,12 +13,11 @@ defmodule Basenji.ReaderTest do
 
     files
     |> Enum.each(fn file ->
-      {:ok, info} = Reader.info(file, include_hash: true)
+      {:ok, info} = Reader.info(file)
       assert info.format
       assert info.title
       assert info.resource_location
       assert info.page_count
-      assert info.hash
     end)
   end
 

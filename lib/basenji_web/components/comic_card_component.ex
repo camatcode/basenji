@@ -7,25 +7,24 @@ defmodule BasenjiWeb.ComicCardComponent do
   attr :comic, :any, required: true, doc: "The comic struct to display"
   attr :class, :string, default: "", doc: "Additional CSS classes for the card container"
   attr :lazy_loading, :boolean, default: true, doc: "Whether to use lazy loading for images"
+  attr :new_tab, :boolean, default: false, doc: "Whether to open the comic in a new tab"
 
   def render(assigns) do
     ~H"""
     <div class={[comic_card_classes(:container), @class]}>
       <div class={comic_card_classes(:inner)}>
-        <.link navigate={~p"/comics/#{@comic.id}/read"} class="block">
-          <div class={comic_card_classes(:cover_container)}>
-            <%= if @comic.image_preview do %>
-              <img
-                id={@comic.id <> "_preview"}
-                src={~p"/api/comics/#{@comic.id}/preview"}
-                alt={@comic.title || "Unknown"}
-                class={comic_card_classes(:cover_image)}
-                loading={if @lazy_loading, do: "lazy", else: "eager"}
-              />
-            <% else %>
-              <.icon name="hero-book-open" class={comic_card_classes(:fallback_icon)} />
-            <% end %>
-          </div>
+        <a
+          :if={@new_tab}
+          href={~p"/comics/#{@comic.id}/read"}
+          class="block"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <.comic_preview comic={@comic} lazy_loading={@lazy_loading} />
+        </a>
+
+        <.link :if={!@new_tab} navigate={~p"/comics/#{@comic.id}/read"} class="block">
+          <.comic_preview comic={@comic} lazy_loading={@lazy_loading} />
         </.link>
 
         <div class={comic_card_classes(:content_area)}>
@@ -43,6 +42,27 @@ defmodule BasenjiWeb.ComicCardComponent do
           </div>
         </div>
       </div>
+    </div>
+    """
+  end
+
+  attr :comic, :any, required: true, doc: "The comic struct to display"
+  attr :lazy_loading, :boolean, default: true, doc: "Whether to use lazy loading for images"
+
+  def comic_preview(assigns) do
+    ~H"""
+    <div class={comic_card_classes(:cover_container)}>
+      <%= if @comic.image_preview do %>
+        <img
+          id={@comic.id <> "_preview"}
+          src={~p"/api/comics/#{@comic.id}/preview"}
+          alt={@comic.title || "Unknown"}
+          class={comic_card_classes(:cover_image)}
+          loading={if @lazy_loading, do: "lazy", else: "eager"}
+        />
+      <% else %>
+        <.icon name="hero-book-open" class={comic_card_classes(:fallback_icon)} />
+      <% end %>
     </div>
     """
   end

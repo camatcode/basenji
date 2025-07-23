@@ -86,14 +86,12 @@ defmodule Basenji.Reader do
         {:ok, response} = reader.read(location, opts)
         %{entries: entries} = response
         reader.close(response[:file])
-        xxhash = if opts[:include_hash], do: xxhash(location)
 
         %{
           format: reader.format(),
           resource_location: location,
           title: title,
-          page_count: Enum.count(entries),
-          hash: xxhash
+          page_count: Enum.count(entries)
         }
       else
         {:error, :unreadable}
@@ -104,12 +102,6 @@ defmodule Basenji.Reader do
       {:error, e} -> {:error, e}
       inf -> {:ok, inf}
     end
-  end
-
-  def xxhash(location) do
-    {:ok, output} = exec("xxhsum", [location])
-    [hash, _] = output |> String.split(" ", parts: 2)
-    hash
   end
 
   def exec(cmd, args, opts \\ []) do

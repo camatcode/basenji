@@ -290,6 +290,7 @@ defmodule BasenjiWeb.HomeLive do
             id={"comic_card_#{comic.id}"}
             module={BasenjiWeb.ComicCardComponent}
             comic={comic}
+            new_tab={true}
           />
         <% end %>
       </div>
