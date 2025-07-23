@@ -283,6 +283,9 @@ defmodule Basenji.Collections do
         term = "%#{search}%"
         where(query, [c], ilike(c.title, ^term))
 
+      {:resource_location, loc}, query ->
+        where(query, [c], c.resource_location == ^loc)
+
       {:description, search}, query ->
         term = "%#{search}%"
         where(query, [c], ilike(c.description, ^term))
