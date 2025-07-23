@@ -19,6 +19,16 @@ defmodule BasenjiWeb.Router do
     plug UserPresencePlug
   end
 
+  pipeline :browser_no_track do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {BasenjiWeb.Layouts, :root}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+    plug :put_csp_headers
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -33,8 +43,6 @@ defmodule BasenjiWeb.Router do
     live "/", HomeLive, :index
     live "/comics/:id", Comics.ShowLive, :show
     live "/comics/:id/read", Comics.ReadLive, :show
-
-    oban_dashboard("/oban")
   end
 
   scope "/api", BasenjiWeb do
@@ -74,8 +82,9 @@ defmodule BasenjiWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through :browser
+      pipe_through :browser_no_track
 
+      oban_dashboard("/oban")
       live_dashboard "/dashboard", metrics: BasenjiWeb.Telemetry
       forward "/mailbox", MailboxPreview
     end

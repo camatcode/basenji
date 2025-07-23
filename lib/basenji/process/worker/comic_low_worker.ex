@@ -14,7 +14,7 @@ defmodule Basenji.Worker.ComicLowWorker do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "comic_id" => comic_id} = args}) do
     if UserPresenceTracker.anyone_browsing?() do
-      Logger.info("Someone is browsing, snoozing low comic #{comic_id} for 5 minutes")
+      Logger.debug("Someone is browsing, snoozing low comic #{comic_id} for 5 minutes")
       {:snooze, 300}
     else
       do_work(action, comic_id, args)
@@ -42,10 +42,6 @@ defmodule Basenji.Worker.ComicLowWorker do
   end
 
   defp optimize(%{optimized_id: nil, original_id: nil, resource_location: resource_location} = comic, _args) do
-    Logger.info(
-      "Attempting to optimize comic: #{inspect(%{id: comic.id, optimized_id: comic.optimized_id, original_id: comic.original_id, resource_location: comic.resource_location})}"
-    )
-
     parent_dir = Path.join(Path.dirname(resource_location), "optimized")
     tmp_dir = Path.join(System.tmp_dir!(), "basenji")
 
