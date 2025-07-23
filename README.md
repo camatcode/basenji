@@ -25,6 +25,13 @@
     <img alt="Apache 2 License" src="https://img.shields.io/hexpm/l/oban">
   </a>
 
+  <a href="https://github.com/camatcode/basenji/actions?query=branch%3Amain++">
+    <img alt="ci status" src="https://github.com/camatcode/basenji/workflows/ci/badge.svg">
+  </a>
+  <a href='https://coveralls.io/github/camatcode/basenji?branch=main'>
+    <img src='https://coveralls.io/repos/github/camatcode/basenji/badge.svg?branch=main' alt='Coverage Status' />
+  </a>
+
 <a href="https://mastodon.social/@scrum_log" target="_blank" rel="noopener noreferrer">
     <img alt="Mastodon Follow" src="https://img.shields.io/badge/mastodon-%40scrum__log%40mastodon.social-purple?color=6364ff">
   </a>
@@ -46,27 +53,28 @@
 
 ### Features / Running Roadmap
 
-* ✅ Supported formats:  CBZ, CBR, CBT, CB7, and PDF
-* ✅ Optimizes pages to improve read times on-the-fly
-* ✅ Efficent CRUD, filtering, sorting
-  *  ✅ Intelligently pre-fetches pages, so you're *never* waiting on it to send you the next page (thank you `GenServer`)
-* ✅ APIs / Services
-  * ✅ JSON:API
-  * ✅ GraphQL
-  * ✅ FTP interface (for legacy third-party clients without HTTP connectivity)
-* ✅ Powerful background processing that
-  * ✅ Organizes deeply nested collections of comics
-  * ✅ Creates image previews, extracts metadata, handles the comic life cycle
-  * ✅ Stress tested with 49.9 GB of comics with 2700 items
-  * ✅ Stores optimized versions to save you disk space
-  * ✅ Won't run expensive background jobs when the app is in use (thanks, [Phoenix.Tracker](https://hexdocs.pm/phoenix_pubsub/Phoenix.Tracker.html)!)
-* ✅ Front-End
-  * ✅ Search, List, Explore, Filter
-  * ✅ Smart full screen viewer
-  * 🚧 In Progress: Continue making  it more ergonomic
+* Supported formats:  CBZ, CBR, CBT, CB7, and PDF
+* Optimizes pages to improve read times on-the-fly
+* Efficent CRUD, filtering, sorting
+  *  Intelligently pre-fetches pages, so you're *never* waiting on it to send you the next page
+* APIs / Services
+  * JSON:API
+  * GraphQL
+  * FTP interface (for legacy third-party clients without HTTP connectivity)
+* Powerful background processing that
+  * Organizes deeply nested collections of comics
+  * Creates image previews, extracts metadata, handles the comic life cycle
+  * Stress tested with 49.9 GB of comics with 2700 items
+  * Stores optimized versions to save you disk space
+  * Won't run expensive background jobs when the app is in use (thanks, [Phoenix.Tracker](https://hexdocs.pm/phoenix_pubsub/Phoenix.Tracker.html)!)
+  * Finds and resolves duplicates
+* Front-End
+  * Search, List, Explore, Filter
+  * Smart full screen viewer
+  * 🚧 Continue making  it more ergonomic
   * 🚧 Admin pages
 
-### ⏸️ Deep Backlog
+###  Deep Backlog
 
 * ⏸️ [Ebook Detection using visual analysis and fallback OCR](https://github.com/camatcode/basenji/pull/44)
   * Under heavy stress testing, this strategy is very good at *confirming* that a comic is a comic; but is only about 60% accurate at *confirming* a file is a text-heavy ebook
