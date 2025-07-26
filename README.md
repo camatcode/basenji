@@ -55,7 +55,7 @@
 
 * Supported formats:  CBZ, CBR, CBT, CB7, and PDF
 * Optimizes pages to improve read times on-the-fly
-* Efficent CRUD, filtering, sorting
+* Efficient CRUD, filtering, sorting
   *  Intelligently pre-fetches pages, so you're *never* waiting on it to send you the next page
 * APIs / Services
   * JSON:API
