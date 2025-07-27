@@ -1,5 +1,6 @@
 defmodule BasenjiWeb.Router do
   use BasenjiWeb, :router
+  use ErrorTracker.Web, :router
 
   import Oban.Web.Router
 
@@ -85,6 +86,7 @@ defmodule BasenjiWeb.Router do
       pipe_through :browser_no_track
 
       oban_dashboard("/oban")
+      error_tracker_dashboard("/errors")
       live_dashboard "/dashboard", metrics: BasenjiWeb.Telemetry
       forward "/mailbox", MailboxPreview
     end
