@@ -1,5 +1,7 @@
 defmodule Basenji.Reader.CBTReader do
   @moduledoc false
+  use Basenji.TelemetryHelpers
+
   import Basenji.Reader
 
   def format, do: :cbt
@@ -42,15 +44,17 @@ defmodule Basenji.Reader.CBTReader do
   end
 
   def read(cbz_file_path, _opts \\ []) do
-    with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
-      file_entries =
-        file_entries
-        |> Enum.map(fn entry ->
-          entry
-          |> Map.put(:stream_fun, fn -> get_entry_stream!(cbz_file_path, entry) end)
-        end)
+    telemetry_wrap [:basenji, :process], %{action: "read_cbt"} do
+      with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
+        file_entries =
+          file_entries
+          |> Enum.map(fn entry ->
+            entry
+            |> Map.put(:stream_fun, fn -> get_entry_stream!(cbz_file_path, entry) end)
+          end)
 
-      {:ok, %{entries: file_entries}}
+        {:ok, %{entries: file_entries}}
+      end
     end
   end
 end

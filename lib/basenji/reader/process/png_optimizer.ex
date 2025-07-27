@@ -11,7 +11,7 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
   end
 
   def optimize(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _rest::binary>> = png_bytes, _opts) do
-    telemetry_wrap [:basenji, :process], %{action: "optimize_jpeg"} do
+    telemetry_wrap [:basenji, :process], %{action: "optimize_png"} do
       cmd = "optipng"
 
       tmp_dir = System.tmp_dir!() |> Path.join("basenji") |> Path.join("png_optimize")
