@@ -1,7 +1,17 @@
 global:
   scrape_interval: 10s
+
 scrape_configs:
- - job_name: prometheus
-   static_configs:
-    - targets:
-       - prometheus:9090
+  # Scrape Prometheus itself
+  - job_name: prometheus
+    static_configs:
+      - targets:
+         - localhost:9090
+
+  # Scrape your Elixir application running on the host
+  - job_name: basenji-app
+    static_configs:
+      - targets:
+         - host.docker.internal:4000  # Works across all platforms with extra_hosts
+    metrics_path: '/metrics'
+    scrape_interval: 5s

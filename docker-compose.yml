@@ -1,29 +1,16 @@
-# You should know that Docker Compose works with services.
-# 1 service = 1 container.
-# For example, a service, a server, a client, a database...
-# We use the keyword 'services' to start to create services.
-services:
-  # The name of our service is "database"
-  # but you can use the name of your choice.
-  # Note: This may change the commands you are going to use a little bit.
-  database:
-    # Official Postgres image from DockerHub (we use the last version)
-    image: 'postgres:latest'
+version: '3.8'
 
-    # By default, a Postgres database is running on the 5432 port.
-    # If we want to access the database from our computer (outside the container),
-    # we must share the port with our computer's port.
-    # The syntax is [port we want on our machine]:[port we want to retrieve in the container]
-    # Note: You are free to change your computer's port,
-    # but take into consideration that it will change the way
-    # you are connecting to your database.
+services:
+  database:
+    image: 'postgres:latest'
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: postgres # The PostgreSQL user (useful to connect to the database)
-      POSTGRES_PASSWORD: postgres # The PostgreSQL password (useful to connect to the database)
-      POSTGRES_DB: basenji_dev # The PostgreSQL default database (automatically created at first launch)
-
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: basenji_dev
+    networks:
+      - monitoring
 
   prometheus:
     image: prom/prometheus:latest
@@ -32,6 +19,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -39,6 +27,8 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Works on Linux, Mac, and Windows
     networks:
       - monitoring
 
@@ -52,9 +42,14 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_SECURITY_ALLOW_EMBEDDING=true
     volumes:
+      - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     networks:
       - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
 
 networks:
   monitoring:
