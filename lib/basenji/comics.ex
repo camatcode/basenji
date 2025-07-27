@@ -1,5 +1,6 @@
 defmodule Basenji.Comics do
   @moduledoc false
+  use Basenji.TelemetryHelpers
 
   import Basenji.ContextUtils
   import Ecto.Query, warn: false
@@ -15,54 +16,64 @@ defmodule Basenji.Comics do
   end
 
   def create_comic(attrs, opts \\ []) do
-    opts = Keyword.merge([repo_opts: []], opts)
+    telemetry_wrap [:basenji, :command], %{action: "create_comic"} do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-    insert_comic(attrs, opts)
-    |> handle_insert_side_effects()
+      insert_comic(attrs, opts)
+      |> handle_insert_side_effects()
+    end
   end
 
   def create_comics(attrs_list, _opts \\ []) when is_list(attrs_list) do
-    Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
-      Ecto.Multi.insert(multi, System.monotonic_time(), Comic.changeset(%Comic{}, attrs), on_conflict: :nothing)
-    end)
-    |> Repo.transaction()
-    |> case do
-      {:ok, transactions} ->
-        comics =
-          Map.values(transactions)
-          |> Enum.map(fn comic -> list_comics(resource_location: comic.resource_location) |> hd() end)
+    telemetry_wrap [:basenji, :command], %{action: "create_comics"} do
+      Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
+        Ecto.Multi.insert(multi, System.monotonic_time(), Comic.changeset(%Comic{}, attrs), on_conflict: :nothing)
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, transactions} ->
+          comics =
+            Map.values(transactions)
+            |> Enum.map(fn comic -> list_comics(resource_location: comic.resource_location) |> hd() end)
 
-        handle_insert_side_effects({:ok, comics})
+          handle_insert_side_effects({:ok, comics})
 
-      e ->
-        e
+        e ->
+          e
+      end
     end
   end
 
   def list_comics(opts \\ []) do
-    opts = Keyword.merge([repo_opts: []], opts)
+    telemetry_wrap [:basenji, :query], %{action: "list_comics"} do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-    Comic
-    |> reduce_comic_opts(opts)
-    |> Repo.all(opts[:repo_opts])
+      Comic
+      |> reduce_comic_opts(opts)
+      |> Repo.all(opts[:repo_opts])
+    end
   end
 
   def get_comic(id, opts \\ []) do
-    opts = Keyword.merge([repo_opts: []], opts)
+    telemetry_wrap [:basenji, :query], %{action: "list_comics"} do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-    from(c in Comic, where: c.id == ^id)
-    |> reduce_comic_opts(opts)
-    |> Repo.one(opts[:repo_opts])
-    |> case do
-      nil -> {:error, :not_found}
-      result -> {:ok, result}
+      from(c in Comic, where: c.id == ^id)
+      |> reduce_comic_opts(opts)
+      |> Repo.one(opts[:repo_opts])
+      |> case do
+        nil -> {:error, :not_found}
+        result -> {:ok, result}
+      end
     end
   end
 
   def update_comic(%Comic{} = comic, attrs) do
-    comic
-    |> Comic.update_changeset(attrs)
-    |> Repo.update()
+    telemetry_wrap [:basenji, :command], %{action: "update_comic"} do
+      comic
+      |> Comic.update_changeset(attrs)
+      |> Repo.update()
+    end
   end
 
   def update_comic(id, attrs) when is_bitstring(id) do
@@ -83,13 +94,15 @@ defmodule Basenji.Comics do
   end
 
   def delete_comic(%Comic{id: _comic_id} = comic, opts) do
-    opts = Keyword.merge([delete_resource: false], opts)
+    telemetry_wrap [:basenji, :command], %{action: "delete_comic"} do
+      opts = Keyword.merge([delete_resource: false], opts)
 
-    if opts[:delete_resource] == true do
-      Processor.process(comic, [:delete])
+      if opts[:delete_resource] == true do
+        Processor.process(comic, [:delete])
+      end
+
+      Repo.delete(comic)
     end
-
-    Repo.delete(comic)
   end
 
   def stream_pages(ref, opts \\ [])
@@ -123,17 +136,19 @@ defmodule Basenji.Comics do
         page_num,
         opts
       ) do
-    should_optimize? = optimized_id == nil && !pre_optimized?
-    opts = Keyword.merge([optimize: should_optimize?], opts)
+    telemetry_wrap [:basenji, :query], %{action: "get_page"} do
+      should_optimize? = optimized_id == nil && !pre_optimized?
+      opts = Keyword.merge([optimize: should_optimize?], opts)
 
-    with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do
-      entry = Enum.at(entries, page_num - 1)
+      with {:ok, %{entries: entries}} <- Reader.read(loc, opts) do
+        entry = Enum.at(entries, page_num - 1)
 
-      mime = MIME.from_path(entry.file_name)
+        mime = MIME.from_path(entry.file_name)
 
-      bytes = entry.stream_fun.() |> Enum.to_list() |> :binary.list_to_bin()
+        bytes = entry.stream_fun.() |> Enum.to_list() |> :binary.list_to_bin()
 
-      {:ok, bytes, mime}
+        {:ok, bytes, mime}
+      end
     end
   end
 

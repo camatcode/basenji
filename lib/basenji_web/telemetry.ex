@@ -92,6 +92,16 @@ defmodule BasenjiWeb.Telemetry do
         "basenji.process.duration",
         unit: {:native, :millisecond},
         tags: [:action]
+      ),
+      summary(
+        "basenji.command.duration",
+        unit: {:native, :millisecond},
+        tags: [:action]
+      ),
+      summary(
+        "basenji.query.duration",
+        unit: {:native, :millisecond},
+        tags: [:action]
       )
     ]
   end
