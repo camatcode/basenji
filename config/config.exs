@@ -20,6 +20,13 @@ alias Swoosh.Adapters.Local
 
 config :basenji, Basenji.Mailer, adapter: Local
 
+config :basenji, Basenji.PromEx,
+  disabled: false,
+  manual_metrics_start_delay: :no_delay,
+  drop_metrics_groups: [],
+  grafana: [host: System.get_env("GRAFANA_HOST", "http://localhost:3000")],
+  metrics_server: :disabled
+
 # Configures the endpoint
 config :basenji, BasenjiWeb.Endpoint,
   url: [host: "localhost"],
@@ -48,13 +55,6 @@ config :error_tracker,
   repo: Basenji.Repo,
   otp_app: :basenji,
   enabled: true
-
-config :basenji, Basenji.PromEx,
-  disabled: false,
-  manual_metrics_start_delay: :no_delay,
-  drop_metrics_groups: [],
-  grafana: [host: System.get_env("GRAFANA_HOST", "http://localhost:3000")],
-  metrics_server: :disabled
 
 # Configure esbuild (the version is required)
 config :esbuild,

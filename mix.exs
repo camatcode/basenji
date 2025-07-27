@@ -103,7 +103,7 @@ defmodule Basenji.MixProject do
       {:telemetry_metrics_statsd, "~> 0.7"},
       {:error_tracker, "~> 0.6"},
       {:ecto_psql_extras, "~> 0.6"},
- {:prom_ex, "~> 1.11.0"},
+      {:prom_ex, "~> 1.11.0"},
       # api deps
       {:jsonapi_plug, "~> 2.0"},
       {:absinthe, "~> 1.7"},
