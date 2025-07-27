@@ -19,6 +19,13 @@ defmodule Basenji.Worker.CollectionWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "collection_id" => collection_id} = args}) do
+    start = System.monotonic_time()
+    result = do_work(action, collection_id, args)
+    :telemetry.execute([:basenji, :oban, :worker], %{duration: System.monotonic_time() - start}, %{action: action})
+    result
+  end
+
+  defp do_work(action, collection_id, args) do
     case action do
       "explore_resource" -> explore_resource(collection_id, args)
       _ -> {:error, "Unknown action #{action}"}

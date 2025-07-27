@@ -32,6 +32,13 @@ defmodule Basenji.Worker.ComicWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "comic_id" => comic_id} = args}) do
+    start = System.monotonic_time()
+    result = do_work(action, comic_id, args)
+    :telemetry.execute([:basenji, :oban, :worker], %{duration: System.monotonic_time() - start}, %{action: action})
+    result
+  end
+
+  defp do_work(action, comic_id, args) do
     case action do
       "extract_metadata" -> extract_metadata(comic_id, args)
       "delete" -> delete(args)
