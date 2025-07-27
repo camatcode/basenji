@@ -1,5 +1,6 @@
 defmodule Basenji.Reader.Process.PNGOptimizer do
   @moduledoc false
+  use Basenji.TelemetryHelpers
 
   import Basenji.Reader
 
@@ -10,22 +11,24 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
   end
 
   def optimize(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _rest::binary>> = png_bytes, _opts) do
-    cmd = "optipng"
+    telemetry_wrap [:basenji, :process], %{action: "optimize_jpeg"} do
+      cmd = "optipng"
 
-    tmp_dir = System.tmp_dir!() |> Path.join("basenji") |> Path.join("png_optimize")
-    :ok = File.mkdir_p!(tmp_dir)
-    path = Path.join(tmp_dir, "#{System.monotonic_time(:nanosecond)}.jpg")
+      tmp_dir = System.tmp_dir!() |> Path.join("basenji") |> Path.join("png_optimize")
+      :ok = File.mkdir_p!(tmp_dir)
+      path = Path.join(tmp_dir, "#{System.monotonic_time(:nanosecond)}.jpg")
 
-    try do
-      :ok = File.write!(path, png_bytes)
+      try do
+        :ok = File.write!(path, png_bytes)
 
-      cmd_opts = ["-fix", "-quiet"] ++ [path]
+        cmd_opts = ["-fix", "-quiet"] ++ [path]
 
-      with {:ok, _} <- exec(cmd, cmd_opts) do
-        {:ok, File.read!(path)}
+        with {:ok, _} <- exec(cmd, cmd_opts) do
+          {:ok, File.read!(path)}
+        end
+      after
+        File.rm(path)
       end
-    after
-      File.rm(path)
     end
   end
 

@@ -2,6 +2,7 @@ defmodule Basenji.Worker.CollectionWorker do
   @moduledoc false
 
   use Oban.Worker, queue: :collection, unique: [period: 60, keys: [:collection_id, :action]], max_attempts: 3
+  use Basenji.TelemetryHelpers
 
   alias __MODULE__, as: CollectionWorker
   alias Basenji.Collection
@@ -19,16 +20,11 @@ defmodule Basenji.Worker.CollectionWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "collection_id" => collection_id} = args}) do
-    start = System.monotonic_time()
-    result = do_work(action, collection_id, args)
-    :telemetry.execute([:basenji, :oban, :worker], %{duration: System.monotonic_time() - start}, %{action: action})
-    result
-  end
-
-  defp do_work(action, collection_id, args) do
-    case action do
-      "explore_resource" -> explore_resource(collection_id, args)
-      _ -> {:error, "Unknown action #{action}"}
+    telemetry_wrap [:basenji, :oban, :worker], %{action: action} do
+      case action do
+        "explore_resource" -> explore_resource(collection_id, args)
+        _ -> {:error, "Unknown action #{action}"}
+      end
     end
   rescue
     e ->

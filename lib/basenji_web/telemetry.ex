@@ -87,6 +87,11 @@ defmodule BasenjiWeb.Telemetry do
         "basenji.oban.worker.duration",
         unit: {:native, :millisecond},
         tags: [:action]
+      ),
+      summary(
+        "basenji.process.duration",
+        unit: {:native, :millisecond},
+        tags: [:action]
       )
     ]
   end
