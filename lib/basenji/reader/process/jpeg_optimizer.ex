@@ -1,5 +1,6 @@
 defmodule Basenji.Reader.Process.JPEGOptimizer do
   @moduledoc false
+  use Basenji.TelemetryHelpers
 
   import Basenji.Reader
 
@@ -20,20 +21,22 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
   end
 
   defp optimize_impl(bytes, _opts) when is_binary(bytes) do
-    # Use file-based approach in CI environments to avoid epipe issues
-    # GitHub Actions and other CI systems can have issues with stdin/stdout pipes
-    use_file_mode =
-      System.get_env("CI") == "true" or
-        System.get_env("GITHUB_ACTIONS") == "true" or
-        System.get_env("BASENJI_JPEG_FILE_MODE") == "true"
+    meter_duration [:basenji, :process], "optimize_jpeg" do
+      # Use file-based approach in CI environments to avoid epipe issues
+      # GitHub Actions and other CI systems can have issues with stdin/stdout pipes
+      use_file_mode =
+        System.get_env("CI") == "true" or
+          System.get_env("GITHUB_ACTIONS") == "true" or
+          System.get_env("BASENJI_JPEG_FILE_MODE") == "true"
 
-    if use_file_mode do
-      optimize_with_file(bytes)
-    else
-      # Try stdin first for local development (more efficient), fallback to file on error
-      case optimize_with_stdin(bytes) do
-        {:ok, result} -> {:ok, result}
-        {:error, _} -> optimize_with_file(bytes)
+      if use_file_mode do
+        optimize_with_file(bytes)
+      else
+        # Try stdin first for local development (more efficient), fallback to file on error
+        case optimize_with_stdin(bytes) do
+          {:ok, result} -> {:ok, result}
+          {:error, _} -> optimize_with_file(bytes)
+        end
       end
     end
   end

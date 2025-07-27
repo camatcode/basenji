@@ -2,6 +2,7 @@ defmodule Basenji.Worker.ComicLowWorker do
   @moduledoc false
 
   use Oban.Worker, queue: :comic_low, unique: [period: 3000], max_attempts: 3
+  use Basenji.TelemetryHelpers
 
   alias Basenji.Collections
   alias Basenji.Comics
@@ -17,7 +18,9 @@ defmodule Basenji.Worker.ComicLowWorker do
       Logger.debug("Someone is browsing, snoozing low comic #{comic_id} for 5 minutes")
       {:snooze, 300}
     else
-      do_work(action, comic_id, args)
+      meter_duration [:basenji, :oban, :worker], action do
+        do_work(action, comic_id, args)
+      end
     end
   rescue
     e ->
@@ -25,7 +28,7 @@ defmodule Basenji.Worker.ComicLowWorker do
       reraise e, __STACKTRACE__
   end
 
-  def do_work(action, comic_id, args) do
+  defp do_work(action, comic_id, args) do
     Comics.get_comic(comic_id)
     |> case do
       {:ok, comic} ->

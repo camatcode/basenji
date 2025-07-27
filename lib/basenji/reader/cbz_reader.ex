@@ -1,5 +1,7 @@
 defmodule Basenji.Reader.CBZReader do
   @moduledoc false
+  use Basenji.TelemetryHelpers
+
   import Basenji.Reader
 
   def format, do: :cbz
@@ -29,19 +31,6 @@ defmodule Basenji.Reader.CBZReader do
   def get_entry_stream!(cbz_file_path, entry) do
     create_resource(fn ->
       escaped_filename = entry[:file_name]
-      #        String.replace(entry[:file_name], "[", "\\[")
-      #        |> String.replace("]", "\\]")
-      #        |> String.replace(" ", "\\ ")
-      #        |> String.replace("(", "\\(")
-      #        |> String.replace(")", "\\)")
-
-      cbz_file_path = cbz_file_path
-
-      #      String.replace(cbz_file_path, "[", "\\[")
-      #      |> String.replace("]", "\\]")
-      #      |> String.replace(" ", "\\ ")
-      #      |> String.replace("(", "\\(")
-      #      |> String.replace(")", "\\)")
 
       with {:ok, output} <- exec("unzip", ["-p", cbz_file_path, escaped_filename]) do
         [output |> :binary.bin_to_list()]
@@ -50,15 +39,17 @@ defmodule Basenji.Reader.CBZReader do
   end
 
   def read(cbz_file_path, _opts \\ []) do
-    with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
-      file_entries =
-        file_entries
-        |> Enum.map(fn entry ->
-          entry
-          |> Map.put(:stream_fun, fn -> get_entry_stream!(cbz_file_path, entry) end)
-        end)
+    meter_duration [:basenji, :process], "read_cbz" do
+      with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
+        file_entries =
+          file_entries
+          |> Enum.map(fn entry ->
+            entry
+            |> Map.put(:stream_fun, fn -> get_entry_stream!(cbz_file_path, entry) end)
+          end)
 
-      {:ok, %{entries: file_entries}}
+        {:ok, %{entries: file_entries}}
+      end
     end
   end
 end

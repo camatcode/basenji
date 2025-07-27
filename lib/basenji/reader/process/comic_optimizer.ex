@@ -1,42 +1,46 @@
 defmodule Basenji.Reader.Process.ComicOptimizer do
   @moduledoc false
 
+  use Basenji.TelemetryHelpers
+
   alias Basenji.FilenameSanitizer
   alias Basenji.Reader
 
   require Logger
 
   def optimize(comic_file_path, tmp_dir, result_directory) do
-    if String.ends_with?(comic_file_path, "optimized.cbz") || basenji_comment?(comic_file_path) do
-      {:ok, comic_file_path}
-    else
-      comic_name =
-        Path.basename(comic_file_path)
-        |> Path.rootname()
-        |> FilenameSanitizer.sanitize()
+    meter_duration [:basenji, :process], "optimize_comic" do
+      if String.ends_with?(comic_file_path, "optimized.cbz") || basenji_comment?(comic_file_path) do
+        {:ok, comic_file_path}
+      else
+        comic_name =
+          Path.basename(comic_file_path)
+          |> Path.rootname()
+          |> FilenameSanitizer.sanitize()
 
-      with {:ok, %{page_count: page_count}} <- Reader.info(comic_file_path),
-           {:ok, %{entries: entries}} <- Reader.read(comic_file_path, optimize: true) do
-        :ok = File.mkdir_p!(tmp_dir)
-        :ok = File.mkdir_p!(result_directory)
+        with {:ok, %{page_count: page_count}} <- Reader.info(comic_file_path),
+             {:ok, %{entries: entries}} <- Reader.read(comic_file_path, optimize: true) do
+          :ok = File.mkdir_p!(tmp_dir)
+          :ok = File.mkdir_p!(result_directory)
 
-        image_dir_name = "0_images#{System.monotonic_time()}"
-        images_dir = Path.join(tmp_dir, image_dir_name)
-        :ok = File.mkdir_p!(images_dir)
+          image_dir_name = "0_images#{System.monotonic_time()}"
+          images_dir = Path.join(tmp_dir, image_dir_name)
+          :ok = File.mkdir_p!(images_dir)
 
-        padding = String.length("#{page_count}")
+          padding = String.length("#{page_count}")
 
-        1..page_count
-        |> Task.async_stream(
-          &extract_page(&1, entries, padding, images_dir),
-          max_concurrency: 3,
-          timeout: max(300_000, page_count * 2_000)
-        )
-        |> Stream.run()
+          1..page_count
+          |> Task.async_stream(
+            &extract_page(&1, entries, padding, images_dir),
+            max_concurrency: 3,
+            timeout: max(300_000, page_count * 2_000)
+          )
+          |> Stream.run()
 
-        optimized_name = "#{comic_name}_optimized.cbz"
+          optimized_name = "#{comic_name}_optimized.cbz"
 
-        zip(tmp_dir, image_dir_name, optimized_name, result_directory)
+          zip(tmp_dir, image_dir_name, optimized_name, result_directory)
+        end
       end
     end
   end

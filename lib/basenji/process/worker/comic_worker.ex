@@ -2,6 +2,7 @@ defmodule Basenji.Worker.ComicWorker do
   @moduledoc false
 
   use Oban.Worker, queue: :comic, unique: [period: 30], max_attempts: 3
+  use Basenji.TelemetryHelpers
 
   alias __MODULE__, as: ComicWorker
   alias Basenji.Comic
@@ -32,10 +33,12 @@ defmodule Basenji.Worker.ComicWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "comic_id" => comic_id} = args}) do
-    case action do
-      "extract_metadata" -> extract_metadata(comic_id, args)
-      "delete" -> delete(args)
-      _ -> {:error, "Unknown action #{action}"}
+    meter_duration [:basenji, :oban, :worker], action do
+      case action do
+        "extract_metadata" -> extract_metadata(comic_id, args)
+        "delete" -> delete(args)
+        _ -> {:error, "Unknown action #{action}"}
+      end
     end
   rescue
     e ->

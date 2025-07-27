@@ -100,6 +100,7 @@ defmodule Basenji.MixProject do
       {:quokka, "~> 2.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: [:test]},
       {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},
+      {:telemetry_metrics_statsd, "~> 0.7"},
       # api deps
       {:jsonapi_plug, "~> 2.0"},
       {:absinthe, "~> 1.7"},

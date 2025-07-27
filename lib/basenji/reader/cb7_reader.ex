@@ -1,6 +1,8 @@
 defmodule Basenji.Reader.CB7Reader do
   @moduledoc false
 
+  use Basenji.TelemetryHelpers
+
   import Basenji.Reader
 
   def format, do: :cb7
@@ -41,12 +43,14 @@ defmodule Basenji.Reader.CB7Reader do
   end
 
   def read(cbz_file_path, _opts \\ []) do
-    with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
-      file_entries =
-        file_entries
-        |> Enum.map(&Map.put(&1, :stream_fun, fn -> get_entry_stream!(cbz_file_path, &1) end))
+    meter_duration [:basenji, :process], "read_cb7" do
+      with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
+        file_entries =
+          file_entries
+          |> Enum.map(&Map.put(&1, :stream_fun, fn -> get_entry_stream!(cbz_file_path, &1) end))
 
-      {:ok, %{entries: file_entries}}
+        {:ok, %{entries: file_entries}}
+      end
     end
   end
 end

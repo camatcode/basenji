@@ -12,7 +12,8 @@ defmodule BasenjiWeb.Telemetry do
     children = [
       # Telemetry poller will execute the given period measurements
       # every 10_000ms. Learn more here: https://hexdocs.pm/telemetry_metrics
-      {:telemetry_poller, measurements: periodic_measurements(), period: 10_000}
+      {:telemetry_poller, measurements: periodic_measurements(), period: 10_000},
+      {TelemetryMetricsStatsd, metrics: metrics()}
       # Add reporters as children of your supervision tree.
       # {Telemetry.Metrics.ConsoleReporter, metrics: metrics()}
     ]
@@ -79,7 +80,29 @@ defmodule BasenjiWeb.Telemetry do
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
-      summary("vm.total_run_queue_lengths.io")
+      summary("vm.total_run_queue_lengths.io"),
+
+      # other basenji metrics
+      summary(
+        "basenji.oban.worker.duration",
+        unit: {:native, :millisecond},
+        tags: [:action]
+      ),
+      summary(
+        "basenji.process.duration",
+        unit: {:native, :millisecond},
+        tags: [:action]
+      ),
+      summary(
+        "basenji.command.duration",
+        unit: {:native, :millisecond},
+        tags: [:action]
+      ),
+      summary(
+        "basenji.query.duration",
+        unit: {:native, :millisecond},
+        tags: [:action]
+      )
     ]
   end
 

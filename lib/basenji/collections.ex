@@ -1,5 +1,6 @@
 defmodule Basenji.Collections do
   @moduledoc false
+  use Basenji.TelemetryHelpers
 
   import Basenji.ContextUtils
   import Ecto.Query
@@ -11,46 +12,52 @@ defmodule Basenji.Collections do
   alias Basenji.Repo
 
   def create_collection(attrs, opts \\ []) do
-    opts = Keyword.merge([repo_opts: []], opts)
+    meter_duration [:basenji, :command], "create_collection" do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-    insert_collection(attrs, opts)
-    |> handle_insert_side_effects()
+      insert_collection(attrs, opts)
+      |> handle_insert_side_effects()
+    end
   end
 
   def create_collections(attrs_list, _opts \\ []) when is_list(attrs_list) do
-    Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
-      Ecto.Multi.insert(
-        multi,
-        System.monotonic_time(),
-        Collection.changeset(%Collection{}, attrs),
-        on_conflict: :nothing
-      )
-    end)
-    |> Repo.transaction()
-    |> case do
-      {:ok, transactions} ->
-        collections =
-          transactions
-          |> Map.values()
-          |> Enum.map(fn collection ->
-            list_collections(title: collection.title)
-            |> hd()
-          end)
-          |> Enum.filter(fn collection -> collection != nil end)
+    meter_duration [:basenji, :command], "create_collections" do
+      Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
+        Ecto.Multi.insert(
+          multi,
+          System.monotonic_time(),
+          Collection.changeset(%Collection{}, attrs),
+          on_conflict: :nothing
+        )
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, transactions} ->
+          collections =
+            transactions
+            |> Map.values()
+            |> Enum.map(fn collection ->
+              list_collections(title: collection.title)
+              |> hd()
+            end)
+            |> Enum.filter(fn collection -> collection != nil end)
 
-        handle_insert_side_effects({:ok, collections})
+          handle_insert_side_effects({:ok, collections})
 
-      e ->
-        e
+        e ->
+          e
+      end
     end
   end
 
   def list_collections(opts \\ []) do
-    opts = Keyword.merge([repo_opts: []], opts)
+    meter_duration [:basenji, :query], "list_collections" do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-    Collection
-    |> reduce_collection_opts(opts)
-    |> Repo.all(opts[:repo_opts])
+      Collection
+      |> reduce_collection_opts(opts)
+      |> Repo.all(opts[:repo_opts])
+    end
   end
 
   def get_collection(id, opts \\ [])
@@ -58,28 +65,32 @@ defmodule Basenji.Collections do
   def get_collection(nil, _opts), do: {:error, :not_found}
 
   def get_collection(id, opts) do
-    opts = Keyword.merge([repo_opts: []], opts)
+    meter_duration [:basenji, :query], "get_collection" do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-    from(c in Collection, where: c.id == ^id)
-    |> reduce_collection_opts(opts)
-    |> Repo.one(opts[:repo_opts])
-    |> case do
-      nil -> {:error, :not_found}
-      result -> {:ok, result}
+      from(c in Collection, where: c.id == ^id)
+      |> reduce_collection_opts(opts)
+      |> Repo.one(opts[:repo_opts])
+      |> case do
+        nil -> {:error, :not_found}
+        result -> {:ok, result}
+      end
     end
   end
 
   def update_collection(collection_ref, attrs, opts \\ [])
 
   def update_collection(%Collection{} = collection, attrs, opts) do
-    with {:ok, collection} <-
-           collection
-           |> Collection.changeset(attrs)
-           |> Repo.update() do
-      if opts[:preload] do
-        get_collection(collection.id, opts)
-      else
-        {:ok, collection}
+    meter_duration [:basenji, :command], "update_collection" do
+      with {:ok, collection} <-
+             collection
+             |> Collection.changeset(attrs)
+             |> Repo.update() do
+        if opts[:preload] do
+          get_collection(collection.id, opts)
+        else
+          {:ok, collection}
+        end
       end
     end
   end
@@ -97,27 +108,29 @@ defmodule Basenji.Collections do
   end
 
   def update_collection_with_comics(collection_id, attrs, opts \\ []) do
-    comics_to_add = Map.get(attrs, :comics_to_add, [])
-    comics_to_remove = Map.get(attrs, :comics_to_remove, [])
+    meter_duration [:basenji, :command], "update_collection" do
+      comics_to_add = Map.get(attrs, :comics_to_add, [])
+      comics_to_remove = Map.get(attrs, :comics_to_remove, [])
 
-    collection_attrs = Map.drop(attrs, [:comics_to_add, :comics_to_remove])
+      collection_attrs = Map.drop(attrs, [:comics_to_add, :comics_to_remove])
 
-    with {:ok, collection} <- get_collection(collection_id, []) do
-      Ecto.Multi.new()
-      |> Ecto.Multi.update(:collection, Collection.changeset(collection, collection_attrs))
-      |> add_comics_to_multi(collection_id, comics_to_add)
-      |> remove_comics_from_multi(collection_id, comics_to_remove)
-      |> Repo.transaction()
-      |> case do
-        {:ok, %{collection: updated_collection}} ->
-          if opts[:preload] do
-            get_collection(updated_collection.id, opts)
-          else
-            {:ok, updated_collection}
-          end
+      with {:ok, collection} <- get_collection(collection_id, []) do
+        Ecto.Multi.new()
+        |> Ecto.Multi.update(:collection, Collection.changeset(collection, collection_attrs))
+        |> add_comics_to_multi(collection_id, comics_to_add)
+        |> remove_comics_from_multi(collection_id, comics_to_remove)
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{collection: updated_collection}} ->
+            if opts[:preload] do
+              get_collection(updated_collection.id, opts)
+            else
+              {:ok, updated_collection}
+            end
 
-        {:error, _failed_operation, changeset, _changes} ->
-          {:error, changeset}
+          {:error, _failed_operation, changeset, _changes} ->
+            {:error, changeset}
+        end
       end
     end
   end
@@ -166,9 +179,11 @@ defmodule Basenji.Collections do
   end
 
   def delete_collection(collection_id) do
-    case get_collection(collection_id) do
-      {:ok, collection} -> Repo.delete(collection)
-      error -> error
+    meter_duration [:basenji, :command], "delete_collection" do
+      case get_collection(collection_id) do
+        {:ok, collection} -> Repo.delete(collection)
+        error -> error
+      end
     end
   end
 

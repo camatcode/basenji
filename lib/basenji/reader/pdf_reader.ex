@@ -1,5 +1,6 @@
 defmodule Basenji.Reader.PDFReader do
   @moduledoc false
+  use Basenji.TelemetryHelpers
 
   import Basenji.Reader
 
@@ -37,15 +38,17 @@ defmodule Basenji.Reader.PDFReader do
   end
 
   def read(pdf_file_path, _opts \\ []) do
-    with {:ok, %{entries: file_entries}} <- get_entries(pdf_file_path) do
-      file_entries =
-        file_entries
-        |> Enum.map(fn entry ->
-          entry
-          |> Map.put(:stream_fun, fn -> get_entry_stream!(pdf_file_path, entry) end)
-        end)
+    meter_duration [:basenji, :process], "read_pdf" do
+      with {:ok, %{entries: file_entries}} <- get_entries(pdf_file_path) do
+        file_entries =
+          file_entries
+          |> Enum.map(fn entry ->
+            entry
+            |> Map.put(:stream_fun, fn -> get_entry_stream!(pdf_file_path, entry) end)
+          end)
 
-      {:ok, %{entries: file_entries}}
+        {:ok, %{entries: file_entries}}
+      end
     end
   end
 
