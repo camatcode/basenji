@@ -53,7 +53,7 @@ defmodule Basenji.MixProject do
   def application do
     [
       mod: {Basenji.Application, []},
-      extra_applications: [:logger, :runtime_tools, :porcelain]
+      extra_applications: [:logger, :runtime_tools, :os_mon, :porcelain]
     ]
   end
 
@@ -101,6 +101,9 @@ defmodule Basenji.MixProject do
       {:excoveralls, "~> 0.18", only: [:test]},
       {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},
       {:telemetry_metrics_statsd, "~> 0.7"},
+      {:error_tracker, "~> 0.6"},
+      {:ecto_psql_extras, "~> 0.6"},
+      {:prom_ex, "~> 1.11.0"},
       # api deps
       {:jsonapi_plug, "~> 2.0"},
       {:absinthe, "~> 1.7"},

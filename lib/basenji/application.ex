@@ -8,6 +8,7 @@ defmodule Basenji.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      Basenji.PromEx,
       BasenjiWeb.Telemetry,
       Basenji.Repo,
       {Oban, Application.fetch_env!(:basenji, Oban)},
