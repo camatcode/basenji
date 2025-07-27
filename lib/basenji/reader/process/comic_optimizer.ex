@@ -9,7 +9,7 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
   require Logger
 
   def optimize(comic_file_path, tmp_dir, result_directory) do
-    telemetry_wrap [:basenji, :process], %{action: "optimize_comic"} do
+    meter_duration [:basenji, :process], "optimize_comic" do
       if String.ends_with?(comic_file_path, "optimized.cbz") || basenji_comment?(comic_file_path) do
         {:ok, comic_file_path}
       else

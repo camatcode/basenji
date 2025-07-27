@@ -33,7 +33,7 @@ defmodule Basenji.Worker.ComicWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "comic_id" => comic_id} = args}) do
-    telemetry_wrap [:basenji, :oban, :worker], %{action: action} do
+    meter_duration [:basenji, :oban, :worker], action do
       case action do
         "extract_metadata" -> extract_metadata(comic_id, args)
         "delete" -> delete(args)

@@ -43,7 +43,7 @@ defmodule Basenji.Reader.CB7Reader do
   end
 
   def read(cbz_file_path, _opts \\ []) do
-    telemetry_wrap [:basenji, :process], %{action: "read_cb7"} do
+    meter_duration [:basenji, :process], "read_cb7" do
       with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
         file_entries =
           file_entries

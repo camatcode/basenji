@@ -7,7 +7,7 @@ defmodule Basenji.ImageProcessor do
   def get_image_preview(binary, preview_width_target, preview_height_target) do
     with {:ok, image} <- Image.from_binary(binary),
          {:ok, preview} <- make_preview(image, preview_width_target, preview_height_target) do
-      telemetry_wrap [:basenji, :process], %{action: "make_preview"} do
+      meter_duration [:basenji, :process], "make_preview" do
         bytes =
           Image.write!(preview, :memory, suffix: ".jpg")
           |> JPEGOptimizer.optimize!()

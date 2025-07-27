@@ -16,7 +16,7 @@ defmodule Basenji.Comics do
   end
 
   def create_comic(attrs, opts \\ []) do
-    telemetry_wrap [:basenji, :command], %{action: "create_comic"} do
+    meter_duration [:basenji, :command], "create_comic" do
       opts = Keyword.merge([repo_opts: []], opts)
 
       insert_comic(attrs, opts)
@@ -25,7 +25,7 @@ defmodule Basenji.Comics do
   end
 
   def create_comics(attrs_list, _opts \\ []) when is_list(attrs_list) do
-    telemetry_wrap [:basenji, :command], %{action: "create_comics"} do
+    meter_duration [:basenji, :command], "create_comics" do
       Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
         Ecto.Multi.insert(multi, System.monotonic_time(), Comic.changeset(%Comic{}, attrs), on_conflict: :nothing)
       end)
@@ -45,7 +45,7 @@ defmodule Basenji.Comics do
   end
 
   def list_comics(opts \\ []) do
-    telemetry_wrap [:basenji, :query], %{action: "list_comics"} do
+    meter_duration [:basenji, :query], "list_comics" do
       opts = Keyword.merge([repo_opts: []], opts)
 
       Comic
@@ -55,7 +55,7 @@ defmodule Basenji.Comics do
   end
 
   def get_comic(id, opts \\ []) do
-    telemetry_wrap [:basenji, :query], %{action: "list_comics"} do
+    meter_duration [:basenji, :query], "get_comic" do
       opts = Keyword.merge([repo_opts: []], opts)
 
       from(c in Comic, where: c.id == ^id)
@@ -69,7 +69,7 @@ defmodule Basenji.Comics do
   end
 
   def update_comic(%Comic{} = comic, attrs) do
-    telemetry_wrap [:basenji, :command], %{action: "update_comic"} do
+    meter_duration [:basenji, :command], "update_comic" do
       comic
       |> Comic.update_changeset(attrs)
       |> Repo.update()
@@ -94,7 +94,7 @@ defmodule Basenji.Comics do
   end
 
   def delete_comic(%Comic{id: _comic_id} = comic, opts) do
-    telemetry_wrap [:basenji, :command], %{action: "delete_comic"} do
+    meter_duration [:basenji, :command], "delete_comic" do
       opts = Keyword.merge([delete_resource: false], opts)
 
       if opts[:delete_resource] == true do
@@ -136,7 +136,7 @@ defmodule Basenji.Comics do
         page_num,
         opts
       ) do
-    telemetry_wrap [:basenji, :query], %{action: "get_page"} do
+    meter_duration [:basenji, :query], "get_page" do
       should_optimize? = optimized_id == nil && !pre_optimized?
       opts = Keyword.merge([optimize: should_optimize?], opts)
 

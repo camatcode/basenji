@@ -12,7 +12,7 @@ defmodule Basenji.Collections do
   alias Basenji.Repo
 
   def create_collection(attrs, opts \\ []) do
-    telemetry_wrap [:basenji, :command], %{action: "create_collection"} do
+    meter_duration [:basenji, :command], "create_collection" do
       opts = Keyword.merge([repo_opts: []], opts)
 
       insert_collection(attrs, opts)
@@ -21,7 +21,7 @@ defmodule Basenji.Collections do
   end
 
   def create_collections(attrs_list, _opts \\ []) when is_list(attrs_list) do
-    telemetry_wrap [:basenji, :command], %{action: "create_collections"} do
+    meter_duration [:basenji, :command], "create_collections" do
       Enum.reduce(attrs_list, Ecto.Multi.new(), fn attrs, multi ->
         Ecto.Multi.insert(
           multi,
@@ -51,7 +51,7 @@ defmodule Basenji.Collections do
   end
 
   def list_collections(opts \\ []) do
-    telemetry_wrap [:basenji, :query], %{action: "list_collections"} do
+    meter_duration [:basenji, :query], "list_collections" do
       opts = Keyword.merge([repo_opts: []], opts)
 
       Collection
@@ -65,7 +65,7 @@ defmodule Basenji.Collections do
   def get_collection(nil, _opts), do: {:error, :not_found}
 
   def get_collection(id, opts) do
-    telemetry_wrap [:basenji, :query], %{action: "get_collection"} do
+    meter_duration [:basenji, :query], "get_collection" do
       opts = Keyword.merge([repo_opts: []], opts)
 
       from(c in Collection, where: c.id == ^id)
@@ -81,7 +81,7 @@ defmodule Basenji.Collections do
   def update_collection(collection_ref, attrs, opts \\ [])
 
   def update_collection(%Collection{} = collection, attrs, opts) do
-    telemetry_wrap [:basenji, :command], %{action: "update_collection"} do
+    meter_duration [:basenji, :command], "update_collection" do
       with {:ok, collection} <-
              collection
              |> Collection.changeset(attrs)
@@ -108,7 +108,7 @@ defmodule Basenji.Collections do
   end
 
   def update_collection_with_comics(collection_id, attrs, opts \\ []) do
-    telemetry_wrap [:basenji, :command], %{action: "update_collection"} do
+    meter_duration [:basenji, :command], "update_collection" do
       comics_to_add = Map.get(attrs, :comics_to_add, [])
       comics_to_remove = Map.get(attrs, :comics_to_remove, [])
 
@@ -179,7 +179,7 @@ defmodule Basenji.Collections do
   end
 
   def delete_collection(collection_id) do
-    telemetry_wrap [:basenji, :command], %{action: "delete_collection"} do
+    meter_duration [:basenji, :command], "delete_collection" do
       case get_collection(collection_id) do
         {:ok, collection} -> Repo.delete(collection)
         error -> error

@@ -18,7 +18,7 @@ defmodule Basenji.Worker.ComicLowWorker do
       Logger.debug("Someone is browsing, snoozing low comic #{comic_id} for 5 minutes")
       {:snooze, 300}
     else
-      telemetry_wrap [:basenji, :oban, :worker], %{action: action} do
+      meter_duration [:basenji, :oban, :worker], action do
         do_work(action, comic_id, args)
       end
     end

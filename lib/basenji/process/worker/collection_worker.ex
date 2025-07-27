@@ -20,7 +20,7 @@ defmodule Basenji.Worker.CollectionWorker do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"action" => action, "collection_id" => collection_id} = args}) do
-    telemetry_wrap [:basenji, :oban, :worker], %{action: action} do
+    meter_duration [:basenji, :oban, :worker], action do
       case action do
         "explore_resource" -> explore_resource(collection_id, args)
         _ -> {:error, "Unknown action #{action}"}

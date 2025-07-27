@@ -37,7 +37,7 @@ defmodule Basenji.Reader.CBRReader do
   end
 
   def read(cbr_file_path, _opts \\ []) do
-    telemetry_wrap [:basenji, :process], %{action: "read_cbr"} do
+    meter_duration [:basenji, :process], "read_cbr" do
       with {:ok, %{entries: file_entries}} <- get_entries(cbr_file_path) do
         file_entries =
           file_entries

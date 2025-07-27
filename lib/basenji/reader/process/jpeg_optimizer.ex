@@ -21,7 +21,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
   end
 
   defp optimize_impl(bytes, _opts) when is_binary(bytes) do
-    telemetry_wrap [:basenji, :process], %{action: "optimize_jpeg"} do
+    meter_duration [:basenji, :process], "optimize_jpeg" do
       # Use file-based approach in CI environments to avoid epipe issues
       # GitHub Actions and other CI systems can have issues with stdin/stdout pipes
       use_file_mode =

@@ -38,7 +38,7 @@ defmodule Basenji.Reader.PDFReader do
   end
 
   def read(pdf_file_path, _opts \\ []) do
-    telemetry_wrap [:basenji, :process], %{action: "read_pdf"} do
+    meter_duration [:basenji, :process], "read_pdf" do
       with {:ok, %{entries: file_entries}} <- get_entries(pdf_file_path) do
         file_entries =
           file_entries
