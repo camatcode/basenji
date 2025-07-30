@@ -26,6 +26,9 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: basenji_dev
     steps:
+      - name: 'Apt update'
+        run: sudo apt-get update
+
       - name: 'Install unrar, optipng, jpegoptim, poppler-utils xxhash'
         run: sudo apt install -y unrar optipng jpegoptim poppler-utils xxhash
 
