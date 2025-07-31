@@ -64,7 +64,7 @@ defmodule Basenji.PromEx do
       Plugins.Beam,
       {Plugins.Phoenix, router: BasenjiWeb.Router, endpoint: BasenjiWeb.Endpoint},
       Plugins.Ecto,
-      Plugins.Oban,
+      # Plugins.Oban,
       Plugins.PhoenixLiveView,
       Plugins.Absinthe
       # Plugins.Broadway,
@@ -90,7 +90,7 @@ defmodule Basenji.PromEx do
       {:prom_ex, "beam.json"},
       {:prom_ex, "phoenix.json"},
       {:prom_ex, "ecto.json"},
-      {:prom_ex, "oban.json"},
+      #    {:prom_ex, "oban.json"},
       {:prom_ex, "phoenix_live_view.json"},
       {:prom_ex, "absinthe.json"}
       # Add your dashboard definitions here with the format: {:otp_app, "path_in_priv"}
