@@ -119,6 +119,7 @@ defmodule Basenji.MixProject do
       {:zarex, "~> 1.0"},
       {:cachex, "~> 4.1"},
       # phx deps
+      {:lazy_html, ">= 0.1.0", only: :test},
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
