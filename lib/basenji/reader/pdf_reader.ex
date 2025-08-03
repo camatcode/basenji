@@ -1,17 +1,21 @@
 defmodule Basenji.Reader.PDFReader do
   @moduledoc false
+  @behaviour Basenji.Reader
+
   use Basenji.TelemetryHelpers
 
-  import Basenji.Reader
+  alias Basenji.Reader
 
+  @impl Reader
   def format, do: :pdf
 
+  @impl Reader
   def file_extensions, do: ["pdf"]
 
-  def get_magic_numbers, do: [%{offset: 0, magic: [0x25, 0x50, 0x44, 0x46, 0x2D]}]
+  @impl Reader
+  def magic_numbers, do: [%{offset: 0, magic: [0x25, 0x50, 0x44, 0x46, 0x2D]}]
 
-  def close(_any), do: :ok
-
+  @impl Reader
   def get_entries(pdf_file_path, _opts \\ []) do
     with {:ok, %{pages: pages}} <- get_metadata(pdf_file_path) do
       padding = String.length("#{pages}")
@@ -26,17 +30,7 @@ defmodule Basenji.Reader.PDFReader do
     end
   end
 
-  def get_entry_stream!(pdf_file_path, entry) do
-    file_name = entry[:file_name]
-    {page_num, _rest} = Integer.parse(file_name)
-
-    create_resource(fn ->
-      with {:ok, output} <- exec("pdftoppm", ["-f", "#{page_num}", "-singlefile", "-jpeg", "-q", pdf_file_path]) do
-        [output |> :binary.bin_to_list()]
-      end
-    end)
-  end
-
+  @impl Reader
   def read(pdf_file_path, _opts \\ []) do
     meter_duration [:basenji, :process], "read_pdf" do
       with {:ok, %{entries: file_entries}} <- get_entries(pdf_file_path) do
@@ -52,8 +46,22 @@ defmodule Basenji.Reader.PDFReader do
     end
   end
 
-  def get_metadata(pdf_file_path) do
-    with {:ok, output} <- exec("pdfinfo", ["-isodates", pdf_file_path]) do
+  @impl Reader
+  def close(_), do: :ok
+
+  defp get_entry_stream!(pdf_file_path, entry) do
+    file_name = entry[:file_name]
+    {page_num, _rest} = Integer.parse(file_name)
+
+    Reader.create_resource(fn ->
+      with {:ok, output} <- Reader.exec("pdftoppm", ["-f", "#{page_num}", "-singlefile", "-jpeg", "-q", pdf_file_path]) do
+        [output |> :binary.bin_to_list()]
+      end
+    end)
+  end
+
+  defp get_metadata(pdf_file_path) do
+    with {:ok, output} <- Reader.exec("pdfinfo", ["-isodates", pdf_file_path]) do
       metadata =
         String.split(output, "\n")
         |> Map.new(fn line ->
