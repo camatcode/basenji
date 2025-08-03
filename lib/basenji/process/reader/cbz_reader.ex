@@ -4,6 +4,7 @@ defmodule Basenji.Reader.CBZReader do
 
   use Basenji.TelemetryHelpers
 
+  alias Basenji.CmdExecutor
   alias Basenji.Reader
 
   @impl Reader
@@ -17,7 +18,7 @@ defmodule Basenji.Reader.CBZReader do
 
   @impl Reader
   def get_entries(cbz_file_path, _opts \\ []) do
-    with {:ok, output} <- Reader.exec("zipinfo", ["-1", cbz_file_path]) do
+    with {:ok, output} <- CmdExecutor.exec("zipinfo", ["-1", cbz_file_path]) do
       output
       |> String.split("\n")
       |> Enum.map(&%{file_name: &1})

@@ -4,6 +4,7 @@ defmodule Basenji.Reader.CBRReader do
 
   use Basenji.TelemetryHelpers
 
+  alias Basenji.CmdExecutor
   alias Basenji.Reader
 
   @impl Reader
@@ -17,7 +18,7 @@ defmodule Basenji.Reader.CBRReader do
 
   @impl Reader
   def get_entries(cbr_file_path, _opts \\ []) do
-    with {:ok, output} <- Reader.exec("unrar", ["lb", cbr_file_path]) do
+    with {:ok, output} <- CmdExecutor.exec("unrar", ["lb", cbr_file_path]) do
       String.split(output, "\n")
       |> Enum.map(&%{file_name: &1})
       |> Reader.sort_and_reject()

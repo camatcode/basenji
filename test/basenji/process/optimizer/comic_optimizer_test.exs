@@ -1,8 +1,8 @@
-defmodule Basenji.Reader.Process.ComicOptimizerTest do
+defmodule Basenji.Optimizer.ComicOptimizerTest do
   use ExUnit.Case
 
+  alias Basenji.Optimizer.ComicOptimizer
   alias Basenji.Reader
-  alias Basenji.Reader.Process.ComicOptimizer
 
   @moduletag :capture_log
 

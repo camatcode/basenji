@@ -1,8 +1,9 @@
-defmodule Basenji.Reader.Process.ComicOptimizer do
+defmodule Basenji.Optimizer.ComicOptimizer do
   @moduledoc false
 
   use Basenji.TelemetryHelpers
 
+  alias Basenji.CmdExecutor
   alias Basenji.FilenameSanitizer
   alias Basenji.Reader
 
@@ -58,7 +59,7 @@ defmodule Basenji.Reader.Process.ComicOptimizer do
     {:ok, %{format: format}} = Reader.info(comic_file_path)
 
     if format == :cbz do
-      Reader.exec("zipinfo", ["-z", comic_file_path])
+      CmdExecutor.exec("zipinfo", ["-z", comic_file_path])
       |> case do
         {:ok, output} ->
           String.contains?(output, "Optimized by Basenji")

@@ -1,13 +1,13 @@
-defmodule Basenji.ProcessorTest do
+defmodule Basenji.ObanProcessorTest do
   use Basenji.DataCase
 
-  alias Basenji.Processor
+  alias Basenji.ObanProcessor
 
-  doctest Processor
+  doctest ObanProcessor
 
   test "submit comic jobs" do
     comic = insert(:comic)
-    jobs = Processor.process(comic, [:insert])
+    jobs = ObanProcessor.process(comic, [:insert])
 
     refute Enum.empty?(jobs)
     %{failure: 0} = TestHelper.drain_queue(:comic)

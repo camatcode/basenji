@@ -1,8 +1,14 @@
-defmodule Basenji.Reader.Process.PNGOptimizer do
+defmodule Basenji.Optimizer.PNGOptimizer do
   @moduledoc false
 
-  import Basenji.Reader
+  @behaviour Basenji.Optimizer
 
+  use Basenji.TelemetryHelpers
+
+  alias Basenji.CmdExecutor
+  alias Basenji.Optimizer
+
+  @impl Optimizer
   def optimize(png_bytes, opts \\ [])
 
   def optimize(list, opts) when is_list(list) do
@@ -22,7 +28,7 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
 
         cmd_opts = ["-fix", "-quiet"] ++ [path]
 
-        with {:ok, _} <- exec(cmd, cmd_opts) do
+        with {:ok, _} <- CmdExecutor.exec(cmd, cmd_opts) do
           {:ok, File.read!(path)}
         end
       after
@@ -33,6 +39,7 @@ defmodule Basenji.Reader.Process.PNGOptimizer do
 
   def optimize(not_png_bytes, _) when is_binary(not_png_bytes), do: {:ok, not_png_bytes}
 
+  @impl Optimizer
   def optimize!(png_bytes, opts \\ []) do
     with {:ok, optimized_bytes} <- optimize(png_bytes, opts) do
       optimized_bytes

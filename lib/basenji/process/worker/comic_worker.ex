@@ -7,7 +7,7 @@ defmodule Basenji.Worker.ComicWorker do
   alias __MODULE__, as: ComicWorker
   alias Basenji.Comics
   alias Basenji.Comics.Comic
-  alias Basenji.Processor
+  alias Basenji.ObanProcessor
   alias Basenji.Reader
   alias Basenji.Worker.ComicLowWorker
 
@@ -49,7 +49,7 @@ defmodule Basenji.Worker.ComicWorker do
   defp extract_metadata(%Comic{} = comic, _args) do
     with {:ok, info} <- Reader.info(comic.resource_location),
          {:ok, comic} <- Comics.update_comic(comic, info) do
-      Processor.process(comic, [:hash])
+      ObanProcessor.process(comic, [:hash])
       :ok
     end
     |> case do
