@@ -1,6 +1,7 @@
 defmodule Basenji.Reader.PDFReaderTest do
   use ExUnit.Case
 
+  alias Basenji.Reader
   alias Basenji.Reader.PDFReader
 
   @moduletag :capture_log
@@ -38,7 +39,7 @@ defmodule Basenji.Reader.PDFReaderTest do
 
     files
     |> Enum.each(fn pdf_file_path ->
-      {:ok, %{entries: entries}} = PDFReader.read(pdf_file_path)
+      {:ok, %{entries: entries}} = Reader.read(pdf_file_path)
       refute Enum.empty?(entries)
 
       [random_entry] = Enum.shuffle(entries) |> Enum.take(1)

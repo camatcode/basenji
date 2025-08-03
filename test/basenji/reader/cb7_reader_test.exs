@@ -1,6 +1,7 @@
 defmodule Basenji.Reader.CB7ReaderTest do
   use ExUnit.Case
 
+  alias Basenji.Reader
   alias Basenji.Reader.CB7Reader
 
   doctest CB7Reader
@@ -35,7 +36,7 @@ defmodule Basenji.Reader.CB7ReaderTest do
 
     cb7_files
     |> Enum.each(fn cb7_file_path ->
-      {:ok, %{entries: entries}} = CB7Reader.read(cb7_file_path)
+      {:ok, %{entries: entries}} = Reader.read(cb7_file_path)
       refute Enum.empty?(entries)
 
       [random_entry] = Enum.shuffle(entries) |> Enum.take(1)

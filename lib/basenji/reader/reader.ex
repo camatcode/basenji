@@ -1,6 +1,8 @@
 defmodule Basenji.Reader do
   @moduledoc false
 
+  use Basenji.TelemetryHelpers
+
   alias Basenji.Reader.CB7Reader
   alias Basenji.Reader.CBRReader
   alias Basenji.Reader.CBTReader
@@ -41,6 +43,41 @@ defmodule Basenji.Reader do
     "tif"
   ]
 
+  @callback format() :: atom()
+  @callback file_extensions() :: list()
+  @callback magic_numbers :: [map()]
+  @callback get_entries(file_path :: String.t(), opts :: list()) :: {:ok, map()} | {:error, any()}
+  @callback get_entry_stream!(location :: String.t(), file_name :: String.t()) :: Enumerable.t()
+  @callback close(any()) :: :ok | :error
+
+  def read(file_path, opts \\ []) do
+    opts = Keyword.merge([optimize: true], opts)
+
+    reader = find_reader(file_path)
+
+    if reader do
+      read_result = read_from_location(reader, file_path)
+      if opts[:optimize], do: optimize_entries(read_result), else: read_result
+    else
+      {:error, :no_reader_found}
+    end
+  end
+
+  def stream_pages(file_path, opts \\ []) do
+    opts = Keyword.merge([start_page: 1, optimize: true], opts)
+
+    with {:ok, %{entries: entries}} <- read(file_path, opts) do
+      stream =
+        opts[:start_page]..Enum.count(entries)
+        |> Stream.map(fn idx ->
+          at = idx - 1
+          Enum.at(entries, at).stream_fun.()
+        end)
+
+      {:ok, stream}
+    end
+  end
+
   def title_from_location(location) do
     location
     |> Path.basename()
@@ -48,10 +85,6 @@ defmodule Basenji.Reader do
     |> ProperCase.snake_case()
     |> String.split("_")
     |> Enum.map_join(" ", &String.capitalize(&1))
-  end
-
-  defp info_cache_key(location, opts) do
-    %{location: location, opts: opts}
   end
 
   def info(location, opts \\ []) do
@@ -72,35 +105,6 @@ defmodule Basenji.Reader do
 
       response ->
         response
-    end
-  end
-
-  defp get_info(location, opts) do
-    opts = Keyword.merge([include_hash: false], opts)
-    reader = find_reader(location)
-
-    info =
-      if reader do
-        title = title_from_location(location)
-
-        {:ok, response} = reader.read(location, opts)
-        %{entries: entries} = response
-        reader.close(response[:file])
-
-        %{
-          format: reader.format(),
-          resource_location: location,
-          title: title,
-          page_count: Enum.count(entries)
-        }
-      else
-        {:error, :unreadable}
-      end
-
-    info
-    |> case do
-      {:error, e} -> {:error, e}
-      inf -> {:ok, inf}
     end
   end
 
@@ -126,60 +130,36 @@ defmodule Basenji.Reader do
     )
   end
 
-  def sort_file_names(e), do: Enum.sort_by(e, & &1.file_name)
+  def create_resource(cmd, args) do
+    create_resource(fn ->
+      with {:ok, output} <- exec(cmd, args) do
+        [output |> :binary.bin_to_list()]
+      end
+    end)
+  end
 
-  def reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
+  def sort_and_reject(e) do
+    e
+    |> sort_file_names()
+    |> reject_macos_preview()
+    |> reject_directories()
+    |> reject_non_image()
+  end
 
-  def reject_directories(e), do: Enum.reject(e, &(Path.extname(&1.file_name) == ""))
+  defp sort_file_names(e), do: Enum.sort_by(e, & &1.file_name)
 
-  def reject_non_image(e) do
+  defp reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
+
+  defp reject_directories(e), do: Enum.reject(e, &(Path.extname(&1.file_name) == ""))
+
+  defp reject_non_image(e) do
     Enum.filter(e, fn ent ->
       ext = Path.extname(ent.file_name) |> String.replace(".", "") |> String.downcase()
       ext in @image_extensions
     end)
   end
 
-  def read(file_path, opts \\ []) do
-    opts = Keyword.merge([optimize: true], opts)
-
-    reader = find_reader(file_path)
-
-    if reader do
-      read_result = reader.read(file_path, opts)
-      if opts[:optimize], do: optimize_entries(read_result), else: read_result
-    else
-      {:error, :no_reader_found}
-    end
-  end
-
-  def find_reader(file_path) do
-    @readers
-    |> Enum.reduce_while(
-      nil,
-      fn reader, _acc ->
-        if matches_extension?(reader, file_path) && matches_magic?(reader, file_path),
-          do: {:halt, reader},
-          else: {:cont, nil}
-      end
-    )
-  end
-
-  def stream_pages(file_path, opts \\ []) do
-    opts = Keyword.merge([start_page: 1, optimize: true], opts)
-
-    with {:ok, %{entries: entries}} <- read(file_path, opts) do
-      stream =
-        opts[:start_page]..Enum.count(entries)
-        |> Stream.map(fn idx ->
-          at = idx - 1
-          Enum.at(entries, at).stream_fun.()
-        end)
-
-      {:ok, stream}
-    end
-  end
-
-  def matches_extension?(reader, filepath) do
+  defp matches_extension?(reader, filepath) do
     file_ext = Path.extname(filepath) |> String.downcase()
 
     reader.file_extensions()
@@ -188,8 +168,8 @@ defmodule Basenji.Reader do
     end)
   end
 
-  def matches_magic?(reader, file_path) do
-    reader.get_magic_numbers()
+  defp matches_magic?(reader, file_path) do
+    reader.magic_numbers()
     |> Enum.reduce_while(
       nil,
       fn %{offset: offset, magic: magic}, _acc ->
@@ -233,5 +213,59 @@ defmodule Basenji.Reader do
     |> Enum.reduce(bytes |> Enum.to_list(), fn reader, bytes ->
       reader.optimize!(bytes)
     end)
+  end
+
+  defp info_cache_key(location, opts), do: %{location: location, opts: opts}
+
+  defp read_from_location(reader, location) do
+    meter_duration [:basenji, :process], "read_#{reader.format()}" do
+      with {:ok, %{entries: file_entries}} <- reader.get_entries(location) do
+        file_entries =
+          file_entries
+          |> Enum.map(&Map.put(&1, :stream_fun, fn -> reader.get_entry_stream!(location, &1) end))
+
+        {:ok, %{entries: file_entries}}
+      end
+    end
+  end
+
+  defp get_info(location, _opts) do
+    reader = find_reader(location)
+
+    info =
+      if reader do
+        title = title_from_location(location)
+
+        {:ok, response} = read_from_location(reader, location)
+        %{entries: entries} = response
+        reader.close(response[:file])
+
+        %{
+          format: reader.format(),
+          resource_location: location,
+          title: title,
+          page_count: Enum.count(entries)
+        }
+      else
+        {:error, :unreadable}
+      end
+
+    info
+    |> case do
+      {:error, e} -> {:error, e}
+      inf -> {:ok, inf}
+    end
+  end
+
+  defp find_reader(file_path) do
+    @readers
+    |> Enum.reduce_while(
+      nil,
+      fn reader, _acc ->
+        if matches_extension?(reader, file_path) && matches_magic?(reader, file_path),
+          do: {:halt, reader},
+          else: {:cont, nil}
+      end
+    )
   end
 end

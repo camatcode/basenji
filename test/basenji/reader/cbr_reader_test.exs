@@ -1,6 +1,7 @@
 defmodule Basenji.Reader.CBRReaderTest do
   use ExUnit.Case
 
+  alias Basenji.Reader
   alias Basenji.Reader.CBRReader
 
   doctest CBRReader
@@ -33,7 +34,7 @@ defmodule Basenji.Reader.CBRReaderTest do
 
     cbr_files
     |> Enum.each(fn cbr_file_path ->
-      {:ok, %{entries: entries}} = CBRReader.read(cbr_file_path)
+      {:ok, %{entries: entries}} = Reader.read(cbr_file_path)
       refute Enum.empty?(entries)
 
       [random_entry] = Enum.shuffle(entries) |> Enum.take(1)

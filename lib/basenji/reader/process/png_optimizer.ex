@@ -1,6 +1,5 @@
 defmodule Basenji.Reader.Process.PNGOptimizer do
   @moduledoc false
-  use Basenji.TelemetryHelpers
 
   import Basenji.Reader
 
