@@ -18,29 +18,10 @@ defmodule Basenji.Reader.CBRReader do
   @impl Reader
   def get_entries(cbr_file_path, _opts \\ []) do
     with {:ok, output} <- Reader.exec("unrar", ["lb", cbr_file_path]) do
-      file_names = String.split(output, "\n")
-
-      file_entries =
-        file_names
-        |> Enum.map(&%{file_name: &1})
-        |> Reader.sort_and_reject()
-
-      {:ok, %{entries: file_entries}}
-    end
-  end
-
-  def read(cbr_file_path, _opts \\ []) do
-    meter_duration [:basenji, :process], "read_cbr" do
-      with {:ok, %{entries: file_entries}} <- get_entries(cbr_file_path) do
-        file_entries =
-          file_entries
-          |> Enum.map(fn entry ->
-            entry
-            |> Map.put(:stream_fun, fn -> get_entry_stream!(cbr_file_path, entry) end)
-          end)
-
-        {:ok, %{entries: file_entries}}
-      end
+      String.split(output, "\n")
+      |> Enum.map(&%{file_name: &1})
+      |> Reader.sort_and_reject()
+      |> then(&{:ok, %{entries: &1}})
     end
   end
 

@@ -1,6 +1,8 @@
 defmodule Basenji.Reader do
   @moduledoc false
 
+  use Basenji.TelemetryHelpers
+
   alias Basenji.Reader.CB7Reader
   alias Basenji.Reader.CBRReader
   alias Basenji.Reader.CBTReader
@@ -41,12 +43,12 @@ defmodule Basenji.Reader do
     "tif"
   ]
 
-  @callback get_entry_stream!(location :: String.t(), file_name :: String.t()) :: Enumerable.t()
   @callback format() :: atom()
   @callback file_extensions() :: list()
-  @callback close(any()) :: :ok | :error
   @callback magic_numbers :: [map()]
   @callback get_entries(file_path :: String.t(), opts :: list()) :: {:ok, map()} | {:error, any()}
+  @callback get_entry_stream!(location :: String.t(), file_name :: String.t()) :: Enumerable.t()
+  @callback close(any()) :: :ok | :error
 
   def read(file_path, opts \\ []) do
     opts = Keyword.merge([optimize: true], opts)
@@ -54,7 +56,7 @@ defmodule Basenji.Reader do
     reader = find_reader(file_path)
 
     if reader do
-      read_result = reader.read(file_path, opts)
+      read_result = read_from_location(reader, file_path)
       if opts[:optimize], do: optimize_entries(read_result), else: read_result
     else
       {:error, :no_reader_found}
@@ -216,12 +218,14 @@ defmodule Basenji.Reader do
   defp info_cache_key(location, opts), do: %{location: location, opts: opts}
 
   defp read_from_location(reader, location) do
-    with {:ok, %{entries: file_entries}} <- reader.get_entries(location) do
-      file_entries =
-        file_entries
-        |> Enum.map(&Map.put(&1, :stream_fun, fn -> reader.get_entry_stream!(location, &1) end))
+    meter_duration [:basenji, :process], "read_#{reader.format()}" do
+      with {:ok, %{entries: file_entries}} <- reader.get_entries(location) do
+        file_entries =
+          file_entries
+          |> Enum.map(&Map.put(&1, :stream_fun, fn -> reader.get_entry_stream!(location, &1) end))
 
-      {:ok, %{entries: file_entries}}
+        {:ok, %{entries: file_entries}}
+      end
     end
   end
 

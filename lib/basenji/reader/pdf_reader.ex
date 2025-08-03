@@ -2,8 +2,6 @@ defmodule Basenji.Reader.PDFReader do
   @moduledoc false
   @behaviour Basenji.Reader
 
-  use Basenji.TelemetryHelpers
-
   alias Basenji.Reader
 
   @impl Reader
@@ -20,28 +18,11 @@ defmodule Basenji.Reader.PDFReader do
     with {:ok, %{pages: pages}} <- get_metadata(pdf_file_path) do
       padding = String.length("#{pages}")
 
-      file_entries =
-        1..pages
-        |> Enum.map(fn idx ->
-          %{file_name: "#{String.pad_leading("#{idx}", padding, "0")}.jpg"}
-        end)
-
-      {:ok, %{entries: file_entries}}
-    end
-  end
-
-  def read(pdf_file_path, _opts \\ []) do
-    meter_duration [:basenji, :process], "read_pdf" do
-      with {:ok, %{entries: file_entries}} <- get_entries(pdf_file_path) do
-        file_entries =
-          file_entries
-          |> Enum.map(fn entry ->
-            entry
-            |> Map.put(:stream_fun, fn -> get_entry_stream!(pdf_file_path, entry) end)
-          end)
-
-        {:ok, %{entries: file_entries}}
-      end
+      1..pages
+      |> Enum.map(fn idx ->
+        %{file_name: "#{String.pad_leading("#{idx}", padding, "0")}.jpg"}
+      end)
+      |> then(&{:ok, %{entries: &1}})
     end
   end
 

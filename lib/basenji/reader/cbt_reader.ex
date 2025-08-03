@@ -18,35 +18,16 @@ defmodule Basenji.Reader.CBTReader do
   @impl Reader
   def get_entries(cbz_file_path, _opts \\ []) do
     with {:ok, file_names} <- :erl_tar.table(cbz_file_path, [:compressed]) do
-      file_entries =
-        file_names
-        |> Enum.map(&%{file_name: "#{&1}"})
-        |> Reader.sort_and_reject()
-
-      {:ok, %{entries: file_entries}}
-    end
-  end
-
-  def read(cbz_file_path, _opts \\ []) do
-    meter_duration [:basenji, :process], "read_cbt" do
-      with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
-        file_entries =
-          file_entries
-          |> Enum.map(fn entry ->
-            entry
-            |> Map.put(:stream_fun, fn -> get_entry_stream!(cbz_file_path, entry) end)
-          end)
-
-        {:ok, %{entries: file_entries}}
-      end
+      file_names
+      |> Enum.map(&%{file_name: "#{&1}"})
+      |> Reader.sort_and_reject()
+      |> then(&{:ok, %{entries: &1}})
     end
   end
 
   @impl Reader
   def get_entry_stream!(cbz_file_path, entry) do
-    escaped_filename = entry[:file_name]
-
-    file_name = ~c"#{escaped_filename}"
+    file_name = ~c"#{entry[:file_name]}"
 
     Reader.create_resource(fn ->
       with {:ok, [{^file_name, data}]} <-

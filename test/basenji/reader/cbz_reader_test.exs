@@ -1,6 +1,7 @@
 defmodule Basenji.Reader.CBZReaderTest do
   use ExUnit.Case
 
+  alias Basenji.Reader
   alias Basenji.Reader.CBZReader
 
   doctest CBZReader
@@ -25,7 +26,7 @@ defmodule Basenji.Reader.CBZReaderTest do
 
     test_file = "test/support/data/basenji/formats/cbz/bobby_make_believe_sample.cbz"
 
-    {:ok, %{entries: entries}} = CBZReader.read(test_file)
+    {:ok, %{entries: entries}} = Reader.read(test_file)
     refute Enum.empty?(entries)
 
     [random_entry] = Enum.shuffle(entries) |> Enum.take(1)
@@ -48,7 +49,7 @@ defmodule Basenji.Reader.CBZReaderTest do
   test "parallel processing" do
     test_file = "test/support/data/basenji/formats/cbz/bobby_make_believe_sample.cbz"
 
-    {:ok, %{entries: entries}} = CBZReader.read(test_file)
+    {:ok, %{entries: entries}} = Reader.read(test_file)
 
     # Test that multiple tasks can access the same file concurrently
     tasks =

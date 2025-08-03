@@ -19,29 +19,12 @@ defmodule Basenji.Reader.CB7Reader do
   @impl Reader
   def get_entries(cbz_file_path, _opts \\ []) do
     with {:ok, output} <- Reader.exec("7z", ["l", "-ba", cbz_file_path]) do
-      file_names =
-        output
-        |> String.split("\n")
-        |> Enum.map(&String.slice(&1, 53..-1//1))
-
-      file_entries =
-        file_names
-        |> Enum.map(&%{file_name: &1})
-        |> Reader.sort_and_reject()
-
-      {:ok, %{entries: file_entries}}
-    end
-  end
-
-  def read(cbz_file_path, _opts \\ []) do
-    meter_duration [:basenji, :process], "read_cb7" do
-      with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
-        file_entries =
-          file_entries
-          |> Enum.map(&Map.put(&1, :stream_fun, fn -> get_entry_stream!(cbz_file_path, &1) end))
-
-        {:ok, %{entries: file_entries}}
-      end
+      output
+      |> String.split("\n")
+      |> Enum.map(&String.slice(&1, 53..-1//1))
+      |> Enum.map(&%{file_name: &1})
+      |> Reader.sort_and_reject()
+      |> then(&{:ok, %{entries: &1}})
     end
   end
 

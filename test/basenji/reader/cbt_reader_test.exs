@@ -1,6 +1,7 @@
 defmodule Basenji.Reader.CBTReaderTest do
   use ExUnit.Case
 
+  alias Basenji.Reader
   alias Basenji.Reader.CBTReader
 
   doctest CBTReader
@@ -34,7 +35,7 @@ defmodule Basenji.Reader.CBTReaderTest do
     cbt_files
     #
     |> Enum.each(fn cbt_file_path ->
-      {:ok, %{entries: entries}} = CBTReader.read(cbt_file_path)
+      {:ok, %{entries: entries}} = Reader.read(cbt_file_path)
       refute Enum.empty?(entries)
 
       [random_entry] = Enum.shuffle(entries) |> Enum.take(1)
