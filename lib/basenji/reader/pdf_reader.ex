@@ -30,7 +30,6 @@ defmodule Basenji.Reader.PDFReader do
     end
   end
 
-  @impl Reader
   def read(pdf_file_path, _opts \\ []) do
     meter_duration [:basenji, :process], "read_pdf" do
       with {:ok, %{entries: file_entries}} <- get_entries(pdf_file_path) do
@@ -47,9 +46,7 @@ defmodule Basenji.Reader.PDFReader do
   end
 
   @impl Reader
-  def close(_), do: :ok
-
-  defp get_entry_stream!(pdf_file_path, entry) do
+  def get_entry_stream!(pdf_file_path, entry) do
     file_name = entry[:file_name]
     {page_num, _rest} = Integer.parse(file_name)
 
@@ -59,6 +56,9 @@ defmodule Basenji.Reader.PDFReader do
       end
     end)
   end
+
+  @impl Reader
+  def close(_), do: :ok
 
   defp get_metadata(pdf_file_path) do
     with {:ok, output} <- Reader.exec("pdfinfo", ["-isodates", pdf_file_path]) do

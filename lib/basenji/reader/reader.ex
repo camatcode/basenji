@@ -41,7 +41,7 @@ defmodule Basenji.Reader do
     "tif"
   ]
 
-  @callback read(file_path :: String.t(), opts :: list()) :: {:ok, map()} | {:error, any()}
+  @callback get_entry_stream!(location :: String.t(), file_name :: String.t()) :: Enumerable.t()
   @callback format() :: atom()
   @callback file_extensions() :: list()
   @callback close(any()) :: :ok | :error
@@ -128,13 +128,29 @@ defmodule Basenji.Reader do
     )
   end
 
-  def sort_file_names(e), do: Enum.sort_by(e, & &1.file_name)
+  def create_resource(cmd, args) do
+    create_resource(fn ->
+      with {:ok, output} <- exec(cmd, args) do
+        [output |> :binary.bin_to_list()]
+      end
+    end)
+  end
 
-  def reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
+  def sort_and_reject(e) do
+    e
+    |> sort_file_names()
+    |> reject_macos_preview()
+    |> reject_directories()
+    |> reject_non_image()
+  end
 
-  def reject_directories(e), do: Enum.reject(e, &(Path.extname(&1.file_name) == ""))
+  defp sort_file_names(e), do: Enum.sort_by(e, & &1.file_name)
 
-  def reject_non_image(e) do
+  defp reject_macos_preview(e), do: Enum.reject(e, &String.contains?(&1.file_name, "__MACOSX"))
+
+  defp reject_directories(e), do: Enum.reject(e, &(Path.extname(&1.file_name) == ""))
+
+  defp reject_non_image(e) do
     Enum.filter(e, fn ent ->
       ext = Path.extname(ent.file_name) |> String.replace(".", "") |> String.downcase()
       ext in @image_extensions
@@ -199,15 +215,24 @@ defmodule Basenji.Reader do
 
   defp info_cache_key(location, opts), do: %{location: location, opts: opts}
 
-  defp get_info(location, opts) do
-    opts = Keyword.merge([include_hash: false], opts)
+  defp read_from_location(reader, location) do
+    with {:ok, %{entries: file_entries}} <- reader.get_entries(location) do
+      file_entries =
+        file_entries
+        |> Enum.map(&Map.put(&1, :stream_fun, fn -> reader.get_entry_stream!(location, &1) end))
+
+      {:ok, %{entries: file_entries}}
+    end
+  end
+
+  defp get_info(location, _opts) do
     reader = find_reader(location)
 
     info =
       if reader do
         title = title_from_location(location)
 
-        {:ok, response} = reader.read(location, opts)
+        {:ok, response} = read_from_location(reader, location)
         %{entries: entries} = response
         reader.close(response[:file])
 

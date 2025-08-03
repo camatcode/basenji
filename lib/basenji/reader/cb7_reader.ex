@@ -27,16 +27,12 @@ defmodule Basenji.Reader.CB7Reader do
       file_entries =
         file_names
         |> Enum.map(&%{file_name: &1})
-        |> Reader.sort_file_names()
-        |> Reader.reject_macos_preview()
-        |> Reader.reject_directories()
-        |> Reader.reject_non_image()
+        |> Reader.sort_and_reject()
 
       {:ok, %{entries: file_entries}}
     end
   end
 
-  @impl Reader
   def read(cbz_file_path, _opts \\ []) do
     meter_duration [:basenji, :process], "read_cb7" do
       with {:ok, %{entries: file_entries}} <- get_entries(cbz_file_path) do
@@ -50,15 +46,9 @@ defmodule Basenji.Reader.CB7Reader do
   end
 
   @impl Reader
+  def get_entry_stream!(cbz_file_path, entry),
+    do: Reader.create_resource("7z", ["x", "-so", cbz_file_path, entry[:file_name]])
+
+  @impl Reader
   def close(_), do: :ok
-
-  defp get_entry_stream!(cbz_file_path, entry) do
-    Reader.create_resource(fn ->
-      escaped_filename = entry[:file_name]
-
-      with {:ok, output} <- Reader.exec("7z", ["x", "-so", cbz_file_path, escaped_filename]) do
-        [output |> :binary.bin_to_list()]
-      end
-    end)
-  end
 end

@@ -23,16 +23,12 @@ defmodule Basenji.Reader.CBRReader do
       file_entries =
         file_names
         |> Enum.map(&%{file_name: &1})
-        |> Reader.sort_file_names()
-        |> Reader.reject_macos_preview()
-        |> Reader.reject_directories()
-        |> Reader.reject_non_image()
+        |> Reader.sort_and_reject()
 
       {:ok, %{entries: file_entries}}
     end
   end
 
-  @impl Reader
   def read(cbr_file_path, _opts \\ []) do
     meter_duration [:basenji, :process], "read_cbr" do
       with {:ok, %{entries: file_entries}} <- get_entries(cbr_file_path) do
@@ -49,15 +45,9 @@ defmodule Basenji.Reader.CBRReader do
   end
 
   @impl Reader
+  def get_entry_stream!(cbr_file_path, entry),
+    do: Reader.create_resource("unrar", ["p", cbr_file_path, entry[:file_name]])
+
+  @impl Reader
   def close(_), do: :ok
-
-  defp get_entry_stream!(cbr_file_path, entry) do
-    Reader.create_resource(fn ->
-      escaped_filename = entry[:file_name]
-
-      with {:ok, output} <- Reader.exec("unrar", ["p", cbr_file_path, escaped_filename]) do
-        [output |> :binary.bin_to_list()]
-      end
-    end)
-  end
 end
