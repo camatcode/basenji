@@ -2,7 +2,7 @@ defmodule Basenji.ImageProcessor do
   @moduledoc false
   use Basenji.TelemetryHelpers
 
-  alias Basenji.Reader.Process.JPEGOptimizer
+  alias Basenji.Optimizer.JPEGOptimizer
 
   def get_image_preview(binary, preview_width_target, preview_height_target) do
     with {:ok, image} <- Image.from_binary(binary),

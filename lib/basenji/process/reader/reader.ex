@@ -3,14 +3,14 @@ defmodule Basenji.Reader do
 
   use Basenji.TelemetryHelpers
 
+  alias Basenji.CmdExecutor
+  alias Basenji.Optimizer.JPEGOptimizer
+  alias Basenji.Optimizer.PNGOptimizer
   alias Basenji.Reader.CB7Reader
   alias Basenji.Reader.CBRReader
   alias Basenji.Reader.CBTReader
   alias Basenji.Reader.CBZReader
   alias Basenji.Reader.PDFReader
-  alias Basenji.Reader.Process.JPEGOptimizer
-  alias Basenji.Reader.Process.PNGOptimizer
-  alias Porcelain.Result
 
   @readers [
     CBZReader,
@@ -108,17 +108,6 @@ defmodule Basenji.Reader do
     end
   end
 
-  def exec(cmd, args, opts \\ []) do
-    Porcelain.exec(cmd, args, opts)
-    |> case do
-      %Result{out: output, status: 0} ->
-        {:ok, output |> String.trim()}
-
-      other ->
-        {:error, other}
-    end
-  end
-
   def create_resource(make_func) do
     Stream.resource(
       make_func,
@@ -132,7 +121,7 @@ defmodule Basenji.Reader do
 
   def create_resource(cmd, args) do
     create_resource(fn ->
-      with {:ok, output} <- exec(cmd, args) do
+      with {:ok, output} <- CmdExecutor.exec(cmd, args) do
         [output |> :binary.bin_to_list()]
       end
     end)

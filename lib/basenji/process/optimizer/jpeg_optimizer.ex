@@ -1,8 +1,14 @@
-defmodule Basenji.Reader.Process.JPEGOptimizer do
+defmodule Basenji.Optimizer.JPEGOptimizer do
   @moduledoc false
 
-  import Basenji.Reader
+  @behaviour Basenji.Optimizer
 
+  use Basenji.TelemetryHelpers
+
+  alias Basenji.CmdExecutor
+  alias Basenji.Optimizer
+
+  @impl Optimizer
   def optimize(jpeg_bytes, opts \\ [])
 
   def optimize(list, opts) when is_list(list) do
@@ -13,6 +19,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
 
   def optimize(not_jpeg_bytes, _) when is_binary(not_jpeg_bytes), do: {:ok, not_jpeg_bytes}
 
+  @impl Optimizer
   def optimize!(jpeg_bytes, opts \\ []) do
     with {:ok, optimized_bytes} <- optimize(jpeg_bytes, opts) do
       optimized_bytes
@@ -43,7 +50,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
   defp optimize_with_stdin(bytes) do
     cmd = "jpegoptim"
     cmd_opts = ["-f", "--stdout", "-q", "--stdin"]
-    exec(cmd, cmd_opts, in: bytes)
+    CmdExecutor.exec(cmd, cmd_opts, in: bytes)
   end
 
   defp optimize_with_file(bytes) do
@@ -56,7 +63,7 @@ defmodule Basenji.Reader.Process.JPEGOptimizer do
     try do
       :ok = File.write!(path, bytes)
       cmd_opts = ["-f", "--stdout", "-q", path]
-      exec(cmd, cmd_opts)
+      CmdExecutor.exec(cmd, cmd_opts)
     after
       # Ensure cleanup even if exec fails
       File.rm(path)

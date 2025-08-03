@@ -2,6 +2,7 @@ defmodule Basenji.Reader.PDFReader do
   @moduledoc false
   @behaviour Basenji.Reader
 
+  alias Basenji.CmdExecutor
   alias Basenji.Reader
 
   @impl Reader
@@ -32,7 +33,8 @@ defmodule Basenji.Reader.PDFReader do
     {page_num, _rest} = Integer.parse(file_name)
 
     Reader.create_resource(fn ->
-      with {:ok, output} <- Reader.exec("pdftoppm", ["-f", "#{page_num}", "-singlefile", "-jpeg", "-q", pdf_file_path]) do
+      with {:ok, output} <-
+             CmdExecutor.exec("pdftoppm", ["-f", "#{page_num}", "-singlefile", "-jpeg", "-q", pdf_file_path]) do
         [output |> :binary.bin_to_list()]
       end
     end)
@@ -42,7 +44,7 @@ defmodule Basenji.Reader.PDFReader do
   def close(_), do: :ok
 
   defp get_metadata(pdf_file_path) do
-    with {:ok, output} <- Reader.exec("pdfinfo", ["-isodates", pdf_file_path]) do
+    with {:ok, output} <- CmdExecutor.exec("pdfinfo", ["-isodates", pdf_file_path]) do
       metadata =
         String.split(output, "\n")
         |> Map.new(fn line ->

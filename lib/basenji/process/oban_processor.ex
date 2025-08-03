@@ -1,4 +1,4 @@
-defmodule Basenji.Processor do
+defmodule Basenji.ObanProcessor do
   @moduledoc false
 
   alias Basenji.Collections.Collection

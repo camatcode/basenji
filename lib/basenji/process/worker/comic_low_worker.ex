@@ -7,7 +7,7 @@ defmodule Basenji.Worker.ComicLowWorker do
   alias Basenji.Collections
   alias Basenji.Comics
   alias Basenji.ImageProcessor
-  alias Basenji.Reader.Process.ComicOptimizer
+  alias Basenji.Optimizer.ComicOptimizer
   alias Basenji.UserPresenceTracker
 
   require Logger

@@ -8,7 +8,7 @@ defmodule Basenji.Collections do
   alias Basenji.Collections.Collection
   alias Basenji.Collections.CollectionComic
   alias Basenji.Comics.Comic
-  alias Basenji.Processor
+  alias Basenji.ObanProcessor
   alias Basenji.Repo
 
   def create_collection(attrs, opts \\ []) do
@@ -273,7 +273,7 @@ defmodule Basenji.Collections do
   end
 
   defp handle_insert_side_effects({:ok, collection}) do
-    Processor.process(collection, [:insert])
+    ObanProcessor.process(collection, [:insert])
     {:ok, collection}
   end
 

@@ -1,7 +1,7 @@
-defmodule Basenji.Reader.Process.PNGOptimizerTest do
+defmodule Basenji.Optimizer.PNGOptimizerTest do
   use ExUnit.Case
 
-  alias Basenji.Reader.Process.PNGOptimizer
+  alias Basenji.Optimizer.PNGOptimizer
 
   doctest PNGOptimizer
 

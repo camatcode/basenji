@@ -5,6 +5,7 @@ defmodule Basenji.Reader.CB7Reader do
 
   use Basenji.TelemetryHelpers
 
+  alias Basenji.CmdExecutor
   alias Basenji.Reader
 
   @impl Reader
@@ -18,7 +19,7 @@ defmodule Basenji.Reader.CB7Reader do
 
   @impl Reader
   def get_entries(cbz_file_path, _opts \\ []) do
-    with {:ok, output} <- Reader.exec("7z", ["l", "-ba", cbz_file_path]) do
+    with {:ok, output} <- CmdExecutor.exec("7z", ["l", "-ba", cbz_file_path]) do
       output
       |> String.split("\n")
       |> Enum.map(&String.slice(&1, 53..-1//1))

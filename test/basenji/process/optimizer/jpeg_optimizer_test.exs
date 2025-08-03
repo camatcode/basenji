@@ -1,7 +1,7 @@
-defmodule Basenji.Reader.Process.JPEGOptimizerTest do
+defmodule Basenji.Optimizer.JPEGOptimizerTest do
   use ExUnit.Case
 
-  alias Basenji.Reader.Process.JPEGOptimizer
+  alias Basenji.Optimizer.JPEGOptimizer
 
   doctest JPEGOptimizer
 

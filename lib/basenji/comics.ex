@@ -7,7 +7,7 @@ defmodule Basenji.Comics do
 
   alias Basenji.Comics.Comic
   alias Basenji.Comics.ComicPreview
-  alias Basenji.Processor
+  alias Basenji.ObanProcessor
   alias Basenji.Reader
   alias Basenji.Repo
 
@@ -98,7 +98,7 @@ defmodule Basenji.Comics do
       opts = Keyword.merge([delete_resource: false], opts)
 
       if opts[:delete_resource] == true do
-        Processor.process(comic, [:delete])
+        ObanProcessor.process(comic, [:delete])
       end
 
       Repo.delete(comic)
@@ -297,7 +297,7 @@ defmodule Basenji.Comics do
   end
 
   defp handle_insert_side_effects({:ok, comic}) do
-    Processor.process(comic, [:insert])
+    ObanProcessor.process(comic, [:insert])
     {:ok, comic}
   end
 
