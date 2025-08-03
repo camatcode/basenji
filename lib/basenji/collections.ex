@@ -5,9 +5,9 @@ defmodule Basenji.Collections do
   import Basenji.ContextUtils
   import Ecto.Query
 
-  alias Basenji.Collection
-  alias Basenji.CollectionComic
-  alias Basenji.Comic
+  alias Basenji.Collections.Collection
+  alias Basenji.Collections.CollectionComic
+  alias Basenji.Comics.Comic
   alias Basenji.Processor
   alias Basenji.Repo
 
@@ -166,7 +166,7 @@ defmodule Basenji.Collections do
     opts = Keyword.merge([repo_opts: [on_conflict: :nothing]], opts)
 
     %CollectionComic{collection_id: collection_id, comic_id: comic_id}
-    |> Basenji.CollectionComic.changeset(attrs)
+    |> CollectionComic.changeset(attrs)
     |> Repo.insert(opts[:repo_opts])
   end
 

@@ -1,12 +1,12 @@
-defmodule Basenji.CollectionComic do
+defmodule Basenji.Collections.CollectionComic do
   @moduledoc false
 
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias Basenji.Collection
-  alias Basenji.Comic
+  alias Basenji.Collections.Collection
+  alias Basenji.Comics.Comic
 
   require Logger
 

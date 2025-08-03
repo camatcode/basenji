@@ -5,8 +5,8 @@ defmodule Basenji.Worker.ComicWorker do
   use Basenji.TelemetryHelpers
 
   alias __MODULE__, as: ComicWorker
-  alias Basenji.Comic
   alias Basenji.Comics
+  alias Basenji.Comics.Comic
   alias Basenji.Processor
   alias Basenji.Reader
   alias Basenji.Worker.ComicLowWorker

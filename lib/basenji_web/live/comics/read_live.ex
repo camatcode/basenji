@@ -2,8 +2,8 @@ defmodule BasenjiWeb.Comics.ReadLive do
   @moduledoc false
   use BasenjiWeb, :live_view
 
-  alias Basenji.Comic
   alias Basenji.Comics
+  alias Basenji.Comics.Comic
 
   def mount(%{"id" => id}, _session, socket) do
     socket

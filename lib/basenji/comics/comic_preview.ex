@@ -5,7 +5,7 @@ defmodule Basenji.Comics.ComicPreview do
 
   import Ecto.Changeset
 
-  alias Basenji.Comic
+  alias Basenji.Comics.Comic
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   @foreign_key_type Ecto.UUID
