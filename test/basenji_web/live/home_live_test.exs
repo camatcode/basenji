@@ -67,6 +67,34 @@ defmodule BasenjiWeb.HomeLiveTest do
     end)
   end
 
+  test "verify keybindings", %{conn: conn} do
+    _inserted_comics = insert_list(8 * 24, :comic)
+
+    [chunk_1 | other_chunks] =
+      Comics.list_comics(order_by: :title)
+      |> Enum.chunk_every(24)
+
+    assert {:ok, lv, html} = live(conn, ~p"/")
+
+    Enum.each(chunk_1, fn comic ->
+      assert html =~ comic.id
+      assert html =~ comic.title
+    end)
+
+    assert has_element?(lv, "#top_pagination")
+    assert has_element?(lv, "#bottom_pagination")
+
+    Enum.with_index(other_chunks, 2)
+    |> Enum.reduce(lv, fn {_chunk, _page_num}, lv ->
+      {_, {_, %{to: to}}} =
+        element(lv, "#page-container")
+        |> render_keydown(%{"key" => "ArrowRight"})
+
+      {:ok, lv, _html} = live(conn, to)
+      lv
+    end)
+  end
+
   test "verify search and sorting functionality", %{conn: conn} do
     comic_a = insert(:comic, title: "Amazing Spider-Man", format: :cbz)
     comic_b = insert(:comic, title: "Batman Detective", format: :pdf)

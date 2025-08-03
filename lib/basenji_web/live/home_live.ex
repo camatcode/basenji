@@ -37,27 +37,56 @@ defmodule BasenjiWeb.HomeLive do
 
     socket
     |> assign_content(1, search, format, sort)
-    |> patch_url()
+    |> modify_url()
     |> then(&{:noreply, &1})
   end
 
   def handle_event("clear_filters", _params, socket) do
     socket
     |> assign_content()
-    |> patch_url()
+    |> modify_url()
     |> then(&{:noreply, &1})
   end
 
   def handle_event("paginate", %{"page" => page}, socket) do
     socket
     |> change_page(page)
-    |> patch_url()
+    |> modify_url()
     |> then(&{:noreply, &1})
   end
 
-  defp patch_url(socket) do
+  def handle_event("handle_keydown", %{"key" => "ArrowLeft"}, socket) do
+    prev_page = socket.assigns.current_page - 1
+
     socket
-    |> push_patch(to: "#{@path}?#{socket.assigns.q_string}")
+    |> change_page(prev_page)
+    |> modify_url(navigate: true)
+    |> then(&{:noreply, &1})
+  end
+
+  def handle_event("handle_keydown", %{"key" => "ArrowRight"}, socket) do
+    next_page = socket.assigns.current_page + 1
+
+    socket
+    |> change_page(next_page)
+    |> modify_url(navigate: true)
+    |> then(&{:noreply, &1})
+  end
+
+  def handle_event("handle_keydown", _, socket) do
+    {:noreply, socket}
+  end
+
+  defp modify_url(socket, opts \\ []) do
+    opts = Keyword.merge([navigate: false], opts)
+
+    if opts[:navigate] do
+      socket
+      |> push_navigate(to: "#{@path}?#{socket.assigns.q_string}")
+    else
+      socket
+      |> push_patch(to: "#{@path}?#{socket.assigns.q_string}")
+    end
   end
 
   defp update_current_params(socket, params) do
@@ -206,7 +235,12 @@ defmodule BasenjiWeb.HomeLive do
 
   def render(assigns) do
     ~H"""
-    <div class={page_classes(:container)} id="page-container">
+    <div
+      phx-window-keydown="handle_keydown"
+      phx-hook="ScrollToTop"
+      class={page_classes(:container)}
+      id="page-container"
+    >
       <.search_bar form={@search_form} search_options={@search_options_info} page_info={@page_info} />
 
       <.pagination_section id="top_pagination" page_info={@page_info} total_pages={@total_pages} />
