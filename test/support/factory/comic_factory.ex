@@ -5,12 +5,14 @@ defmodule Basenji.Factory.ComicFactory do
     quote do
       use ExUnit.Case
 
+      alias Basenji.Comics.Comic
+
       def comic_factory(attrs) do
-        format = Map.get(attrs, :format, Enum.random(Basenji.Comic.formats()))
+        format = Map.get(attrs, :format, Enum.random(Comic.formats()))
 
         {resource_location, page_count, hash} = make_resource_location(attrs, format)
 
-        %Basenji.Comic{
+        %Comic{
           title: Faker.Lorem.sentence(),
           author: Faker.Person.name(),
           description: Faker.Lorem.paragraph(2),
@@ -23,7 +25,7 @@ defmodule Basenji.Factory.ComicFactory do
         }
         |> merge_attributes(attrs)
         |> evaluate_lazy_attributes()
-        |> Basenji.Comic.changeset(%{})
+        |> Comic.changeset(%{})
         |> Ecto.Changeset.apply_action!(:validate)
       end
 

@@ -1,8 +1,8 @@
 defmodule Basenji.Processor do
   @moduledoc false
 
-  alias Basenji.Collection
-  alias Basenji.Comic
+  alias Basenji.Collections.Collection
+  alias Basenji.Comics.Comic
   alias Basenji.Worker.CollectionWorker
   alias Basenji.Worker.ComicWorker
 

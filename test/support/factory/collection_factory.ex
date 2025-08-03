@@ -24,7 +24,7 @@ defmodule Basenji.Factory.CollectionFactory do
             Enum.random(files)
           )
 
-        %Basenji.Collection{
+        %Basenji.Collections.Collection{
           title: Faker.Lorem.sentence(),
           description: Faker.Lorem.paragraph(2),
           parent: parent_fn,
@@ -35,7 +35,7 @@ defmodule Basenji.Factory.CollectionFactory do
       end
 
       def collection_comic_factory(attrs) do
-        %Basenji.CollectionComic{
+        %Basenji.Collections.CollectionComic{
           collection_id: fn -> insert(:collection) |> Map.get(:id) end,
           comic_id: fn -> insert(:comic) |> Map.get(:id) end
         }

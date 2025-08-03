@@ -5,8 +5,8 @@ defmodule Basenji.Worker.CollectionWorker do
   use Basenji.TelemetryHelpers
 
   alias __MODULE__, as: CollectionWorker
-  alias Basenji.Collection
   alias Basenji.Collections
+  alias Basenji.Collections.Collection
   alias Basenji.Comics
 
   require Logger

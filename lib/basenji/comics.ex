@@ -5,7 +5,7 @@ defmodule Basenji.Comics do
   import Basenji.ContextUtils
   import Ecto.Query, warn: false
 
-  alias Basenji.Comic
+  alias Basenji.Comics.Comic
   alias Basenji.Comics.ComicPreview
   alias Basenji.Processor
   alias Basenji.Reader

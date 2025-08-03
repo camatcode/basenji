@@ -1,13 +1,13 @@
-defmodule Basenji.Collection do
+defmodule Basenji.Collections.Collection do
   @moduledoc false
 
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias Basenji.Collection
-  alias Basenji.CollectionComic
-  alias Basenji.Comic
+  alias Basenji.Collections.Collection
+  alias Basenji.Collections.CollectionComic
+  alias Basenji.Comics.Comic
   alias Basenji.Repo
 
   require Logger
@@ -24,8 +24,8 @@ defmodule Basenji.Collection do
     type: "collection",
     attributes: @attrs ++ [:updated_at, :inserted_at],
     relationships: [
-      parent: [resource: Basenji.Collection],
-      comics: [many: true, resource: Basenji.Comic]
+      parent: [resource: Collection],
+      comics: [many: true, resource: Comic]
     ]
   }
   @primary_key {:id, Ecto.UUID, autogenerate: true}

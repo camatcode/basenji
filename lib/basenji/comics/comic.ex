@@ -1,13 +1,14 @@
-defmodule Basenji.Comic do
+defmodule Basenji.Comics.Comic do
   @moduledoc false
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias Basenji.Collection
-  alias Basenji.Comic
+  alias Basenji.Collections.Collection
+  alias Basenji.Comics.Comic
   alias Basenji.Comics.ComicPreview
 
+  Comic
   @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3, pdf: 4]
 
   @attrs [
@@ -33,7 +34,7 @@ defmodule Basenji.Comic do
     type: "comic",
     attributes: (@attrs -- [:image_preview]) ++ [:updated_at, :inserted_at],
     relationships: [
-      member_collections: [many: true, resource: Basenji.Collection],
+      member_collections: [many: true, resource: Collection],
       original_comic: [resource: Comic],
       optimized_comic: [resource: Comic],
       image_preview: [resource: ComicPreview]

@@ -4,8 +4,8 @@ defmodule BasenjiWeb.PredictiveCache do
   use GenServer
 
   alias __MODULE__, as: PredictiveCache
-  alias Basenji.Comic
   alias Basenji.Comics
+  alias Basenji.Comics.Comic
   alias Basenji.ImageProcessor
 
   require Logger

@@ -3,10 +3,11 @@ defmodule BasenjiWeb.JSONAPI.CollectionsController do
   use BasenjiWeb, :controller
 
   alias Basenji.Collections
+  alias Basenji.Collections.Collection
   alias BasenjiWeb.API.Utils
   alias BasenjiWeb.Plugs.JSONAPIPlug, as: BasenjiJSONAPIPlug
 
-  plug BasenjiJSONAPIPlug, api: BasenjiWeb.API, path: "collections", resource: Basenji.Collection
+  plug BasenjiJSONAPIPlug, api: BasenjiWeb.API, path: "collections", resource: Collection
 
   def index(%{private: %{jsonapi_plug: jsonapi_plug}} = conn, _params) do
     collections = Collections.list_collections(Utils.to_opts(jsonapi_plug))

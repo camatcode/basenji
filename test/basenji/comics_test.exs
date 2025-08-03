@@ -1,8 +1,8 @@
 defmodule Basenji.ComicsTest do
   use Basenji.DataCase
 
-  alias Basenji.Comic
   alias Basenji.Comics
+  alias Basenji.Comics.Comic
 
   @moduletag :capture_log
 
@@ -53,7 +53,7 @@ defmodule Basenji.ComicsTest do
     test "from_resource/2" do
       resource_dir = Basenji.Application.get_comics_directory()
 
-      Basenji.Comic.formats()
+      Comic.formats()
       |> Enum.each(fn format ->
         files = Path.wildcard("#{resource_dir}/**/*.#{format}")
         refute Enum.empty?(files)
