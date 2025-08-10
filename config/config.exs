@@ -14,6 +14,7 @@ import Config
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
+alias Basenji.Worker.HourlyWorker
 alias BasenjiWeb.FTP.ComicConnector
 alias ExFTP.Auth.NoAuth
 alias Swoosh.Adapters.Local
@@ -40,11 +41,16 @@ config :basenji, BasenjiWeb.Endpoint,
 
 config :basenji, Oban,
   engine: Oban.Engines.Basic,
-  queues: [comic: 15, comic_low: 5, collection: 25],
+  queues: [comic: 15, comic_low: 5, collection: 25, schedule: 10],
   repo: Basenji.Repo,
   plugins: [
     {Oban.Plugins.Pruner, max_age: to_timeout(hour: 6)},
-    {Oban.Plugins.Lifeline, rescue_after: to_timeout(hour: 1)}
+    {Oban.Plugins.Lifeline, rescue_after: to_timeout(hour: 1)},
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"0 * * * *", HourlyWorker, queue: :scheduled}
+     ]},
+    Oban.Plugins.Reindexer
   ]
 
 config :basenji,
