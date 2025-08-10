@@ -39,6 +39,7 @@ defmodule Basenji.Application do
   end
 
   def get_comics_directory do
-    Application.get_env(:basenji, :comics_dir, File.cwd!()) |> Path.expand()
+    Application.get_env(:basenji, :comics_dir, System.get_env("BASENJI_COMICS_DIR", Path.join(File.cwd!(), "comics")))
+    |> Path.expand()
   end
 end

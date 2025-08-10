@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /app
+exec ./bin/basenji eval Basenji.Release.migrate

@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /app
+PHX_SERVER=true exec ./bin/basenji start

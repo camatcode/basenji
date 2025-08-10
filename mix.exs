@@ -22,6 +22,7 @@ defmodule Basenji.MixProject do
         "coveralls.html": :test,
         "coveralls.cobertura": :test
       ],
+      releases: [basenji: [applications: [basenji: :permanent]]],
 
       # Hex
       package: package(),

@@ -1,0 +1,29 @@
+services:
+  basenji:
+    build: .
+    ports:
+      - "4000:4000"
+      - "2121:4041"  # FTP port
+    environment:
+      - MIX_ENV=prod
+      - DATABASE_URL=ecto://postgres:password@db:5432/basenji_prod
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - PHX_HOST=${PHX_HOST:-localhost}
+    volumes:
+      - ./test/support/data/basenji/formats:/app/comics
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=basenji_prod
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
