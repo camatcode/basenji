@@ -49,8 +49,6 @@ config :basenji, BasenjiWeb.Endpoint,
   ]
 
 config :basenji,
-  #     mix phx.gen.cert
-  # Run `mix help phx.gen.cert` for more information.
   comics_dir: "test/support/data/basenji/formats/"
 
 #
