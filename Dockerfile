@@ -101,4 +101,4 @@ ARG GIT_HASH
 ENV GIT_HASH="$GIT_HASH"
 
 
-CMD ["/app/bin/create_db && /app/bin/migrate && /app/bin/server"]
+ENTRYPOINT ["/app/bin/server"]

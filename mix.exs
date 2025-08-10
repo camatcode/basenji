@@ -22,6 +22,7 @@ defmodule Basenji.MixProject do
         "coveralls.html": :test,
         "coveralls.cobertura": :test
       ],
+      listeners: [Phoenix.CodeReloader],
       releases: [basenji: [applications: [basenji: :permanent]]],
 
       # Hex

@@ -1,3 +1,6 @@
 #!/bin/sh
+/app/bin/create_db
+/app/bin/migrate
 cd /app
+echo "Server..."
 PHX_SERVER=true exec ./bin/basenji start

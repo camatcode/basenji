@@ -3,6 +3,7 @@ defmodule Basenji.Release do
   Used for executing DB release tasks when run in production without Mix
   installed.
   """
+
   @app :basenji
 
   def create do

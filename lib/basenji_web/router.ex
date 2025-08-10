@@ -45,6 +45,13 @@ defmodule BasenjiWeb.Router do
     live "/comics/:id/read", Comics.ReadLive, :show
   end
 
+  scope "/admin" do
+    pipe_through :browser_no_track
+
+    oban_dashboard("/oban")
+    error_tracker_dashboard("/errors")
+  end
+
   scope "/api", BasenjiWeb do
     pipe_through :api
     get "/comics/:id/page/:page", ComicsController, :get_page
@@ -83,9 +90,6 @@ defmodule BasenjiWeb.Router do
 
     scope "/dev" do
       pipe_through :browser_no_track
-
-      oban_dashboard("/oban")
-      error_tracker_dashboard("/errors")
       live_dashboard "/dashboard", metrics: BasenjiWeb.Telemetry
       forward "/mailbox", MailboxPreview
     end

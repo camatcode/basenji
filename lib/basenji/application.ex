@@ -12,6 +12,7 @@ defmodule Basenji.Application do
       BasenjiWeb.Telemetry,
       Basenji.Repo,
       {Oban, Application.fetch_env!(:basenji, Oban)},
+      Basenji.Validator,
       {DNSCluster, query: Application.get_env(:basenji, :dns_cluster_query) || :ignore},
       {Cachex, [:basenji_cache]},
       BasenjiWeb.PredictiveCache,

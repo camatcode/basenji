@@ -1,3 +1,4 @@
 #!/bin/sh
 cd /app
+echo "Create DB..."
 exec ./bin/basenji eval Basenji.Release.create

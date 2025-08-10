@@ -41,7 +41,7 @@ config :basenji, BasenjiWeb.Endpoint,
 
 config :basenji, Oban,
   engine: Oban.Engines.Basic,
-  queues: [comic: 15, comic_low: 5, collection: 25, schedule: 10],
+  queues: [comic: 15, comic_low: 5, collection: 25, scheduled: 10],
   repo: Basenji.Repo,
   plugins: [
     {Oban.Plugins.Pruner, max_age: to_timeout(hour: 6)},
