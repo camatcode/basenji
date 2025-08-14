@@ -1,8 +1,9 @@
 defmodule Basenji.Accounts.UserNotifier do
+  @moduledoc false
   import Swoosh.Email
 
-  alias Basenji.Mailer
   alias Basenji.Accounts.User
+  alias Basenji.Mailer
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do

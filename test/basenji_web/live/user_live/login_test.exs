@@ -1,8 +1,10 @@
 defmodule BasenjiWeb.UserLive.LoginTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Phoenix.LiveViewTest
   import Basenji.AccountsFixtures
+  import Phoenix.LiveViewTest
+
+  alias Basenji.Accounts.UserToken
 
   describe "login page" do
     test "renders login page", %{conn: conn} do
@@ -27,7 +29,7 @@ defmodule BasenjiWeb.UserLive.LoginTest do
 
       assert html =~ "If your email is in our system"
 
-      assert Basenji.Repo.get_by!(Basenji.Accounts.UserToken, user_id: user.id).context ==
+      assert Basenji.Repo.get_by!(UserToken, user_id: user.id).context ==
                "login"
     end
 
@@ -50,9 +52,7 @@ defmodule BasenjiWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password",
-          user: %{email: user.email, password: valid_user_password(), remember_me: true}
-        )
+        form(lv, "#login_form_password", user: %{email: user.email, password: valid_user_password(), remember_me: true})
 
       conn = submit_form(form, conn)
 

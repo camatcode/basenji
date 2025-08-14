@@ -17,6 +17,8 @@ defmodule BasenjiWeb.ConnCase do
 
   use ExUnit.CaseTemplate
 
+  alias Basenji.Accounts.Scope
+
   using do
     quote do
       use BasenjiWeb, :verified_routes
@@ -47,12 +49,12 @@ defmodule BasenjiWeb.ConnCase do
   """
   def register_and_log_in_user(%{conn: conn} = context) do
     user = Basenji.AccountsFixtures.user_fixture()
-    scope = Basenji.Accounts.Scope.for_user(user)
+    scope = Scope.for_user(user)
 
     opts =
       context
       |> Map.take([:token_authenticated_at])
-      |> Enum.into([])
+      |> Enum.to_list()
 
     %{conn: log_in_user(conn, user, opts), user: user, scope: scope}
   end

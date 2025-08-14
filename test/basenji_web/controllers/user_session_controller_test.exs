@@ -2,6 +2,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
   use BasenjiWeb.ConnCase, async: true
 
   import Basenji.AccountsFixtures
+
   alias Basenji.Accounts
 
   setup do

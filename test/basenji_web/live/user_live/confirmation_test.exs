@@ -1,8 +1,8 @@
 defmodule BasenjiWeb.UserLive.ConfirmationTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Phoenix.LiveViewTest
   import Basenji.AccountsFixtures
+  import Phoenix.LiveViewTest
 
   alias Basenji.Accounts
 

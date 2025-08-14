@@ -1,9 +1,10 @@
 defmodule BasenjiWeb.UserLive.SettingsTest do
   use BasenjiWeb.ConnCase, async: true
 
-  alias Basenji.Accounts
-  import Phoenix.LiveViewTest
   import Basenji.AccountsFixtures
+  import Phoenix.LiveViewTest
+
+  alias Basenji.Accounts
 
   describe "Settings page" do
     test "renders settings page", %{conn: conn} do

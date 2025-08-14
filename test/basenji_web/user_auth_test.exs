@@ -1,12 +1,13 @@
 defmodule BasenjiWeb.UserAuthTest do
   use BasenjiWeb.ConnCase, async: true
 
-  alias Phoenix.LiveView
+  import Basenji.AccountsFixtures
+
   alias Basenji.Accounts
   alias Basenji.Accounts.Scope
   alias BasenjiWeb.UserAuth
-
-  import Basenji.AccountsFixtures
+  alias Phoenix.LiveView
+  alias Phoenix.Socket.Broadcast
 
   @remember_me_cookie "_basenji_web_user_remember_me"
   @remember_me_cookie_max_age 60 * 60 * 24 * 14
@@ -132,7 +133,7 @@ defmodule BasenjiWeb.UserAuthTest do
       |> put_session(:live_socket_id, live_socket_id)
       |> UserAuth.log_out_user()
 
-      assert_receive %Phoenix.Socket.Broadcast{event: "disconnect", topic: ^live_socket_id}
+      assert_receive %Broadcast{event: "disconnect", topic: ^live_socket_id}
     end
 
     test "works even if user is already logged out", %{conn: conn} do
@@ -301,7 +302,7 @@ defmodule BasenjiWeb.UserAuthTest do
       user = %{user | authenticated_at: eleven_minutes_ago}
       user_token = Accounts.generate_user_session_token(user)
       {user, token_inserted_at} = Accounts.get_user_by_session_token(user_token)
-      assert DateTime.compare(token_inserted_at, user.authenticated_at) == :gt
+      assert DateTime.after?(token_inserted_at, user.authenticated_at)
       session = conn |> put_session(:user_token, user_token) |> get_session()
 
       socket = %LiveView.Socket{
@@ -376,12 +377,12 @@ defmodule BasenjiWeb.UserAuthTest do
 
       UserAuth.disconnect_sessions(tokens)
 
-      assert_receive %Phoenix.Socket.Broadcast{
+      assert_receive %Broadcast{
         event: "disconnect",
         topic: "users_sessions:dG9rZW4x"
       }
 
-      assert_receive %Phoenix.Socket.Broadcast{
+      assert_receive %Broadcast{
         event: "disconnect",
         topic: "users_sessions:dG9rZW4y"
       }

@@ -7,41 +7,40 @@ defmodule BasenjiWeb.UserLive.Registration do
   @impl true
   def render(assigns) do
     ~H"""
-      <div class="mx-auto max-w-sm">
-        <div class="text-center">
-          <.header>
-            Register for an account
-            <:subtitle>
-              Already registered?
-              <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
-                Log in
-              </.link>
-              to your account now.
-            </:subtitle>
-          </.header>
-        </div>
-
-        <.form for={@form} id="registration_form" phx-submit="save" phx-change="validate">
-          <.input
-            field={@form[:email]}
-            type="email"
-            label="Email"
-            autocomplete="username"
-            required
-            phx-mounted={JS.focus()}
-          />
-
-          <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
-            Create an account
-          </.button>
-        </.form>
+    <div class="mx-auto max-w-sm">
+      <div class="text-center">
+        <.header>
+          Register for an account
+          <:subtitle>
+            Already registered?
+            <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
+              Log in
+            </.link>
+            to your account now.
+          </:subtitle>
+        </.header>
       </div>
+
+      <.form for={@form} id="registration_form" phx-submit="save" phx-change="validate">
+        <.input
+          field={@form[:email]}
+          type="email"
+          label="Email"
+          autocomplete="username"
+          required
+          phx-mounted={JS.focus()}
+        />
+
+        <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
+          Create an account
+        </.button>
+      </.form>
+    </div>
     """
   end
 
   @impl true
-  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket)
-      when not is_nil(user) do
+  def mount(_params, _session, %{assigns: %{current_scope: %{user: user}}} = socket) when not is_nil(user) do
     {:ok, redirect(socket, to: BasenjiWeb.UserAuth.signed_in_path(socket))}
   end
 

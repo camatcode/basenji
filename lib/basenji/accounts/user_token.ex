@@ -1,6 +1,10 @@
 defmodule Basenji.Accounts.UserToken do
+  @moduledoc false
   use Ecto.Schema
+
   import Ecto.Query
+
+  alias Basenji.Accounts.User
   alias Basenji.Accounts.UserToken
 
   @hash_algorithm :sha256
@@ -17,7 +21,7 @@ defmodule Basenji.Accounts.UserToken do
     field :context, :string
     field :sent_to, :string
     field :authenticated_at, :utc_datetime
-    belongs_to :user, Basenji.Accounts.User
+    belongs_to :user, User
 
     timestamps(type: :utc_datetime, updated_at: false)
   end

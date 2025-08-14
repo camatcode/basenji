@@ -1,9 +1,8 @@
 defmodule BasenjiWeb.Router do
   use BasenjiWeb, :router
-
-  import BasenjiWeb.UserAuth
   use ErrorTracker.Web, :router
 
+  import BasenjiWeb.UserAuth
   import Oban.Web.Router
 
   alias Absinthe.Plug.GraphiQL

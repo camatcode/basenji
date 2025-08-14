@@ -1,16 +1,14 @@
 import Config
 
-# Only in tests, remove the complexity from the password hashing algorithm
-config :bcrypt_elixir, :log_rounds, 1
-
-# Configure your database
-#
-# The MIX_TEST_PARTITION environment variable can be used
 alias Swoosh.Adapters.Test
 
 # In test we don't send emails
 # to provide built-in test partitioning in CI environment.
+# Configure your database
 # Run `mix help test` for more information.
+#
+# The MIX_TEST_PARTITION environment variable can be used
+
 config :basenji, Basenji.Mailer, adapter: Test
 
 config :basenji, Basenji.Repo,
@@ -33,6 +31,9 @@ config :basenji, Oban, testing: :manual
 config :basenji,
   comics_dir: "test/support/data/basenji/formats/",
   allow_delete_resources: false
+
+# Only in tests, remove the complexity from the password hashing algorithm
+config :bcrypt_elixir, :log_rounds, 1
 
 config :ex_ftp,
   ftp_port: "FTP_PORT" |> System.get_env("4042") |> String.to_integer()

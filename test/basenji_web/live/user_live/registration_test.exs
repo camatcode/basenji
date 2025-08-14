@@ -1,8 +1,8 @@
 defmodule BasenjiWeb.UserLive.RegistrationTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Phoenix.LiveViewTest
   import Basenji.AccountsFixtures
+  import Phoenix.LiveViewTest
 
   describe "Registration page" do
     test "renders registration page", %{conn: conn} do
