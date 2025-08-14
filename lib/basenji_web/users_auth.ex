@@ -256,7 +256,7 @@ defmodule BasenjiWeb.UsersAuth do
 
   @doc "Returns the path to redirect to after log in."
   # the users was already logged in, redirect to settings
-  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{users: %Accounts.Users{}}}}) do
+  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{users: %Accounts.User{}}}}) do
     ~p"/users/settings"
   end
 

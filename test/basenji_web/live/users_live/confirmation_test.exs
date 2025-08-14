@@ -40,7 +40,7 @@ defmodule BasenjiWeb.UsersLive.ConfirmationTest do
 
       {:ok, lv, _html} = live(conn, ~p"/users/log-in/#{token}")
 
-      form = form(lv, "#confirmation_form", %{"users" => %{"token" => token}})
+      form = form(lv, "#confirmation_form", %{"user" => %{"token" => token}})
       render_submit(form)
 
       conn = follow_trigger_action(form, conn)
@@ -74,7 +74,7 @@ defmodule BasenjiWeb.UsersLive.ConfirmationTest do
 
       {:ok, lv, _html} = live(conn, ~p"/users/log-in/#{token}")
 
-      form = form(lv, "#login_form", %{"users" => %{"token" => token}})
+      form = form(lv, "#login_form", %{"user" => %{"token" => token}})
       render_submit(form)
 
       conn = follow_trigger_action(form, conn)

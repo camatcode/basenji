@@ -4,7 +4,7 @@ defmodule BasenjiWeb.UsersLive.LoginTest do
   import Basenji.AccountsFixtures
   import Phoenix.LiveViewTest
 
-  alias Basenji.Accounts.UsersToken
+  alias Basenji.Accounts.UserToken
 
   describe "login page" do
     test "renders login page", %{conn: conn} do
@@ -23,13 +23,13 @@ defmodule BasenjiWeb.UsersLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       {:ok, _lv, html} =
-        form(lv, "#login_form_magic", users: %{email: users.email})
+        form(lv, "#login_form_magic", user: %{email: users.email})
         |> render_submit()
         |> follow_redirect(conn, ~p"/users/log-in")
 
       assert html =~ "If your email is in our system"
 
-      assert Basenji.Repo.get_by!(UsersToken, users_id: users.id).context ==
+      assert Basenji.Repo.get_by!(UserToken, users_id: users.id).context ==
                "login"
     end
 
@@ -37,7 +37,7 @@ defmodule BasenjiWeb.UsersLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       {:ok, _lv, html} =
-        form(lv, "#login_form_magic", users: %{email: "idonotexist@example.com"})
+        form(lv, "#login_form_magic", user: %{email: "idonotexist@example.com"})
         |> render_submit()
         |> follow_redirect(conn, ~p"/users/log-in")
 
@@ -53,7 +53,7 @@ defmodule BasenjiWeb.UsersLive.LoginTest do
 
       form =
         form(lv, "#login_form_password",
-          users: %{email: users.email, password: valid_users_password(), remember_me: true}
+          user: %{email: users.email, password: valid_users_password(), remember_me: true}
         )
 
       conn = submit_form(form, conn)
@@ -67,7 +67,7 @@ defmodule BasenjiWeb.UsersLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password", users: %{email: "test@email.com", password: "123456"})
+        form(lv, "#login_form_password", user: %{email: "test@email.com", password: "123456"})
 
       render_submit(form, %{user: %{remember_me: true}})
 
@@ -105,7 +105,7 @@ defmodule BasenjiWeb.UsersLive.LoginTest do
       assert html =~ "Log in with email"
 
       assert html =~
-               ~s(<input type="email" name="users[email]" id="login_form_magic_email" value="#{users.email}")
+               ~s(<input type="email" name="user[email]" id="login_form_magic_email" value="#{users.email}")
     end
   end
 end

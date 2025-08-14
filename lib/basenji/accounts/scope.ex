@@ -16,7 +16,7 @@ defmodule Basenji.Accounts.Scope do
   growing application requirements.
   """
 
-  alias Basenji.Accounts.Users
+  alias Basenji.Accounts.User
 
   defstruct users: nil
 
@@ -25,7 +25,7 @@ defmodule Basenji.Accounts.Scope do
 
   Returns nil if no users is given.
   """
-  def for_users(%Users{} = users) do
+  def for_users(%User{} = users) do
     %__MODULE__{users: users}
   end
 

@@ -107,7 +107,7 @@ defmodule BasenjiWeb.UsersLive.Settings do
   end
 
   def handle_event("update_email", params, socket) do
-    %{"users" => users_params} = params
+    %{"user" => users_params} = params
     users = socket.assigns.current_scope.users
     true = Accounts.sudo_mode?(users)
 
@@ -140,7 +140,7 @@ defmodule BasenjiWeb.UsersLive.Settings do
   end
 
   def handle_event("update_password", params, socket) do
-    %{"users" => users_params} = params
+    %{"user" => users_params} = params
     users = socket.assigns.current_scope.users
     true = Accounts.sudo_mode?(users)
 

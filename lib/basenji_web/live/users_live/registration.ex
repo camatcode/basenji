@@ -2,7 +2,7 @@ defmodule BasenjiWeb.UsersLive.Registration do
   use BasenjiWeb, :live_view
 
   alias Basenji.Accounts
-  alias Basenji.Accounts.Users
+  alias Basenji.Accounts.User
 
   @impl true
   def render(assigns) do
@@ -45,7 +45,7 @@ defmodule BasenjiWeb.UsersLive.Registration do
   end
 
   def mount(_params, _session, socket) do
-    changeset = Accounts.change_users_email(%Users{}, %{}, validate_unique: false)
+    changeset = Accounts.change_users_email(%User{}, %{}, validate_unique: false)
 
     {:ok, assign_form(socket, changeset), temporary_assigns: [form: nil]}
   end
@@ -74,7 +74,7 @@ defmodule BasenjiWeb.UsersLive.Registration do
   end
 
   def handle_event("validate", %{"users" => users_params}, socket) do
-    changeset = Accounts.change_users_email(%Users{}, users_params, validate_unique: false)
+    changeset = Accounts.change_users_email(%User{}, users_params, validate_unique: false)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 

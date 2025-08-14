@@ -13,7 +13,7 @@ defmodule BasenjiWeb.UsersSessionController do
   end
 
   # magic link login
-  defp create(conn, %{"users" => %{"token" => token} = users_params}, info) do
+  defp create(conn, %{"user" => %{"token" => token} = users_params}, info) do
     case Accounts.login_users_by_magic_link(token) do
       {:ok, {users, tokens_to_disconnect}} ->
         UsersAuth.disconnect_sessions(tokens_to_disconnect)
@@ -30,7 +30,7 @@ defmodule BasenjiWeb.UsersSessionController do
   end
 
   # email + password login
-  defp create(conn, %{"users" => users_params}, info) do
+  defp create(conn, %{"user" => users_params}, info) do
     %{"email" => email, "password" => password} = users_params
 
     if users = Accounts.get_users_by_email_and_password(email, password) do
@@ -46,7 +46,7 @@ defmodule BasenjiWeb.UsersSessionController do
     end
   end
 
-  def update_password(conn, %{"users" => users_params} = params) do
+  def update_password(conn, %{"user" => users_params} = params) do
     users = conn.assigns.current_scope.users
     true = Accounts.sudo_mode?(users)
     {:ok, {_users, expired_tokens}} = Accounts.update_users_password(users, users_params)

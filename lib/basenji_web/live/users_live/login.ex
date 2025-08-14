@@ -97,7 +97,7 @@ defmodule BasenjiWeb.UsersLive.Login do
       Phoenix.Flash.get(socket.assigns.flash, :email) ||
         get_in(socket.assigns, [:current_scope, Access.key(:users), Access.key(:email)])
 
-    form = to_form(%{"email" => email}, as: "users")
+    form = to_form(%{"email" => email}, as: "user")
 
     {:ok, assign(socket, form: form, trigger_submit: false)}
   end
@@ -107,12 +107,17 @@ defmodule BasenjiWeb.UsersLive.Login do
     {:noreply, assign(socket, :trigger_submit, true)}
   end
 
-  def handle_event("submit_magic", %{"users" => %{"email" => email}}, socket) do
-    if users = Accounts.get_users_by_email(email) do
-      Accounts.deliver_login_instructions(
-        users,
-        &url(~p"/users/log-in/#{&1}")
-      )
+  def handle_event("submit_magic", %{"user" => %{"email" => email}}, socket) do
+    Accounts.list_users(email: email)
+    |> case do
+      [users] ->
+        Accounts.deliver_login_instructions(
+          users,
+          &url(~p"/users/log-in/#{&1}")
+        )
+
+      _ ->
+        nil
     end
 
     info =

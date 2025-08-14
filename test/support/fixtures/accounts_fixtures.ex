@@ -65,7 +65,7 @@ defmodule Basenji.AccountsFixtures do
 
   def override_token_authenticated_at(token, authenticated_at) when is_binary(token) do
     Basenji.Repo.update_all(
-      from(t in Accounts.UsersToken,
+      from(t in Accounts.UserToken,
         where: t.token == ^token
       ),
       set: [authenticated_at: authenticated_at]
@@ -73,7 +73,7 @@ defmodule Basenji.AccountsFixtures do
   end
 
   def generate_users_magic_link_token(users) do
-    {encoded_token, users_token} = Accounts.UsersToken.build_email_token(users, "login")
+    {encoded_token, users_token} = Accounts.UserToken.build_email_token(users, "login")
     Basenji.Repo.insert!(users_token)
     {encoded_token, users_token.token}
   end
@@ -82,7 +82,7 @@ defmodule Basenji.AccountsFixtures do
     dt = DateTime.add(DateTime.utc_now(:second), amount_to_add, unit)
 
     Basenji.Repo.update_all(
-      from(ut in Accounts.UsersToken, where: ut.token == ^token),
+      from(ut in Accounts.UserToken, where: ut.token == ^token),
       set: [inserted_at: dt, authenticated_at: dt]
     )
   end

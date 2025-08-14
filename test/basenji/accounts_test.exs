@@ -4,16 +4,16 @@ defmodule Basenji.AccountsTest do
   import Basenji.AccountsFixtures
 
   alias Basenji.Accounts
-  alias Basenji.Accounts.{Users, UsersToken}
+  alias Basenji.Accounts.{User, UserToken}
 
   describe "get_users_by_email/1" do
     test "does not return the users if the email does not exist" do
-      refute Accounts.get_users_by_email("unknown@example.com")
+      assert Enum.empty?(Accounts.list_users(email: "unknown@example.com"))
     end
 
     test "returns the users if the email exists" do
       %{id: id} = users = users_fixture()
-      assert %Users{id: ^id} = Accounts.get_users_by_email(users.email)
+      assert [%User{id: ^id}] = Accounts.list_users(email: users.email)
     end
   end
 
@@ -30,7 +30,7 @@ defmodule Basenji.AccountsTest do
     test "returns the users if the email and password are valid" do
       %{id: id} = users = users_fixture() |> set_password()
 
-      assert %Users{id: ^id} =
+      assert %User{id: ^id} =
                Accounts.get_users_by_email_and_password(users.email, valid_users_password())
     end
   end
@@ -44,7 +44,7 @@ defmodule Basenji.AccountsTest do
 
     test "returns the users with the given id" do
       %{id: id} = users = users_fixture()
-      assert %Users{id: ^id} = Accounts.get_users!(users.id)
+      assert %User{id: ^id} = Accounts.get_users!(users.id)
     end
   end
 
@@ -91,24 +91,24 @@ defmodule Basenji.AccountsTest do
     test "validates the authenticated_at time" do
       now = DateTime.utc_now()
 
-      assert Accounts.sudo_mode?(%Users{authenticated_at: DateTime.utc_now()})
-      assert Accounts.sudo_mode?(%Users{authenticated_at: DateTime.add(now, -19, :minute)})
-      refute Accounts.sudo_mode?(%Users{authenticated_at: DateTime.add(now, -21, :minute)})
+      assert Accounts.sudo_mode?(%User{authenticated_at: DateTime.utc_now()})
+      assert Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -19, :minute)})
+      refute Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -21, :minute)})
 
       # minute override
       refute Accounts.sudo_mode?(
-               %Users{authenticated_at: DateTime.add(now, -11, :minute)},
+               %User{authenticated_at: DateTime.add(now, -11, :minute)},
                -10
              )
 
       # not authenticated
-      refute Accounts.sudo_mode?(%Users{})
+      refute Accounts.sudo_mode?(%User{})
     end
   end
 
   describe "change_users_email/3" do
     test "returns a users changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_users_email(%Users{})
+      assert %Ecto.Changeset{} = changeset = Accounts.change_users_email(%User{})
       assert changeset.required == [:email]
     end
   end
@@ -125,7 +125,7 @@ defmodule Basenji.AccountsTest do
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
-      assert users_token = Repo.get_by(UsersToken, token: :crypto.hash(:sha256, token))
+      assert users_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
       assert users_token.users_id == users.id
       assert users_token.sent_to == users.email
       assert users_token.context == "change:current@example.com"
@@ -147,49 +147,49 @@ defmodule Basenji.AccountsTest do
 
     test "updates the email with a valid token", %{users: users, token: token, email: email} do
       assert {:ok, %{email: ^email}} = Accounts.update_users_email(users, token)
-      changed_users = Repo.get!(Users, users.id)
+      changed_users = Repo.get!(User, users.id)
       assert changed_users.email != users.email
       assert changed_users.email == email
-      refute Repo.get_by(UsersToken, users_id: users.id)
+      refute Repo.get_by(UserToken, users_id: users.id)
     end
 
     test "does not update email with invalid token", %{users: users} do
       assert Accounts.update_users_email(users, "oops") ==
                {:error, :transaction_aborted}
 
-      assert Repo.get!(Users, users.id).email == users.email
-      assert Repo.get_by(UsersToken, users_id: users.id)
+      assert Repo.get!(User, users.id).email == users.email
+      assert Repo.get_by(UserToken, users_id: users.id)
     end
 
     test "does not update email if users email changed", %{users: users, token: token} do
       assert Accounts.update_users_email(%{users | email: "current@example.com"}, token) ==
                {:error, :transaction_aborted}
 
-      assert Repo.get!(Users, users.id).email == users.email
-      assert Repo.get_by(UsersToken, users_id: users.id)
+      assert Repo.get!(User, users.id).email == users.email
+      assert Repo.get_by(UserToken, users_id: users.id)
     end
 
     test "does not update email if token expired", %{users: users, token: token} do
-      {1, nil} = Repo.update_all(UsersToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
+      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
 
       assert Accounts.update_users_email(users, token) ==
                {:error, :transaction_aborted}
 
-      assert Repo.get!(Users, users.id).email == users.email
-      assert Repo.get_by(UsersToken, users_id: users.id)
+      assert Repo.get!(User, users.id).email == users.email
+      assert Repo.get_by(UserToken, users_id: users.id)
     end
   end
 
   describe "change_users_password/3" do
     test "returns a users changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_users_password(%Users{})
+      assert %Ecto.Changeset{} = changeset = Accounts.change_users_password(%User{})
       assert changeset.required == [:password]
     end
 
     test "allows fields to be set" do
       changeset =
         Accounts.change_users_password(
-          %Users{},
+          %User{},
           %{
             "password" => "new valid password"
           },
@@ -248,7 +248,7 @@ defmodule Basenji.AccountsTest do
           password: "new valid password"
         })
 
-      refute Repo.get_by(UsersToken, users_id: users.id)
+      refute Repo.get_by(UserToken, users_id: users.id)
     end
   end
 
@@ -259,13 +259,13 @@ defmodule Basenji.AccountsTest do
 
     test "generates a token", %{users: users} do
       token = Accounts.generate_users_session_token(users)
-      assert users_token = Repo.get_by(UsersToken, token: token)
+      assert users_token = Repo.get_by(UserToken, token: token)
       assert users_token.context == "session"
       assert users_token.authenticated_at != nil
 
       # Creating the same token for another users should fail
       assert_raise Ecto.ConstraintError, fn ->
-        Repo.insert!(%UsersToken{
+        Repo.insert!(%UserToken{
           token: users_token.token,
           users_id: users_fixture().id,
           context: "session"
@@ -276,7 +276,7 @@ defmodule Basenji.AccountsTest do
     test "duplicates the authenticated_at of given users in new token", %{users: users} do
       users = %{users | authenticated_at: DateTime.add(DateTime.utc_now(:second), -3600)}
       token = Accounts.generate_users_session_token(users)
-      assert users_token = Repo.get_by(UsersToken, token: token)
+      assert users_token = Repo.get_by(UserToken, token: token)
       assert users_token.authenticated_at == users.authenticated_at
       assert DateTime.after?(users_token.inserted_at, users.authenticated_at)
     end
@@ -302,7 +302,7 @@ defmodule Basenji.AccountsTest do
 
     test "does not return users for expired token", %{token: token} do
       dt = ~N[2020-01-01 00:00:00]
-      {1, nil} = Repo.update_all(UsersToken, set: [inserted_at: dt, authenticated_at: dt])
+      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: dt, authenticated_at: dt])
       refute Accounts.get_users_by_session_token(token)
     end
   end
@@ -324,7 +324,7 @@ defmodule Basenji.AccountsTest do
     end
 
     test "does not return users for expired token", %{token: token} do
-      {1, nil} = Repo.update_all(UsersToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
+      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
       refute Accounts.get_users_by_magic_link_token(token)
     end
   end
@@ -352,7 +352,7 @@ defmodule Basenji.AccountsTest do
 
     test "raises when unconfirmed users has password set" do
       users = unconfirmed_users_fixture()
-      {1, nil} = Repo.update_all(Users, set: [hashed_password: "hashed"])
+      {1, nil} = Repo.update_all(User, set: [hashed_password: "hashed"])
       {encoded_token, _hashed_token} = generate_users_magic_link_token(users)
 
       assert_raise RuntimeError, ~r/magic link log in is not allowed/, fn ->
@@ -382,16 +382,16 @@ defmodule Basenji.AccountsTest do
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
-      assert users_token = Repo.get_by(UsersToken, token: :crypto.hash(:sha256, token))
+      assert users_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
       assert users_token.users_id == users.id
       assert users_token.sent_to == users.email
       assert users_token.context == "login"
     end
   end
 
-  describe "inspect/2 for the Users module" do
+  describe "inspect/2 for the User module" do
     test "does not include password" do
-      refute inspect(%Users{password: "123456"}) =~ "password: \"123456\""
+      refute inspect(%User{password: "123456"}) =~ "password: \"123456\""
     end
   end
 end

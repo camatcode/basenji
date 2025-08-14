@@ -52,12 +52,12 @@ defmodule BasenjiWeb.UsersLive.SettingsTest do
       result =
         lv
         |> form("#email_form", %{
-          "users" => %{"email" => new_email}
+          "user" => %{"email" => new_email}
         })
         |> render_submit()
 
       assert result =~ "A link to confirm your email"
-      assert Accounts.get_users_by_email(users.email)
+      assert [_user] = Accounts.list_users(email: users.email)
     end
 
     test "renders errors with invalid data (phx-change)", %{conn: conn} do
@@ -81,7 +81,7 @@ defmodule BasenjiWeb.UsersLive.SettingsTest do
       result =
         lv
         |> form("#email_form", %{
-          "users" => %{"email" => users.email}
+          "user" => %{"email" => users.email}
         })
         |> render_submit()
 
@@ -103,7 +103,7 @@ defmodule BasenjiWeb.UsersLive.SettingsTest do
 
       form =
         form(lv, "#password_form", %{
-          "users" => %{
+          "user" => %{
             "email" => users.email,
             "password" => new_password,
             "password_confirmation" => new_password
@@ -148,7 +148,7 @@ defmodule BasenjiWeb.UsersLive.SettingsTest do
       result =
         lv
         |> form("#password_form", %{
-          "users" => %{
+          "user" => %{
             "password" => "too",
             "password_confirmation" => "does not match"
           }
@@ -181,8 +181,8 @@ defmodule BasenjiWeb.UsersLive.SettingsTest do
       assert path == ~p"/users/settings"
       assert %{"info" => message} = flash
       assert message == "Email changed successfully."
-      refute Accounts.get_users_by_email(users.email)
-      assert Accounts.get_users_by_email(email)
+      assert Enum.empty?(Accounts.list_users(email: users.email))
+      refute Enum.empty?(Accounts.list_users(email: email))
 
       # use confirm token again
       {:error, redirect} = live(conn, ~p"/users/settings/confirm-email/#{token}")
@@ -198,7 +198,7 @@ defmodule BasenjiWeb.UsersLive.SettingsTest do
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
       assert message == "Email change link is invalid or it has expired."
-      assert Accounts.get_users_by_email(users.email)
+      refute Enum.empty?(Accounts.list_users(email: users.email))
     end
 
     test "redirects if users is not logged in", %{token: token} do

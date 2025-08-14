@@ -73,7 +73,7 @@ defmodule BasenjiWeb.UsersLive.Confirmation do
   @impl true
   def mount(%{"token" => token}, _session, socket) do
     if users = Accounts.get_users_by_magic_link_token(token) do
-      form = to_form(%{"token" => token}, as: "users")
+      form = to_form(%{"token" => token}, as: "user")
 
       {:ok, assign(socket, users: users, form: form, trigger_submit: false), temporary_assigns: [form: nil]}
     else
@@ -85,7 +85,7 @@ defmodule BasenjiWeb.UsersLive.Confirmation do
   end
 
   @impl true
-  def handle_event("submit", %{"users" => params}, socket) do
-    {:noreply, assign(socket, form: to_form(params, as: "users"), trigger_submit: true)}
+  def handle_event("submit", %{"user" => params}, socket) do
+    {:noreply, assign(socket, form: to_form(params, as: "user"), trigger_submit: true)}
   end
 end

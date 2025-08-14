@@ -8,7 +8,6 @@ defmodule Basenji.Comics.Comic do
   alias Basenji.Comics.Comic
   alias Basenji.Comics.ComicPreview
 
-  Comic
   @formats [cbz: 0, cbt: 1, cb7: 2, cbr: 3, pdf: 4]
 
   @attrs [

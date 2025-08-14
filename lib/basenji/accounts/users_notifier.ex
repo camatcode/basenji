@@ -1,8 +1,8 @@
-defmodule Basenji.Accounts.UsersNotifier do
+defmodule Basenji.Accounts.UserNotifier do
   @moduledoc false
   import Swoosh.Email
 
-  alias Basenji.Accounts.Users
+  alias Basenji.Accounts.User
   alias Basenji.Mailer
 
   # Delivers the email using the application mailer.
@@ -44,7 +44,7 @@ defmodule Basenji.Accounts.UsersNotifier do
   """
   def deliver_login_instructions(users, url) do
     case users do
-      %Users{confirmed_at: nil} -> deliver_confirmation_instructions(users, url)
+      %User{confirmed_at: nil} -> deliver_confirmation_instructions(users, url)
       _ -> deliver_magic_link_instructions(users, url)
     end
   end

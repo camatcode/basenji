@@ -15,7 +15,7 @@ defmodule BasenjiWeb.UsersSessionControllerTest do
 
       conn =
         post(conn, ~p"/users/log-in", %{
-          "users" => %{"email" => users.email, "password" => valid_users_password()}
+          "user" => %{"email" => users.email, "password" => valid_users_password()}
         })
 
       assert get_session(conn, :users_token)
@@ -34,7 +34,7 @@ defmodule BasenjiWeb.UsersSessionControllerTest do
 
       conn =
         post(conn, ~p"/users/log-in", %{
-          "users" => %{
+          "user" => %{
             "email" => users.email,
             "password" => valid_users_password(),
             "remember_me" => "true"
@@ -52,7 +52,7 @@ defmodule BasenjiWeb.UsersSessionControllerTest do
         conn
         |> init_test_session(users_return_to: "/foo/bar")
         |> post(~p"/users/log-in", %{
-          "users" => %{
+          "user" => %{
             "email" => users.email,
             "password" => valid_users_password()
           }
@@ -65,7 +65,7 @@ defmodule BasenjiWeb.UsersSessionControllerTest do
     test "redirects to login page with invalid credentials", %{conn: conn, users: users} do
       conn =
         post(conn, ~p"/users/log-in?mode=password", %{
-          "users" => %{"email" => users.email, "password" => "invalid_password"}
+          "user" => %{"email" => users.email, "password" => "invalid_password"}
         })
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
@@ -79,7 +79,7 @@ defmodule BasenjiWeb.UsersSessionControllerTest do
 
       conn =
         post(conn, ~p"/users/log-in", %{
-          "users" => %{"token" => token}
+          "user" => %{"token" => token}
         })
 
       assert get_session(conn, :users_token)
@@ -99,7 +99,7 @@ defmodule BasenjiWeb.UsersSessionControllerTest do
 
       conn =
         post(conn, ~p"/users/log-in", %{
-          "users" => %{"token" => token},
+          "user" => %{"token" => token},
           "_action" => "confirmed"
         })
 
@@ -120,7 +120,7 @@ defmodule BasenjiWeb.UsersSessionControllerTest do
     test "redirects to login page when magic link is invalid", %{conn: conn} do
       conn =
         post(conn, ~p"/users/log-in", %{
-          "users" => %{"token" => "invalid"}
+          "user" => %{"token" => "invalid"}
         })
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) ==

@@ -1,11 +1,11 @@
-defmodule Basenji.Accounts.UsersToken do
+defmodule Basenji.Accounts.UserToken do
   @moduledoc false
   use Ecto.Schema
 
   import Ecto.Query
 
-  alias Basenji.Accounts.Users
-  alias Basenji.Accounts.UsersToken
+  alias Basenji.Accounts.User
+  alias Basenji.Accounts.UserToken
 
   @hash_algorithm :sha256
   @rand_size 32
@@ -21,7 +21,7 @@ defmodule Basenji.Accounts.UsersToken do
     field :context, :string
     field :sent_to, :string
     field :authenticated_at, :utc_datetime
-    belongs_to :users, Users
+    belongs_to :users, User
 
     timestamps(type: :utc_datetime, updated_at: false)
   end
@@ -48,7 +48,7 @@ defmodule Basenji.Accounts.UsersToken do
   def build_session_token(users) do
     token = :crypto.strong_rand_bytes(@rand_size)
     dt = users.authenticated_at || DateTime.utc_now(:second)
-    {token, %UsersToken{token: token, context: "session", users_id: users.id, authenticated_at: dt}}
+    {token, %UserToken{token: token, context: "session", users_id: users.id, authenticated_at: dt}}
   end
 
   @doc """
@@ -91,7 +91,7 @@ defmodule Basenji.Accounts.UsersToken do
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
     {Base.url_encode64(token, padding: false),
-     %UsersToken{
+     %UserToken{
        token: hashed_token,
        context: context,
        sent_to: sent_to,
@@ -155,6 +155,6 @@ defmodule Basenji.Accounts.UsersToken do
   end
 
   defp by_token_and_context_query(token, context) do
-    from UsersToken, where: [token: ^token, context: ^context]
+    from UserToken, where: [token: ^token, context: ^context]
   end
 end

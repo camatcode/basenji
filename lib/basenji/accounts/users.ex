@@ -1,10 +1,10 @@
-defmodule Basenji.Accounts.Users do
+defmodule Basenji.Accounts.User do
   @moduledoc false
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias Basenji.Accounts.Users
+  alias Basenji.Accounts.User
 
   schema "users" do
     field :email, :string
@@ -118,7 +118,7 @@ defmodule Basenji.Accounts.Users do
   If there is no users or the users doesn't have a password, we call
   `Bcrypt.no_user_verify/0` to avoid timing attacks.
   """
-  def valid_password?(%Users{hashed_password: hashed_password}, password)
+  def valid_password?(%User{hashed_password: hashed_password}, password)
       when is_binary(hashed_password) and byte_size(password) > 0 do
     Bcrypt.verify_pass(password, hashed_password)
   end
