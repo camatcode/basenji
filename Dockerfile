@@ -1,5 +1,5 @@
 ARG BUILDER_IMAGE="elixir:1.18"
-ARG RUNNER_IMAGE="elixir:1.18"
+ARG RUNNER_IMAGE="debian:bookworm-slim"
 
 FROM ${BUILDER_IMAGE} AS builder
 
