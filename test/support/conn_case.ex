@@ -17,6 +17,8 @@ defmodule BasenjiWeb.ConnCase do
 
   use ExUnit.CaseTemplate
 
+  alias Basenji.Accounts.Scope
+
   using do
     quote do
       use BasenjiWeb, :verified_routes
@@ -35,5 +37,46 @@ defmodule BasenjiWeb.ConnCase do
   setup tags do
     Basenji.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
+  end
+
+  @doc """
+  Setup helper that registers and logs in users.
+
+      setup :register_and_log_in_users
+
+  It stores an updated connection and a registered users in the
+  test context.
+  """
+  def register_and_log_in_users(%{conn: conn} = context) do
+    users = Basenji.AccountsFixtures.users_fixture()
+    scope = Scope.for_users(users)
+
+    opts =
+      context
+      |> Map.take([:token_authenticated_at])
+      |> Enum.to_list()
+
+    %{conn: log_in_users(conn, users, opts), users: users, scope: scope}
+  end
+
+  @doc """
+  Logs the given `users` into the `conn`.
+
+  It returns an updated `conn`.
+  """
+  def log_in_users(conn, users, opts \\ []) do
+    token = Basenji.Accounts.generate_users_session_token(users)
+
+    maybe_set_token_authenticated_at(token, opts[:token_authenticated_at])
+
+    conn
+    |> Phoenix.ConnTest.init_test_session(%{})
+    |> Plug.Conn.put_session(:users_token, token)
+  end
+
+  defp maybe_set_token_authenticated_at(_token, nil), do: nil
+
+  defp maybe_set_token_authenticated_at(token, authenticated_at) do
+    Basenji.AccountsFixtures.override_token_authenticated_at(token, authenticated_at)
   end
 end

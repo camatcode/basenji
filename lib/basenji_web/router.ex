@@ -2,6 +2,7 @@ defmodule BasenjiWeb.Router do
   use BasenjiWeb, :router
   use ErrorTracker.Web, :router
 
+  import BasenjiWeb.UsersAuth
   import Oban.Web.Router
 
   alias Absinthe.Plug.GraphiQL
@@ -16,6 +17,7 @@ defmodule BasenjiWeb.Router do
     plug :put_root_layout, html: {BasenjiWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :fetch_current_scope_for_users
     plug :put_csp_headers
     plug UserPresencePlug
   end
@@ -108,5 +110,33 @@ defmodule BasenjiWeb.Router do
 
     conn
     |> put_resp_header("content-security-policy", Enum.join(csp_directives, "; "))
+  end
+
+  ## Authentication routes
+
+  scope "/", BasenjiWeb do
+    pipe_through [:browser, :require_authenticated_users]
+
+    live_session :require_authenticated_users,
+      on_mount: [{BasenjiWeb.UsersAuth, :require_authenticated}] do
+      live "/users/settings", UsersLive.Settings, :edit
+      live "/users/settings/confirm-email/:token", UsersLive.Settings, :confirm_email
+    end
+
+    post "/users/update-password", UsersSessionController, :update_password
+  end
+
+  scope "/", BasenjiWeb do
+    pipe_through [:browser]
+
+    live_session :current_users,
+      on_mount: [{BasenjiWeb.UsersAuth, :mount_current_scope}] do
+      live "/users/register", UsersLive.Registration, :new
+      live "/users/log-in", UsersLive.Login, :new
+      live "/users/log-in/:token", UsersLive.Confirmation, :new
+    end
+
+    post "/users/log-in", UsersSessionController, :create
+    delete "/users/log-out", UsersSessionController, :delete
   end
 end

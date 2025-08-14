@@ -91,6 +91,7 @@ defmodule Basenji.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:bcrypt_elixir, "~> 3.0"},
       # general deps
       {:tidewave, "~> 0.2", only: :dev},
       {:ex_doc, "~> 0.37", only: :dev, runtime: false},
