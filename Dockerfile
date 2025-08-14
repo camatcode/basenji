@@ -75,8 +75,10 @@ RUN mix release
 # the compiled release and other runtime necessities
 FROM ${RUNNER_IMAGE}
 
-RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales ffmpeg curl libxml2 libxml2-dev libgeos-dev \
+RUN apt-get update -y && apt-get install -y libstdc++6 openssl locales ffmpeg curl libxml2 libxml2-dev libgeos-dev optipng jpegoptim poppler-utils xxhash zip unzip 7zip  unrar-free \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+RUN ln -s /usr/bin/7zz /usr/bin/7z
 
 # Set the locale
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
@@ -89,12 +91,12 @@ RUN groupadd -r steve -g 7000 && useradd -u 7000 -r -g steve -s /sbin/nologin -c
 
 WORKDIR "/app"
 
-RUN chown steve -R /app
+#RUN chown steve -R /app
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=steve:root /app/_build/prod/rel/basenji ./
 
-USER steve
+#USER steve
 
 ARG GIT_HASH
 
