@@ -61,7 +61,7 @@ defmodule BasenjiWeb.ComicsController do
   end
 
   defp make_preview(comic) do
-    with {:ok, bytes, mime} <- PredictiveCache.fetch_page_from_cache(comic, 1, []),
+    with {:ok, bytes, _mime} <- PredictiveCache.fetch_page_from_cache(comic, 1, []),
          {:ok, preview_bytes} <- ImageProcessor.get_image_preview(bytes, 400, 600) do
       Comics.associate_image_preview(comic, preview_bytes, width: 400, height: 600)
       {:ok, preview_bytes}
