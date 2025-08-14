@@ -7,6 +7,12 @@
 # General application configuration
 import Config
 
+alias Basenji.Accounts.Scope
+alias Basenji.Worker.HourlyWorker
+alias BasenjiWeb.FTP.ComicConnector
+alias ExFTP.Auth.NoAuth
+alias Swoosh.Adapters.Local
+
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails
@@ -14,11 +20,6 @@ import Config
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-alias Basenji.Worker.HourlyWorker
-alias BasenjiWeb.FTP.ComicConnector
-alias ExFTP.Auth.NoAuth
-alias Swoosh.Adapters.Local
-
 config :basenji, Basenji.Mailer, adapter: Local
 
 config :basenji, Basenji.PromEx,
@@ -51,6 +52,19 @@ config :basenji, Oban,
        {"0 * * * *", HourlyWorker, queue: :scheduled}
      ]},
     Oban.Plugins.Reindexer
+  ]
+
+config :basenji, :scopes,
+  user: [
+    default: true,
+    module: Scope,
+    assign_key: :current_scope,
+    access_path: [:user, :id],
+    schema_key: :user_id,
+    schema_type: :id,
+    schema_table: :users,
+    test_data_fixture: Basenji.AccountsFixtures,
+    test_setup_helper: :register_and_log_in_user
   ]
 
 config :basenji,
