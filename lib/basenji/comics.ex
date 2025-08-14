@@ -32,9 +32,7 @@ defmodule Basenji.Comics do
       |> Repo.transaction()
       |> case do
         {:ok, transactions} ->
-          comics =
-            Map.values(transactions)
-            |> Enum.map(fn comic -> list_comics(resource_location: comic.resource_location) |> hd() end)
+          comics = determine_comics_from_transactions(transactions)
 
           handle_insert_side_effects({:ok, comics})
 
@@ -321,6 +319,18 @@ defmodule Basenji.Comics do
           other
       end
     end
+  end
+
+  defp determine_comics_from_transactions(transactions) do
+    Map.values(transactions)
+    |> Enum.map(fn comic ->
+      list_comics(resource_location: comic.resource_location)
+      |> case do
+        [] -> nil
+        other -> hd(other)
+      end
+    end)
+    |> Enum.filter(&Function.identity/1)
   end
 
   defp reduce_comic_opts(query, opts) do

@@ -1,3 +1,6 @@
 #!/bin/sh
+/app/bin/create_db
+/app/bin/migrate
 cd /app
-PHX_SERVER=true exec ./bin/basenji start
+echo "Server..."
+SECRET_KEY_BASE=`openssl rand -base64 64` PHX_SERVER=true BASENJI_JPEG_FILE_MODE=true exec ./bin/basenji start

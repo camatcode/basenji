@@ -10,7 +10,7 @@ services:
       - SECRET_KEY_BASE=${SECRET_KEY_BASE}
       - PHX_HOST=${PHX_HOST:-localhost}
     volumes:
-      - ./test/support/data/basenji/formats:/app/comics
+      - ./test/support/data/basenji/formats:/app/comics:rw
     depends_on:
       - db
     restart: unless-stopped
@@ -22,8 +22,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data:/var/lib/postgresql/data
     restart: unless-stopped
 
-volumes:
-  postgres_data:
+#volumes:
+#  postgres_data:

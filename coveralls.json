@@ -23,6 +23,7 @@
     "test/support/factory/",
     "test/support/factory.ex",
     "lib/basenji.ex",
+    "lib/release.ex",
     "lib/basenji/mailer.ex",
     "lib/basenji_web/components/core_components.ex",
     "lib/basenji_web/controllers/api/graphql/collections_schema.ex",
