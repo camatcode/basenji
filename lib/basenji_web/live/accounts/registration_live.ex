@@ -12,17 +12,15 @@ defmodule BasenjiWeb.Accounts.RegistrationLive do
   end
 
   def handle_event("save", %{"user" => user_params}, socket) do
+    user_params = Map.put(user_params, "confirmed_at", DateTime.utc_now())
+
     case Accounts.register_user(user_params) do
       {:ok, user} ->
-        with {:ok, _} <- Accounts.deliver_login_instructions(user, &url(~p"/users/log-in/#{&1}")) do
-          socket
-          |> put_flash(
-            :info,
-            "An email was sent to #{user.email}, please access it to confirm your account."
-          )
-          |> push_navigate(to: ~p"/users/log-in")
-          |> then(&{:noreply, &1})
-        end
+        IO.inspect(user)
+
+        socket
+        |> push_navigate(to: ~p"/users/log-in")
+        |> then(&{:noreply, &1})
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign_form(socket, changeset)}
@@ -60,6 +58,15 @@ defmodule BasenjiWeb.Accounts.RegistrationLive do
           type="email"
           label="Email"
           autocomplete="username"
+          required
+          phx-mounted={JS.focus()}
+        />
+
+        <.input
+          field={@form[:password]}
+          type="password"
+          label="Password"
+          autocomplete="password"
           required
           phx-mounted={JS.focus()}
         />

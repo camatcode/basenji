@@ -14,7 +14,7 @@ defmodule Basenji.Accounts do
 
   def register_user(attrs) do
     %User{}
-    |> User.email_changeset(attrs)
+    |> User.changeset(attrs)
     |> Repo.insert()
   end
 
