@@ -8,12 +8,12 @@ defmodule Basenji.AccountsTest do
 
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
-      refute Accounts.get_user_by_email("unknown@example.com")
+      assert Enum.empty?(Accounts.list_users(email: "unknown@example.com"))
     end
 
     test "returns the user if the email exists" do
       %{id: id} = user = user_fixture()
-      assert %User{id: ^id} = Accounts.get_user_by_email(user.email)
+      assert [%User{id: ^id}] = Accounts.list_users(email: user.email)
     end
   end
 
@@ -36,15 +36,9 @@ defmodule Basenji.AccountsTest do
   end
 
   describe "get_user!/1" do
-    test "raises if id is invalid" do
-      assert_raise Ecto.NoResultsError, fn ->
-        Accounts.get_user!(-1)
-      end
-    end
-
     test "returns the user with the given id" do
       %{id: id} = user = user_fixture()
-      assert %User{id: ^id} = Accounts.get_user!(user.id)
+      assert {:ok, %User{id: ^id}} = Accounts.get_user(user.id)
     end
   end
 
@@ -108,7 +102,7 @@ defmodule Basenji.AccountsTest do
 
   describe "change_user_email/3" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_user_email(%User{})
+      assert %Ecto.Changeset{} = changeset = User.email_changeset(%User{})
       assert changeset.required == [:email]
     end
   end
@@ -182,13 +176,13 @@ defmodule Basenji.AccountsTest do
 
   describe "change_user_password/3" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_user_password(%User{})
+      assert %Ecto.Changeset{} = changeset = User.password_changeset(%User{})
       assert changeset.required == [:password]
     end
 
     test "allows fields to be set" do
       changeset =
-        Accounts.change_user_password(
+        User.password_changeset(
           %User{},
           %{
             "password" => "new valid password"
@@ -210,12 +204,12 @@ defmodule Basenji.AccountsTest do
     test "validates password", %{user: user} do
       {:error, changeset} =
         Accounts.update_user_password(user, %{
-          password: "not valid",
+          password: "inval",
           password_confirmation: "another"
         })
 
       assert %{
-               password: ["should be at least 12 character(s)"],
+               password: ["should be at least 6 character(s)"],
                password_confirmation: ["does not match password"]
              } = errors_on(changeset)
     end

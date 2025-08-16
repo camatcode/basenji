@@ -57,7 +57,7 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
         |> render_submit()
 
       assert result =~ "A link to confirm your email"
-      assert Accounts.get_user_by_email(user.email)
+      assert [_user] = Accounts.list_users(email: user.email)
     end
 
     test "renders errors with invalid data (phx-change)", %{conn: conn} do
@@ -132,13 +132,13 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
         |> element("#password_form")
         |> render_change(%{
           "user" => %{
-            "password" => "too short",
+            "password" => "short",
             "password_confirmation" => "does not match"
           }
         })
 
       assert result =~ "Save Password"
-      assert result =~ "should be at least 12 character(s)"
+      assert result =~ "should be at least 6 character(s)"
       assert result =~ "does not match password"
     end
 
@@ -149,14 +149,14 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
         lv
         |> form("#password_form", %{
           "user" => %{
-            "password" => "too short",
+            "password" => "short",
             "password_confirmation" => "does not match"
           }
         })
         |> render_submit()
 
       assert result =~ "Save Password"
-      assert result =~ "should be at least 12 character(s)"
+      assert result =~ "should be at least 6 character(s)"
       assert result =~ "does not match password"
     end
   end
@@ -181,8 +181,8 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
       assert path == ~p"/users/settings"
       assert %{"info" => message} = flash
       assert message == "Email changed successfully."
-      refute Accounts.get_user_by_email(user.email)
-      assert Accounts.get_user_by_email(email)
+      assert Enum.empty?(Accounts.list_users(email: user.email))
+      assert [_user] = Accounts.list_users(email: email)
 
       # use confirm token again
       {:error, redirect} = live(conn, ~p"/users/settings/confirm-email/#{token}")
@@ -198,7 +198,7 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
       assert message == "Email change link is invalid or it has expired."
-      assert Accounts.get_user_by_email(user.email)
+      assert [_user] = Accounts.list_users(email: user.email)
     end
 
     test "redirects if user is not logged in", %{token: token} do

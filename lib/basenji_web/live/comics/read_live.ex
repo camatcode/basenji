@@ -20,32 +20,30 @@ defmodule BasenjiWeb.Comics.ReadLive do
   end
 
   def handle_event("change_page", %{"page" => page}, socket) do
-    {:noreply,
-     socket
-     |> change_page(page)
-     |> patch_url()
-     |> push_event("scroll-to-top", %{})}
+    socket
+    |> change_page(page)
+    |> patch_url()
+    |> push_event("scroll-to-top", %{})
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("handle_keydown", %{"key" => "ArrowLeft"}, socket) do
-    {:noreply,
-     socket
-     |> change_page(socket.assigns.current_page - 1)
-     |> patch_url()
-     |> push_event("scroll-to-top", %{})}
+    socket
+    |> change_page(socket.assigns.current_page - 1)
+    |> patch_url()
+    |> push_event("scroll-to-top", %{})
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("handle_keydown", %{"key" => "ArrowRight"}, socket) do
-    {:noreply,
-     socket
-     |> change_page(socket.assigns.current_page + 1)
-     |> patch_url()
-     |> push_event("scroll-to-top", %{})}
+    socket
+    |> change_page(socket.assigns.current_page + 1)
+    |> patch_url()
+    |> push_event("scroll-to-top", %{})
+    |> then(&{:noreply, &1})
   end
 
-  def handle_event("handle_keydown", _, socket) do
-    {:noreply, socket}
-  end
+  def handle_event("handle_keydown", _, socket), do: {:noreply, socket}
 
   defp assign_comic(socket, %Comic{} = comic) do
     socket
@@ -72,9 +70,7 @@ defmodule BasenjiWeb.Comics.ReadLive do
     |> push_patch(to: "/comics/#{socket.assigns.comic.id}/read?#{socket.assigns.q_string}")
   end
 
-  defp change_page(socket, page) when is_bitstring(page) do
-    change_page(socket, String.to_integer(page))
-  end
+  defp change_page(socket, page) when is_bitstring(page), do: change_page(socket, String.to_integer(page))
 
   defp change_page(socket, page) when is_number(page) do
     max_page = socket.assigns.comic.page_count

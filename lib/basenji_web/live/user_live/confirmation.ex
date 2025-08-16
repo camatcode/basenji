@@ -3,7 +3,30 @@ defmodule BasenjiWeb.UserLive.Confirmation do
 
   alias Basenji.Accounts
 
-  @impl true
+  def mount(%{"token" => token}, _session, socket) do
+    socket
+    |> assign_user(token)
+    |> then(&{:ok, &1, temporary_assigns: [form: nil]})
+  end
+
+  def handle_event("submit", %{"user" => params}, socket) do
+    {:noreply, assign(socket, form: to_form(params, as: "user"), trigger_submit: true)}
+  end
+
+  defp assign_user(socket, token) do
+    Accounts.get_user_by_magic_link_token(token)
+    |> case do
+      nil ->
+        socket
+        |> put_flash(:error, "Magic link is invalid or it has expired.")
+        |> push_navigate(to: ~p"/users/log-in")
+
+      user ->
+        form = to_form(%{"token" => token}, as: "user")
+        assign(socket, user: user, form: form, trigger_submit: false)
+    end
+  end
+
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
@@ -68,24 +91,5 @@ defmodule BasenjiWeb.UserLive.Confirmation do
       </p>
     </div>
     """
-  end
-
-  @impl true
-  def mount(%{"token" => token}, _session, socket) do
-    if user = Accounts.get_user_by_magic_link_token(token) do
-      form = to_form(%{"token" => token}, as: "user")
-
-      {:ok, assign(socket, user: user, form: form, trigger_submit: false), temporary_assigns: [form: nil]}
-    else
-      {:ok,
-       socket
-       |> put_flash(:error, "Magic link is invalid or it has expired.")
-       |> push_navigate(to: ~p"/users/log-in")}
-    end
-  end
-
-  @impl true
-  def handle_event("submit", %{"user" => params}, socket) do
-    {:noreply, assign(socket, form: to_form(params, as: "user"), trigger_submit: true)}
   end
 end

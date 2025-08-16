@@ -48,7 +48,8 @@ defmodule BasenjiWeb.UserLive.ConfirmationTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
                "User confirmed successfully"
 
-      assert Accounts.get_user!(user.id).confirmed_at
+      assert {:ok, user} = Accounts.get_user(user.id)
+      assert user.confirmed_at
       # we are logged in now
       assert get_session(conn, :user_token)
       assert redirected_to(conn) == ~p"/"
@@ -82,7 +83,8 @@ defmodule BasenjiWeb.UserLive.ConfirmationTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
                "Welcome back!"
 
-      assert Accounts.get_user!(user.id).confirmed_at == user.confirmed_at
+      assert {:ok, retrieved} = Accounts.get_user(user.id)
+      assert retrieved.confirmed_at == user.confirmed_at
 
       # log out, new conn
       conn = build_conn()
