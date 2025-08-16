@@ -108,11 +108,16 @@ defmodule BasenjiWeb.UserLive.Login do
   end
 
   def handle_event("submit_magic", %{"user" => %{"email" => email}}, socket) do
-    if user = Accounts.get_user_by_email(email) do
-      Accounts.deliver_login_instructions(
-        user,
-        &url(~p"/users/log-in/#{&1}")
-      )
+    Accounts.list_users(email: email)
+    |> case do
+      [user] ->
+        Accounts.deliver_login_instructions(
+          user,
+          &url(~p"/users/log-in/#{&1}")
+        )
+
+      _ ->
+        nil
     end
 
     info =

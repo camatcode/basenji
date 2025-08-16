@@ -1,8 +1,9 @@
 defmodule Basenji.Accounts do
-  @moduledoc """
-  The Accounts context.
-  """
+  @moduledoc false
 
+  use Basenji.TelemetryHelpers
+
+  import Basenji.ContextUtils
   import Ecto.Query, warn: false
 
   alias Basenji.Accounts.User
@@ -10,22 +11,14 @@ defmodule Basenji.Accounts do
   alias Basenji.Accounts.UserToken
   alias Basenji.Repo
 
-  ## Database getters
+  def list_users(opts \\ []) do
+    meter_duration [:basenji, :query], "list_users" do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-  @doc """
-  Gets a user by email.
-
-  ## Examples
-
-      iex> get_user_by_email("foo@example.com")
-      %User{}
-
-      iex> get_user_by_email("unknown@example.com")
-      nil
-
-  """
-  def get_user_by_email(email) when is_binary(email) do
-    Repo.get_by(User, email: email)
+      User
+      |> reduce_user_opts(opts)
+      |> Repo.all(opts[:repo_opts])
+    end
   end
 
   @doc """
@@ -292,6 +285,24 @@ defmodule Basenji.Accounts do
 
         {:ok, {user, tokens_to_expire}}
       end
+    end)
+  end
+
+  defp reduce_user_opts(query, opts) do
+    {q, opts} = reduce_opts(query, opts)
+
+    Enum.reduce(opts, q, fn
+      {_any, ""}, query ->
+        query
+
+      {_any, nil}, query ->
+        query
+
+      {:email, email}, query ->
+        where(query, [u], u.email == ^email)
+
+      _, query ->
+        query
     end)
   end
 end
