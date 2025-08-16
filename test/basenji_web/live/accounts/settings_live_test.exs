@@ -1,7 +1,6 @@
 defmodule BasenjiWeb.Accounts.SettingsLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
   import Phoenix.LiveViewTest
 
   alias Basenji.Accounts
@@ -167,7 +166,7 @@ defmodule BasenjiWeb.Accounts.SettingsLiveTest do
       new_email = Faker.Internet.email()
 
       token =
-        extract_user_token(fn url ->
+        TestHelper.extract_user_token(fn url ->
           Accounts.deliver_user_update_email_instructions(%{user | email: new_email}, user.email, url)
         end)
 

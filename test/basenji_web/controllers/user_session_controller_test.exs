@@ -1,8 +1,6 @@
 defmodule BasenjiWeb.UserSessionControllerTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
-
   alias Basenji.Accounts
 
   setup do
@@ -78,7 +76,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
 
   describe "POST /users/log-in - magic link" do
     test "logs the user in", %{conn: conn, user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = TestHelper.generate_user_magic_link_token(user)
 
       conn =
         post(conn, ~p"/users/log-in", %{
@@ -97,7 +95,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
     end
 
     test "confirms unconfirmed user", %{conn: conn, unconfirmed_user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = TestHelper.generate_user_magic_link_token(user)
       refute user.confirmed_at
 
       conn =

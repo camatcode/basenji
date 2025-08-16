@@ -1,10 +1,11 @@
 defmodule BasenjiWeb.UserAuthTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
+  import Ecto.Query
 
   alias Basenji.Accounts
   alias Basenji.Accounts.Scope
+  alias Basenji.Accounts.UserToken
   alias BasenjiWeb.UserAuth
   alias Phoenix.LiveView
   alias Phoenix.Socket.Broadcast
@@ -387,5 +388,14 @@ defmodule BasenjiWeb.UserAuthTest do
         topic: "users_sessions:dG9rZW4y"
       }
     end
+  end
+
+  def offset_user_token(token, amount_to_add, unit) do
+    dt = DateTime.add(DateTime.utc_now(:second), amount_to_add, unit)
+
+    Basenji.Repo.update_all(
+      from(ut in UserToken, where: ut.token == ^token),
+      set: [inserted_at: dt, authenticated_at: dt]
+    )
   end
 end
