@@ -27,7 +27,7 @@ defmodule Basenji.Accounts.User do
       uniqueness of the email, useful when displaying live validations.
       Defaults to `true`.
   """
-  def email_changeset(user, attrs, opts \\ []) do
+  def email_changeset(user, attrs \\ %{}, opts \\ []) do
     user
     |> cast(attrs, [:email])
     |> validate_email(opts)
@@ -73,7 +73,7 @@ defmodule Basenji.Accounts.User do
       validations on a LiveView form), this option can be set to `false`.
       Defaults to `true`.
   """
-  def password_changeset(user, attrs, opts \\ []) do
+  def password_changeset(user, attrs \\ %{}, opts \\ []) do
     user
     |> cast(attrs, [:password])
     |> validate_confirmation(:password, message: "does not match password")

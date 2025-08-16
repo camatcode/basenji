@@ -2,6 +2,7 @@ defmodule BasenjiWeb.UserLive.Settings do
   use BasenjiWeb, :live_view
 
   alias Basenji.Accounts
+  alias Basenji.Accounts.User
 
   on_mount {BasenjiWeb.UserAuth, :require_sudo_mode}
 
@@ -80,8 +81,8 @@ defmodule BasenjiWeb.UserLive.Settings do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    email_changeset = Accounts.change_user_email(user, %{}, validate_unique: false)
-    password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
+    email_changeset = User.email_changeset(user, %{}, validate_unique: false)
+    password_changeset = User.password_changeset(user, %{}, hash_password: false)
 
     socket =
       socket
@@ -99,7 +100,7 @@ defmodule BasenjiWeb.UserLive.Settings do
 
     email_form =
       socket.assigns.current_scope.user
-      |> Accounts.change_user_email(user_params, validate_unique: false)
+      |> User.email_changeset(user_params, validate_unique: false)
       |> Map.put(:action, :validate)
       |> to_form()
 
@@ -110,8 +111,8 @@ defmodule BasenjiWeb.UserLive.Settings do
     %{"user" => user_params} = params
     user = socket.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)
-
-    case Accounts.change_user_email(user, user_params) do
+    # user_params
+    case User.email_changeset(user, user_params) do
       %{valid?: true} = changeset ->
         Accounts.deliver_user_update_email_instructions(
           Ecto.Changeset.apply_action!(changeset, :insert),
@@ -132,7 +133,7 @@ defmodule BasenjiWeb.UserLive.Settings do
 
     password_form =
       socket.assigns.current_scope.user
-      |> Accounts.change_user_password(user_params, hash_password: false)
+      |> User.password_changeset(user_params, hash_password: false)
       |> Map.put(:action, :validate)
       |> to_form()
 
@@ -144,7 +145,7 @@ defmodule BasenjiWeb.UserLive.Settings do
     user = socket.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)
 
-    case Accounts.change_user_password(user, user_params) do
+    case User.password_changeset(user, user_params) do
       %{valid?: true} = changeset ->
         {:noreply, assign(socket, trigger_submit: true, password_form: to_form(changeset))}
 

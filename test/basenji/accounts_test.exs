@@ -102,7 +102,7 @@ defmodule Basenji.AccountsTest do
 
   describe "change_user_email/3" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_user_email(%User{})
+      assert %Ecto.Changeset{} = changeset = User.email_changeset(%User{})
       assert changeset.required == [:email]
     end
   end
@@ -176,13 +176,13 @@ defmodule Basenji.AccountsTest do
 
   describe "change_user_password/3" do
     test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Accounts.change_user_password(%User{})
+      assert %Ecto.Changeset{} = changeset = User.password_changeset(%User{})
       assert changeset.required == [:password]
     end
 
     test "allows fields to be set" do
       changeset =
-        Accounts.change_user_password(
+        User.password_changeset(
           %User{},
           %{
             "password" => "new valid password"
