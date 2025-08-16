@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.UserLive.RegistrationTest do
+defmodule BasenjiWeb.Accounts.RegistrationLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
   import Basenji.AccountsFixtures
@@ -39,7 +39,7 @@ defmodule BasenjiWeb.UserLive.RegistrationTest do
     test "creates account but does not log in", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
-      email = unique_user_email()
+      email = Faker.Internet.email()
       form = form(lv, "#registration_form", user: valid_user_attributes(email: email))
 
       {:ok, _lv, html} =

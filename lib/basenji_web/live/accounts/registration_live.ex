@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.UserLive.Registration do
+defmodule BasenjiWeb.Accounts.RegistrationLive do
   use BasenjiWeb, :live_view
 
   alias Basenji.Accounts

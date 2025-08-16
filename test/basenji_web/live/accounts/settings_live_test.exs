@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.UserLive.SettingsTest do
+defmodule BasenjiWeb.Accounts.SettingsLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
   import Basenji.AccountsFixtures
@@ -45,7 +45,7 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
     end
 
     test "updates the user email", %{conn: conn, user: user} do
-      new_email = unique_user_email()
+      new_email = Faker.Internet.email()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -97,7 +97,7 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
     end
 
     test "updates the user password", %{conn: conn, user: user} do
-      new_password = valid_user_password()
+      new_password = Faker.Internet.slug()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -164,7 +164,7 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
   describe "confirm email" do
     setup %{conn: conn} do
       user = user_fixture()
-      email = unique_user_email()
+      email = Faker.Internet.email()
 
       token =
         extract_user_token(fn url ->

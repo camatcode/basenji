@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.UserLive.LoginTest do
+defmodule BasenjiWeb.Accounts.LoginLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
   import Basenji.AccountsFixtures
@@ -47,12 +47,13 @@ defmodule BasenjiWeb.UserLive.LoginTest do
 
   describe "user login - password" do
     test "redirects if user logs in with valid credentials", %{conn: conn} do
-      user = user_fixture() |> set_password()
+      password = Faker.Internet.slug()
+      user = insert(:user, password: password)
 
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password", user: %{email: user.email, password: valid_user_password(), remember_me: true})
+        form(lv, "#login_form_password", user: %{email: user.email, password: password, remember_me: true})
 
       conn = submit_form(form, conn)
 

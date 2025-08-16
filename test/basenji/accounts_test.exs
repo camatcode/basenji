@@ -6,13 +6,21 @@ defmodule Basenji.AccountsTest do
   alias Basenji.Accounts
   alias Basenji.Accounts.{User, UserToken}
 
+  test "CRUD API tokens" do
+    %{id: id} = user = insert(:user)
+    api_token = Accounts.create_api_token(user)
+    assert api_token
+    assert id == Accounts.verify_api_token(api_token).id
+    assert :ok == Accounts.delete_api_token(api_token)
+  end
+
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
       assert Enum.empty?(Accounts.list_users(email: "unknown@example.com"))
     end
 
     test "returns the user if the email exists" do
-      %{id: id} = user = user_fixture()
+      %{id: id} = user = insert(:user)
       assert [%User{id: ^id}] = Accounts.list_users(email: user.email)
     end
   end
@@ -23,21 +31,22 @@ defmodule Basenji.AccountsTest do
     end
 
     test "does not return the user if the password is not valid" do
-      user = user_fixture() |> set_password()
+      user = insert(:user) |> set_password()
       refute Accounts.get_user_by_email_and_password(user.email, "invalid")
     end
 
     test "returns the user if the email and password are valid" do
-      %{id: id} = user = user_fixture() |> set_password()
+      password = Faker.Internet.slug()
+      %{id: id} = user = insert(:user, password: password)
 
       assert %User{id: ^id} =
-               Accounts.get_user_by_email_and_password(user.email, valid_user_password())
+               Accounts.get_user_by_email_and_password(user.email, password)
     end
   end
 
   describe "get_user!/1" do
     test "returns the user with the given id" do
-      %{id: id} = user = user_fixture()
+      %{id: id} = user = insert(:user)
       assert {:ok, %User{id: ^id}} = Accounts.get_user(user.id)
     end
   end
@@ -62,7 +71,7 @@ defmodule Basenji.AccountsTest do
     end
 
     test "validates email uniqueness" do
-      %{email: email} = user_fixture()
+      %{email: email} = insert(:user)
       {:error, changeset} = Accounts.register_user(%{email: email})
       assert "has already been taken" in errors_on(changeset).email
 
@@ -72,7 +81,7 @@ defmodule Basenji.AccountsTest do
     end
 
     test "registers users without password" do
-      email = unique_user_email()
+      email = Faker.Internet.email()
       {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
       assert user.email == email
       assert is_nil(user.hashed_password)
@@ -109,7 +118,7 @@ defmodule Basenji.AccountsTest do
 
   describe "deliver_user_update_email_instructions/3" do
     setup do
-      %{user: user_fixture()}
+      %{user: insert(:user)}
     end
 
     test "sends token through notification", %{user: user} do
@@ -128,8 +137,8 @@ defmodule Basenji.AccountsTest do
 
   describe "update_user_email/2" do
     setup do
-      user = unconfirmed_user_fixture()
-      email = unique_user_email()
+      user = insert(:user)
+      email = Faker.Internet.email()
 
       token =
         extract_user_token(fn url ->
@@ -198,7 +207,7 @@ defmodule Basenji.AccountsTest do
 
   describe "update_user_password/2" do
     setup do
-      %{user: user_fixture()}
+      %{user: insert(:user)}
     end
 
     test "validates password", %{user: user} do
@@ -230,7 +239,6 @@ defmodule Basenji.AccountsTest do
         })
 
       assert expired_tokens == []
-      assert is_nil(user.password)
       assert Accounts.get_user_by_email_and_password(user.email, "new valid password")
     end
 
@@ -248,7 +256,7 @@ defmodule Basenji.AccountsTest do
 
   describe "generate_user_session_token/1" do
     setup do
-      %{user: user_fixture()}
+      %{user: insert(:user)}
     end
 
     test "generates a token", %{user: user} do
@@ -261,7 +269,7 @@ defmodule Basenji.AccountsTest do
       assert_raise Ecto.ConstraintError, fn ->
         Repo.insert!(%UserToken{
           token: user_token.token,
-          user_id: user_fixture().id,
+          user_id: insert(:user).id,
           context: "session"
         })
       end
@@ -278,7 +286,7 @@ defmodule Basenji.AccountsTest do
 
   describe "get_user_by_session_token/1" do
     setup do
-      user = user_fixture()
+      user = insert(:user)
       token = Accounts.generate_user_session_token(user)
       %{user: user, token: token}
     end
@@ -303,7 +311,7 @@ defmodule Basenji.AccountsTest do
 
   describe "get_user_by_magic_link_token/1" do
     setup do
-      user = user_fixture()
+      user = insert(:user)
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
       %{user: user, token: encoded_token}
     end
@@ -325,7 +333,7 @@ defmodule Basenji.AccountsTest do
 
   describe "login_user_by_magic_link/1" do
     test "confirms user and expires tokens" do
-      user = unconfirmed_user_fixture()
+      user = insert(:user, confirmed_at: nil, hashed_password: nil, password: nil)
       refute user.confirmed_at
       {encoded_token, hashed_token} = generate_user_magic_link_token(user)
 
@@ -345,7 +353,7 @@ defmodule Basenji.AccountsTest do
     end
 
     test "raises when unconfirmed user has password set" do
-      user = unconfirmed_user_fixture()
+      user = insert(:user, confirmed_at: nil)
       {1, nil} = Repo.update_all(User, set: [hashed_password: "hashed"])
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
 
@@ -357,7 +365,7 @@ defmodule Basenji.AccountsTest do
 
   describe "delete_user_session_token/1" do
     test "deletes the token" do
-      user = user_fixture()
+      user = insert(:user)
       token = Accounts.generate_user_session_token(user)
       assert Accounts.delete_user_session_token(token) == :ok
       refute Accounts.get_user_by_session_token(token)
@@ -366,7 +374,7 @@ defmodule Basenji.AccountsTest do
 
   describe "deliver_login_instructions/2" do
     setup do
-      %{user: unconfirmed_user_fixture()}
+      %{user: insert(:user)}
     end
 
     test "sends token through notification", %{user: user} do

@@ -10,12 +10,13 @@ defmodule BasenjiWeb.UserSessionControllerTest do
   end
 
   describe "POST /users/log-in - email and password" do
-    test "logs the user in", %{conn: conn, user: user} do
-      user = set_password(user)
+    test "logs the user in", %{conn: conn, user: _user} do
+      password = Faker.Internet.slug()
+      user = insert(:user, password: password)
 
       conn =
         post(conn, ~p"/users/log-in", %{
-          "user" => %{"email" => user.email, "password" => valid_user_password()}
+          "user" => %{"email" => user.email, "password" => password}
         })
 
       assert get_session(conn, :user_token)
@@ -29,14 +30,15 @@ defmodule BasenjiWeb.UserSessionControllerTest do
       assert response =~ ~p"/users/log-out"
     end
 
-    test "logs the user in with remember me", %{conn: conn, user: user} do
-      user = set_password(user)
+    test "logs the user in with remember me", %{conn: conn, user: _user} do
+      password = Faker.Internet.slug()
+      user = insert(:user, password: password)
 
       conn =
         post(conn, ~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password(),
+            "password" => password,
             "remember_me" => "true"
           }
         })
@@ -45,8 +47,9 @@ defmodule BasenjiWeb.UserSessionControllerTest do
       assert redirected_to(conn) == ~p"/"
     end
 
-    test "logs the user in with return to", %{conn: conn, user: user} do
-      user = set_password(user)
+    test "logs the user in with return to", %{conn: conn, user: _user} do
+      password = Faker.Internet.slug()
+      user = insert(:user, password: password)
 
       conn =
         conn
@@ -54,7 +57,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
         |> post(~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password()
+            "password" => password
           }
         })
 

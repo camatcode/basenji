@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.UserLive.ConfirmationTest do
+defmodule BasenjiWeb.Accounts.ConfirmationLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
   import Basenji.AccountsFixtures
