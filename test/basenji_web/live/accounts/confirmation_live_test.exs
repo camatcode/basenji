@@ -7,7 +7,7 @@ defmodule BasenjiWeb.Accounts.ConfirmationLiveTest do
   alias Basenji.Accounts
 
   setup do
-    %{unconfirmed_user: unconfirmed_user_fixture(), confirmed_user: user_fixture()}
+    %{unconfirmed_user: insert(:user, confirmed_at: nil, password: nil), confirmed_user: insert(:user)}
   end
 
   describe "Confirm user" do

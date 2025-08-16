@@ -7,54 +7,22 @@ defmodule Basenji.AccountsFixtures do
   import Ecto.Query
 
   alias Basenji.Accounts
-  alias Basenji.Accounts.Scope
+  # alias Basenji.Accounts.Scope
+  #  alias Basenji.Accounts.User
 
-  def valid_user_password, do: "hello world!"
-
-  def valid_user_attributes(attrs \\ %{}) do
-    Enum.into(attrs, %{
-      email: Faker.Internet.email()
-    })
-  end
-
-  def unconfirmed_user_fixture(attrs \\ %{}) do
-    {:ok, user} =
-      attrs
-      |> valid_user_attributes()
-      |> Accounts.register_user()
-
-    user
-  end
-
-  def user_fixture(attrs \\ %{}) do
-    user = unconfirmed_user_fixture(attrs)
-
-    token =
-      extract_user_token(fn url ->
-        Accounts.deliver_login_instructions(user, url)
-      end)
-
-    {:ok, {user, _expired_tokens}} =
-      Accounts.login_user_by_magic_link(token)
-
-    user
-  end
-
-  def user_scope_fixture do
-    user = user_fixture()
-    user_scope_fixture(user)
-  end
-
-  def user_scope_fixture(user) do
-    Scope.for_user(user)
-  end
-
-  def set_password(user) do
-    {:ok, {user, _expired_tokens}} =
-      Accounts.update_user_password(user, %{password: Faker.Internet.slug()})
-
-    user
-  end
+  #  def user_fixture(attrs \\ %{}) do
+  #    user = %{}
+  #
+  #    token =
+  #      extract_user_token(fn url ->
+  #        Accounts.deliver_login_instructions(user, url)
+  #      end)
+  #
+  #    {:ok, {user, _expired_tokens}} =
+  #      Accounts.login_user_by_magic_link(token)
+  #
+  #    user
+  #  end
 
   def extract_user_token(fun) do
     {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")

@@ -18,7 +18,7 @@ defmodule BasenjiWeb.UserAuthTest do
       |> Map.replace!(:secret_key_base, BasenjiWeb.Endpoint.config(:secret_key_base))
       |> init_test_session(%{})
 
-    %{user: %{user_fixture() | authenticated_at: DateTime.utc_now(:second)}, conn: conn}
+    %{user: %{insert(:user) | authenticated_at: DateTime.utc_now(:second)}, conn: conn}
   end
 
   describe "log_in_user/3" do
@@ -49,7 +49,7 @@ defmodule BasenjiWeb.UserAuthTest do
       conn: conn,
       user: user
     } do
-      other_user = user_fixture()
+      other_user = insert(:user)
 
       conn =
         conn

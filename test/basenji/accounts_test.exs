@@ -31,7 +31,7 @@ defmodule Basenji.AccountsTest do
     end
 
     test "does not return the user if the password is not valid" do
-      user = insert(:user) |> set_password()
+      user = insert(:user)
       refute Accounts.get_user_by_email_and_password(user.email, "invalid")
     end
 
@@ -82,7 +82,7 @@ defmodule Basenji.AccountsTest do
 
     test "registers users without password" do
       email = Faker.Internet.email()
-      {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
+      user = insert(:user, email: email, hashed_password: nil, confirmed_at: nil, password: nil)
       assert user.email == email
       assert is_nil(user.hashed_password)
       assert is_nil(user.confirmed_at)
@@ -344,10 +344,11 @@ defmodule Basenji.AccountsTest do
     end
 
     test "returns user and (deleted) token for confirmed user" do
-      user = user_fixture()
+      %{id: user_id} = user = insert(:user)
       assert user.confirmed_at
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
-      assert {:ok, {^user, []}} = Accounts.login_user_by_magic_link(encoded_token)
+      assert {:ok, {retrieved, []}} = Accounts.login_user_by_magic_link(encoded_token)
+      assert retrieved.id == user_id
       # one time use only
       assert {:error, :not_found} = Accounts.login_user_by_magic_link(encoded_token)
     end

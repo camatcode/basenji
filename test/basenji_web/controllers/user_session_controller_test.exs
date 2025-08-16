@@ -6,7 +6,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
   alias Basenji.Accounts
 
   setup do
-    %{unconfirmed_user: unconfirmed_user_fixture(), user: user_fixture()}
+    %{unconfirmed_user: insert(:user, confirmed_at: nil, password: nil), user: insert(:user)}
   end
 
   describe "POST /users/log-in - email and password" do

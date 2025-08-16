@@ -18,6 +18,7 @@ defmodule BasenjiWeb.ConnCase do
   use ExUnit.CaseTemplate
 
   alias Basenji.Accounts.Scope
+  alias Basenji.Accounts.User
 
   using do
     quote do
@@ -48,7 +49,8 @@ defmodule BasenjiWeb.ConnCase do
   test context.
   """
   def register_and_log_in_user(%{conn: conn} = context) do
-    user = Basenji.AccountsFixtures.user_fixture()
+    # insert(:user)
+    user = %User{email: Faker.Internet.email()}
     scope = Scope.for_user(user)
 
     opts =

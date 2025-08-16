@@ -1,7 +1,6 @@
 defmodule BasenjiWeb.Accounts.LoginLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
   import Phoenix.LiveViewTest
 
   alias Basenji.Accounts.UserToken
@@ -18,7 +17,7 @@ defmodule BasenjiWeb.Accounts.LoginLiveTest do
 
   describe "user login - magic link" do
     test "sends magic link email when user exists", %{conn: conn} do
-      user = user_fixture()
+      user = insert(:user)
 
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
@@ -92,7 +91,7 @@ defmodule BasenjiWeb.Accounts.LoginLiveTest do
 
   describe "re-authentication (sudo mode)" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:user)
       %{user: user, conn: log_in_user(conn, user)}
     end
 

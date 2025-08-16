@@ -1,7 +1,6 @@
 defmodule BasenjiWeb.Accounts.RegistrationLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
   import Phoenix.LiveViewTest
 
   describe "Registration page" do
@@ -15,7 +14,7 @@ defmodule BasenjiWeb.Accounts.RegistrationLiveTest do
     test "redirects if already logged in", %{conn: conn} do
       result =
         conn
-        |> log_in_user(user_fixture())
+        |> log_in_user(insert(:user))
         |> live(~p"/users/register")
         |> follow_redirect(conn, ~p"/")
 
@@ -40,7 +39,13 @@ defmodule BasenjiWeb.Accounts.RegistrationLiveTest do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
       email = Faker.Internet.email()
-      form = form(lv, "#registration_form", user: valid_user_attributes(email: email))
+
+      form =
+        form(lv, "#registration_form",
+          user: %{
+            email: email
+          }
+        )
 
       {:ok, _lv, html} =
         render_submit(form)
@@ -53,7 +58,7 @@ defmodule BasenjiWeb.Accounts.RegistrationLiveTest do
     test "renders errors for duplicated email", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
-      user = user_fixture(%{email: "test@email.com"})
+      user = insert(:user)
 
       result =
         lv

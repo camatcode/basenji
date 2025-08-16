@@ -10,7 +10,7 @@ defmodule BasenjiWeb.Accounts.SettingsLiveTest do
     test "renders settings page", %{conn: conn} do
       {:ok, _lv, html} =
         conn
-        |> log_in_user(user_fixture())
+        |> log_in_user(insert(:user))
         |> live(~p"/users/settings")
 
       assert html =~ "Change Email"
@@ -28,7 +28,7 @@ defmodule BasenjiWeb.Accounts.SettingsLiveTest do
     test "redirects if user is not in sudo mode", %{conn: conn} do
       {:ok, conn} =
         conn
-        |> log_in_user(user_fixture(),
+        |> log_in_user(insert(:user),
           token_authenticated_at: DateTime.add(DateTime.utc_now(:second), -11, :minute)
         )
         |> live(~p"/users/settings")
@@ -40,7 +40,7 @@ defmodule BasenjiWeb.Accounts.SettingsLiveTest do
 
   describe "update email form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
@@ -92,7 +92,7 @@ defmodule BasenjiWeb.Accounts.SettingsLiveTest do
 
   describe "update password form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
@@ -163,15 +163,15 @@ defmodule BasenjiWeb.Accounts.SettingsLiveTest do
 
   describe "confirm email" do
     setup %{conn: conn} do
-      user = user_fixture()
-      email = Faker.Internet.email()
+      user = insert(:user)
+      new_email = Faker.Internet.email()
 
       token =
         extract_user_token(fn url ->
-          Accounts.deliver_user_update_email_instructions(%{user | email: email}, user.email, url)
+          Accounts.deliver_user_update_email_instructions(%{user | email: new_email}, user.email, url)
         end)
 
-      %{conn: log_in_user(conn, user), token: token, email: email, user: user}
+      %{conn: log_in_user(conn, user), token: token, email: new_email, user: user}
     end
 
     test "updates the user email once", %{conn: conn, user: user, token: token, email: email} do
