@@ -21,38 +21,27 @@ defmodule Basenji.Accounts do
     end
   end
 
-  @doc """
-  Gets a user by email and password.
-
-  ## Examples
-
-      iex> get_user_by_email_and_password("foo@example.com", "correct_password")
-      %User{}
-
-      iex> get_user_by_email_and_password("foo@example.com", "invalid_password")
-      nil
-
-  """
   def get_user_by_email_and_password(email, password) when is_binary(email) and is_binary(password) do
-    user = Repo.get_by(User, email: email)
-    if User.valid_password?(user, password), do: user
+    list_users(email: email)
+    |> case do
+      [user] -> if User.valid_password?(user, password), do: user
+      _ -> nil
+    end
   end
 
-  @doc """
-  Gets a single user.
+  def get_user(id, opts \\ []) do
+    meter_duration [:basenji, :query], "get_user" do
+      opts = Keyword.merge([repo_opts: []], opts)
 
-  Raises `Ecto.NoResultsError` if the User does not exist.
-
-  ## Examples
-
-      iex> get_user!(123)
-      %User{}
-
-      iex> get_user!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_user!(id), do: Repo.get!(User, id)
+      from(u in User, where: u.id == ^id)
+      |> reduce_user_opts(opts)
+      |> Repo.one(opts[:repo_opts])
+      |> case do
+        nil -> {:error, :not_found}
+        result -> {:ok, result}
+      end
+    end
+  end
 
   ## User registration
 
