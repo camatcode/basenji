@@ -40,7 +40,7 @@
 
 
 > [!WARNING]  
-> This project is under active, daily development.
+> This project is under active development.
 
 
 
