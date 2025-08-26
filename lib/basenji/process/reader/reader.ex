@@ -84,7 +84,7 @@ defmodule Basenji.Reader do
     |> Path.rootname()
     |> ProperCase.snake_case()
     |> String.split("_")
-    |> Enum.map_join(" ", &String.capitalize(&1))
+    |> Enum.map_join(" ", &String.capitalize/1)
   end
 
   def info(location, opts \\ []) do
