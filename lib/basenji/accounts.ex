@@ -6,6 +6,7 @@ defmodule Basenji.Accounts do
   import Basenji.ContextUtils
   import Ecto.Query, warn: false
 
+  alias Basenji.Accounts.APIToken
   alias Basenji.Accounts.User
   alias Basenji.Accounts.UserNotifier
   alias Basenji.Accounts.UserToken
@@ -13,7 +14,7 @@ defmodule Basenji.Accounts do
 
   def register_user(attrs) do
     %User{}
-    |> User.email_changeset(attrs)
+    |> User.changeset(attrs)
     |> Repo.insert()
   end
 
@@ -143,6 +144,37 @@ defmodule Basenji.Accounts do
   def delete_user_session_token(token) do
     Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
     :ok
+  end
+
+  def create_api_token(%User{} = user) do
+    {token, user_token} = APIToken.build_api_token(user)
+    Repo.insert!(user_token)
+    token
+  end
+
+  def verify_api_token(token) do
+    case Base.url_decode64(token, padding: false) do
+      {:ok, decoded_token} ->
+        hashed_token = :crypto.hash(APIToken.hash_algorithm(), decoded_token)
+
+        from(t in APIToken,
+          where: t.token == ^hashed_token and t.inserted_at > ago(365, "day"),
+          join: user in assoc(t, :user),
+          select: user
+        )
+        |> Repo.one()
+
+      :error ->
+        :error
+    end
+  end
+
+  def delete_api_token(token) do
+    from(t in APIToken,
+      where: t.token == ^token
+    )
+    |> Repo.all()
+    |> Enum.each(&Repo.delete(&1))
   end
 
   defp update_user_and_delete_all_tokens(changeset) do

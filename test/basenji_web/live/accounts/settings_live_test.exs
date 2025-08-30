@@ -1,7 +1,6 @@
-defmodule BasenjiWeb.UserLive.SettingsTest do
+defmodule BasenjiWeb.Accounts.SettingsLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
   import Phoenix.LiveViewTest
 
   alias Basenji.Accounts
@@ -10,7 +9,7 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
     test "renders settings page", %{conn: conn} do
       {:ok, _lv, html} =
         conn
-        |> log_in_user(user_fixture())
+        |> log_in_user(insert(:user))
         |> live(~p"/users/settings")
 
       assert html =~ "Change Email"
@@ -28,7 +27,7 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
     test "redirects if user is not in sudo mode", %{conn: conn} do
       {:ok, conn} =
         conn
-        |> log_in_user(user_fixture(),
+        |> log_in_user(insert(:user),
           token_authenticated_at: DateTime.add(DateTime.utc_now(:second), -11, :minute)
         )
         |> live(~p"/users/settings")
@@ -40,12 +39,12 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
 
   describe "update email form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
     test "updates the user email", %{conn: conn, user: user} do
-      new_email = unique_user_email()
+      new_email = Faker.Internet.email()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -92,12 +91,12 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
 
   describe "update password form" do
     setup %{conn: conn} do
-      user = user_fixture()
+      user = insert(:user)
       %{conn: log_in_user(conn, user), user: user}
     end
 
     test "updates the user password", %{conn: conn, user: user} do
-      new_password = valid_user_password()
+      new_password = Faker.Internet.slug()
 
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
@@ -163,15 +162,15 @@ defmodule BasenjiWeb.UserLive.SettingsTest do
 
   describe "confirm email" do
     setup %{conn: conn} do
-      user = user_fixture()
-      email = unique_user_email()
+      user = insert(:user)
+      new_email = Faker.Internet.email()
 
       token =
-        extract_user_token(fn url ->
-          Accounts.deliver_user_update_email_instructions(%{user | email: email}, user.email, url)
+        TestHelper.extract_user_token(fn url ->
+          Accounts.deliver_user_update_email_instructions(%{user | email: new_email}, user.email, url)
         end)
 
-      %{conn: log_in_user(conn, user), token: token, email: email, user: user}
+      %{conn: log_in_user(conn, user), token: token, email: new_email, user: user}
     end
 
     test "updates the user email once", %{conn: conn, user: user, token: token, email: email} do

@@ -17,7 +17,11 @@ defmodule BasenjiWeb.ConnCase do
 
   use ExUnit.CaseTemplate
 
+  import Ecto.Query
+
   alias Basenji.Accounts.Scope
+  alias Basenji.Accounts.User
+  alias Basenji.Accounts.UserToken
 
   using do
     quote do
@@ -48,7 +52,8 @@ defmodule BasenjiWeb.ConnCase do
   test context.
   """
   def register_and_log_in_user(%{conn: conn} = context) do
-    user = Basenji.AccountsFixtures.user_fixture()
+    # insert(:user)
+    user = %User{email: Faker.Internet.email()}
     scope = Scope.for_user(user)
 
     opts =
@@ -77,6 +82,11 @@ defmodule BasenjiWeb.ConnCase do
   defp maybe_set_token_authenticated_at(_token, nil), do: nil
 
   defp maybe_set_token_authenticated_at(token, authenticated_at) do
-    Basenji.AccountsFixtures.override_token_authenticated_at(token, authenticated_at)
+    Basenji.Repo.update_all(
+      from(t in UserToken,
+        where: t.token == ^token
+      ),
+      set: [authenticated_at: authenticated_at]
+    )
   end
 end

@@ -1,21 +1,20 @@
 defmodule BasenjiWeb.UserSessionControllerTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
-
   alias Basenji.Accounts
 
   setup do
-    %{unconfirmed_user: unconfirmed_user_fixture(), user: user_fixture()}
+    %{unconfirmed_user: insert(:user, confirmed_at: nil, password: nil), user: insert(:user)}
   end
 
   describe "POST /users/log-in - email and password" do
-    test "logs the user in", %{conn: conn, user: user} do
-      user = set_password(user)
+    test "logs the user in", %{conn: conn, user: _user} do
+      password = Faker.Internet.slug()
+      user = insert(:user, password: password)
 
       conn =
         post(conn, ~p"/users/log-in", %{
-          "user" => %{"email" => user.email, "password" => valid_user_password()}
+          "user" => %{"email" => user.email, "password" => password}
         })
 
       assert get_session(conn, :user_token)
@@ -29,14 +28,15 @@ defmodule BasenjiWeb.UserSessionControllerTest do
       assert response =~ ~p"/users/log-out"
     end
 
-    test "logs the user in with remember me", %{conn: conn, user: user} do
-      user = set_password(user)
+    test "logs the user in with remember me", %{conn: conn, user: _user} do
+      password = Faker.Internet.slug()
+      user = insert(:user, password: password)
 
       conn =
         post(conn, ~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password(),
+            "password" => password,
             "remember_me" => "true"
           }
         })
@@ -45,8 +45,9 @@ defmodule BasenjiWeb.UserSessionControllerTest do
       assert redirected_to(conn) == ~p"/"
     end
 
-    test "logs the user in with return to", %{conn: conn, user: user} do
-      user = set_password(user)
+    test "logs the user in with return to", %{conn: conn, user: _user} do
+      password = Faker.Internet.slug()
+      user = insert(:user, password: password)
 
       conn =
         conn
@@ -54,7 +55,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
         |> post(~p"/users/log-in", %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password()
+            "password" => password
           }
         })
 
@@ -75,7 +76,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
 
   describe "POST /users/log-in - magic link" do
     test "logs the user in", %{conn: conn, user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = TestHelper.generate_user_magic_link_token(user)
 
       conn =
         post(conn, ~p"/users/log-in", %{
@@ -94,7 +95,7 @@ defmodule BasenjiWeb.UserSessionControllerTest do
     end
 
     test "confirms unconfirmed user", %{conn: conn, unconfirmed_user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+      {token, _hashed_token} = TestHelper.generate_user_magic_link_token(user)
       refute user.confirmed_at
 
       conn =
