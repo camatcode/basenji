@@ -4,6 +4,20 @@ ExUnit.start(timeout: :infinity)
 Ecto.Adapters.SQL.Sandbox.mode(Basenji.Repo, :manual)
 
 defmodule TestHelper do
+  alias Basenji.Accounts.UserToken
+
+  def extract_user_token(fun) do
+    {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")
+    [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
+    token
+  end
+
+  def generate_user_magic_link_token(user) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "login")
+    Basenji.Repo.insert!(user_token)
+    {encoded_token, user_token.token}
+  end
+
   def get_tmp_dir, do: Path.join(System.tmp_dir!(), "basenji")
 
   def drain_queue(queue, start_opts \\ [], drain_opts \\ [])

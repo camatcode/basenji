@@ -16,6 +16,13 @@ defmodule Basenji.Accounts.User do
     timestamps(type: :utc_datetime)
   end
 
+  def changeset(user, attrs \\ %{}, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :password, :confirmed_at, :hashed_password])
+    |> validate_email(opts)
+    |> validate_password(opts)
+  end
+
   @doc """
   A user changeset for registering or changing the email.
 

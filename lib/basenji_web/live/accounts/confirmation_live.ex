@@ -1,4 +1,4 @@
-defmodule BasenjiWeb.UserLive.Confirmation do
+defmodule BasenjiWeb.Accounts.ConfirmationLive do
   use BasenjiWeb, :live_view
 
   alias Basenji.Accounts

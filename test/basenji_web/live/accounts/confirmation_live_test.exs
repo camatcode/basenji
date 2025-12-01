@@ -1,19 +1,18 @@
-defmodule BasenjiWeb.UserLive.ConfirmationTest do
+defmodule BasenjiWeb.Accounts.ConfirmationLiveTest do
   use BasenjiWeb.ConnCase, async: true
 
-  import Basenji.AccountsFixtures
   import Phoenix.LiveViewTest
 
   alias Basenji.Accounts
 
   setup do
-    %{unconfirmed_user: unconfirmed_user_fixture(), confirmed_user: user_fixture()}
+    %{unconfirmed_user: insert(:user, confirmed_at: nil, password: nil), confirmed_user: insert(:user)}
   end
 
   describe "Confirm user" do
     test "renders confirmation page for unconfirmed user", %{conn: conn, unconfirmed_user: user} do
       token =
-        extract_user_token(fn url ->
+        TestHelper.extract_user_token(fn url ->
           Accounts.deliver_login_instructions(user, url)
         end)
 
@@ -23,7 +22,7 @@ defmodule BasenjiWeb.UserLive.ConfirmationTest do
 
     test "renders login page for confirmed user", %{conn: conn, confirmed_user: user} do
       token =
-        extract_user_token(fn url ->
+        TestHelper.extract_user_token(fn url ->
           Accounts.deliver_login_instructions(user, url)
         end)
 
@@ -34,7 +33,7 @@ defmodule BasenjiWeb.UserLive.ConfirmationTest do
 
     test "confirms the given token once", %{conn: conn, unconfirmed_user: user} do
       token =
-        extract_user_token(fn url ->
+        TestHelper.extract_user_token(fn url ->
           Accounts.deliver_login_instructions(user, url)
         end)
 
@@ -69,7 +68,7 @@ defmodule BasenjiWeb.UserLive.ConfirmationTest do
       confirmed_user: user
     } do
       token =
-        extract_user_token(fn url ->
+        TestHelper.extract_user_token(fn url ->
           Accounts.deliver_login_instructions(user, url)
         end)
 
